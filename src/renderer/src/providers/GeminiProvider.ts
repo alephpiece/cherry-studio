@@ -19,7 +19,7 @@ import i18n from '@renderer/i18n'
 import { getAssistantSettings, getDefaultModel, getTopNamingModel } from '@renderer/services/AssistantService'
 import { EVENT_NAMES } from '@renderer/services/EventService'
 import { filterContextMessages, filterUserRoleStartMessages } from '@renderer/services/MessagesService'
-import { Assistant, FileType, FileTypes, Message, Model, Provider, Suggestion } from '@renderer/types'
+import { Assistant, FileType, FileTypes, MCPToolResponse, Message, Model, Provider, Suggestion } from '@renderer/types'
 import { removeSpecialCharacters } from '@renderer/utils'
 import axios from 'axios'
 import { isEmpty, takeRight } from 'lodash'
@@ -27,7 +27,14 @@ import OpenAI from 'openai'
 
 import { CompletionsParams } from '.'
 import BaseProvider from './BaseProvider'
-import { callMCPTool, geminiFunctionCallToMcpTool, mcpToolsToGeminiTools } from './mcpToolUtils'
+import { filterInvalidTools } from './geminiToolUtils'
+import {
+  callMCPTool,
+  filterMCPTools,
+  geminiFunctionCallToMcpTool,
+  mcpToolsToGeminiTools,
+  upsertMCPToolResponse
+} from './mcpToolUtils'
 
 export default class GeminiProvider extends BaseProvider {
   private sdk: GoogleGenerativeAI
@@ -161,8 +168,9 @@ export default class GeminiProvider extends BaseProvider {
     for (const message of userMessages) {
       history.push(await this.getMessageContents(message))
     }
-
+    mcpTools = filterMCPTools(mcpTools, userLastMessage?.enabledMCPs)
     const tools = mcpToolsToGeminiTools(mcpTools)
+    const toolResponses: MCPToolResponse[] = []
     if (assistant.enableWebSearch && isWebSearchModel(model)) {
       tools.push({
         // @ts-ignore googleSearch is not a valid tool for Gemini
@@ -174,7 +182,6 @@ export default class GeminiProvider extends BaseProvider {
       {
         model: model.id,
         systemInstruction: assistant.prompt,
-        tools: tools.length > 0 ? tools : undefined,
         safetySettings: this.getSafetySettings(model.id),
         generationConfig: {
           maxOutputTokens: maxTokens,
@@ -185,6 +192,10 @@ export default class GeminiProvider extends BaseProvider {
       },
       this.requestOptions
     )
+    const filteredTools = filterInvalidTools(geminiModel.tools)
+    if (!isEmpty(filteredTools)) {
+      geminiModel.tools = filteredTools
+    }
 
     const chat = geminiModel.startChat({ history })
     const messageContents = await this.getMessageContents(userLastMessage!)
@@ -235,6 +246,14 @@ export default class GeminiProvider extends BaseProvider {
             fcallParts.push({ functionCall: call } as FunctionCallPart)
             const mcpTool = geminiFunctionCallToMcpTool(mcpTools, call)
             if (mcpTool) {
+              upsertMCPToolResponse(
+                toolResponses,
+                {
+                  tool: mcpTool,
+                  status: 'invoking'
+                },
+                onChunk
+              )
               const toolCallResponse = await callMCPTool(mcpTool)
               fcRespParts.push({
                 functionResponse: {
@@ -242,6 +261,15 @@ export default class GeminiProvider extends BaseProvider {
                   response: toolCallResponse
                 }
               })
+              upsertMCPToolResponse(
+                toolResponses,
+                {
+                  tool: mcpTool,
+                  status: 'done',
+                  response: toolCallResponse
+                },
+                onChunk
+              )
             }
           }
           if (fcRespParts) {
@@ -268,7 +296,8 @@ export default class GeminiProvider extends BaseProvider {
             time_completion_millsec,
             time_first_token_millsec
           },
-          search: chunk.candidates?.[0]?.groundingMetadata
+          search: chunk.candidates?.[0]?.groundingMetadata,
+          mcpToolResponse: toolResponses
         })
       }
     }
