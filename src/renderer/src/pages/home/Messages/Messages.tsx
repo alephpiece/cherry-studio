@@ -105,7 +105,8 @@ const Messages: FC<Props> = ({ assistant, topic, setActiveTopic }) => {
   )
 
   const autoRenameTopic = useCallback(async () => {
-    renameTopic(assistant, topic, messages, setActiveTopic, updateTopic)
+    const successful_messages = messages.filter((m) => m.status === 'success')
+    renameTopic(assistant, topic, successful_messages, setActiveTopic, updateTopic)
   }, [assistant, renameTopic, messages, setActiveTopic, topic, updateTopic])
 
   const onDeleteMessage = useCallback(

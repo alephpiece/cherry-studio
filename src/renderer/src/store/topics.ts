@@ -49,10 +49,14 @@ export const renameTopic =
   async (dispatch: any) => {
     const _topic = getTopic(assistant, topic.id)
 
+    if (messages.length < 2) {
+      return
+    }
+
     // If auto naming is disabled, use the first message content as topic name
     if (!enableTopicNaming) {
-      if (messages.length > 0) {
-        const topicName = messages[0].content.substring(0, 50)
+      const topicName = messages[0].content.substring(0, 50)
+      if (topicName) {
         const data = { ..._topic, name: topicName } as Topic
         setActiveTopic(data)
         updateTopic(data)
@@ -61,7 +65,7 @@ export const renameTopic =
     }
 
     // Auto rename topic using AI-generated summary
-    if (_topic && _topic.name === t('chat.default.topic.name') && messages.length >= 2) {
+    if (_topic && _topic.name === t('chat.default.topic.name')) {
       dispatch(startRenaming(topic.id))
       try {
         const summaryText = await fetchMessagesSummary({ messages, assistant })
