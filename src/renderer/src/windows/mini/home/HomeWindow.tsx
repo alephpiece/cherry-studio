@@ -3,11 +3,13 @@ import { useDefaultAssistant, useDefaultModel } from '@renderer/hooks/useAssista
 import { useSettings } from '@renderer/hooks/useSettings'
 import i18n from '@renderer/i18n'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
+import store from '@renderer/store'
+import { selectTopicsByAssistantId } from '@renderer/store/topics'
 import { uuid } from '@renderer/utils'
 import { Divider } from 'antd'
 import dayjs from 'dayjs'
 import { isEmpty } from 'lodash'
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
+import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -147,12 +149,16 @@ const HomeWindow: FC = () => {
       }
 
       setTimeout(() => {
+        const state = store.getState()
+        const topics = selectTopicsByAssistantId(state, defaultAssistant.id)
+        const topicId = topics.length > 0 ? topics[0].id : uuid()
+
         const message = {
           id: uuid(),
           role: 'user',
           content: prompt ? `${prompt}\n\n${content}` : content,
           assistantId: defaultAssistant.id,
-          topicId: defaultAssistant.topics[0].id || uuid(),
+          topicId: topicId,
           createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
           type: 'text',
           status: 'success'
@@ -161,7 +167,7 @@ const HomeWindow: FC = () => {
         setIsFirstMessage(false)
       }, 0)
     },
-    [content, defaultAssistant.id, defaultAssistant.topics]
+    [content, defaultAssistant.id]
   )
 
   const clearClipboard = () => {

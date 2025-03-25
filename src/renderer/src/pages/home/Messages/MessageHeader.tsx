@@ -1,3 +1,4 @@
+import { MoreOutlined, RightOutlined } from '@ant-design/icons'
 import UserPopup from '@renderer/components/Popups/UserPopup'
 import { APP_NAME, AppLogo, isLocalAi } from '@renderer/config/env'
 import { getModelLogo } from '@renderer/config/models'
@@ -11,7 +12,7 @@ import { Assistant, Message, Model } from '@renderer/types'
 import { firstLetter, isEmoji, removeLeadingEmoji } from '@renderer/utils'
 import { Avatar } from 'antd'
 import dayjs from 'dayjs'
-import { CSSProperties, FC, memo, useCallback, useMemo } from 'react'
+import { CSSProperties, FC, memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -33,6 +34,7 @@ const MessageHeader: FC<Props> = memo(({ assistant, model, message }) => {
   const { t } = useTranslation()
   const { isBubbleStyle } = useMessageStyle()
   const { openMinappById } = useMinappPopup()
+  const [showAssistantName, setShowAssistantName] = useState(false)
 
   const avatarSource = useMemo(() => getAvatarSource(isLocalAi, getMessageModelId(message)), [message])
 
@@ -67,6 +69,10 @@ const MessageHeader: FC<Props> = memo(({ assistant, model, message }) => {
       }
     : undefined
 
+  const toggleAssistantName = useCallback(() => {
+    setShowAssistantName((prev) => !prev)
+  }, [])
+
   return (
     <Container className="message-header">
       <AvatarWrapper style={avatarStyle}>
@@ -98,9 +104,17 @@ const MessageHeader: FC<Props> = memo(({ assistant, model, message }) => {
           </>
         )}
         <UserWrap>
-          <UserName isBubbleStyle={isBubbleStyle} theme={theme}>
-            {username}
-          </UserName>
+          <UserNameWrapper>
+            <UserName isBubbleStyle={isBubbleStyle} theme={theme}>
+              {username}
+            </UserName>
+            {isAssistantMessage && (
+              <CollapseIconWrapper onClick={toggleAssistantName}>
+                {showAssistantName ? <RightOutlined /> : <MoreOutlined />}
+              </CollapseIconWrapper>
+            )}
+            {isAssistantMessage && showAssistantName && <AssistantName>{assistant?.name}</AssistantName>}
+          </UserNameWrapper>
           <MessageTime>{dayjs(message.createdAt).format('MM/DD HH:mm')}</MessageTime>
         </UserWrap>
       </AvatarWrapper>
@@ -144,6 +158,13 @@ const UserWrap = styled.div`
   justify-content: space-between;
 `
 
+const UserNameWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+`
+
 const UserName = styled.div<{ isBubbleStyle?: boolean; theme?: string }>`
   font-size: 14px;
   font-weight: 600;
@@ -154,6 +175,29 @@ const MessageTime = styled.div`
   font-size: 10px;
   color: var(--color-text-3);
   font-family: 'Ubuntu';
+`
+
+const CollapseIconWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 20%;
+  cursor: pointer;
+  color: var(--color-text-3);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--color-background-mute);
+  }
+`
+
+const AssistantName = styled.span`
+  font-size: 14px;
+  font-weight: normal;
+  color: var(--color-text-3);
 `
 
 export default MessageHeader

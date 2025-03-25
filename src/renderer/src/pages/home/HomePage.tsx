@@ -2,8 +2,9 @@ import { useAssistants } from '@renderer/hooks/useAssistant'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { useActiveTopic } from '@renderer/hooks/useTopic'
 import NavigationService from '@renderer/services/NavigationService'
-import { Assistant } from '@renderer/types'
-import { FC, useEffect, useState } from 'react'
+import { useAppDispatch } from '@renderer/store'
+import { setActiveTopic as setActiveTopicAction } from '@renderer/store/topics'
+import { FC, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
@@ -11,30 +12,33 @@ import Chat from './Chat'
 import Navbar from './Navbar'
 import HomeTabs from './Tabs'
 
-let _activeAssistant: Assistant
-
 const HomePage: FC = () => {
   const { assistants } = useAssistants()
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
 
   const location = useLocation()
   const state = location.state
 
-  const [activeAssistant, setActiveAssistant] = useState(state?.assistant || _activeAssistant || assistants[0])
-  const { activeTopic, setActiveTopic } = useActiveTopic(activeAssistant, state?.topic)
-  const { showAssistants, showTopics, topicPosition } = useSettings()
+  const { activeTopic } = useActiveTopic()
 
-  _activeAssistant = activeAssistant
+  const activeAssistant = useMemo(
+    () =>
+      activeTopic?.assistantId
+        ? assistants.find((a) => a.id === activeTopic.assistantId) || assistants[0]
+        : assistants[0],
+    [activeTopic, assistants]
+  )
+
+  const { showAssistants, showTopics, topicPosition } = useSettings()
 
   useEffect(() => {
     NavigationService.setNavigate(navigate)
   }, [navigate])
 
   useEffect(() => {
-    state?.assistant && setActiveAssistant(state?.assistant)
-    state?.topic && setActiveTopic(state?.topic)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state])
+    state?.topic && dispatch(setActiveTopicAction(state.topic))
+  }, [state, dispatch])
 
   useEffect(() => {
     const canMinimize = topicPosition == 'left' ? !showAssistants : !showAssistants && !showTopics
@@ -47,23 +51,11 @@ const HomePage: FC = () => {
 
   return (
     <Container id="home-page">
-      <Navbar activeAssistant={activeAssistant} activeTopic={activeTopic} setActiveTopic={setActiveTopic} />
+      <Navbar />
       <ContentContainer id="content-container">
-        {showAssistants && (
-          <HomeTabs
-            activeAssistant={activeAssistant}
-            activeTopic={activeTopic}
-            setActiveAssistant={setActiveAssistant}
-            setActiveTopic={setActiveTopic}
-            position="left"
-          />
-        )}
-        <Chat
-          assistant={activeAssistant}
-          activeTopic={activeTopic}
-          setActiveTopic={setActiveTopic}
-          setActiveAssistant={setActiveAssistant}
-        />
+        {showAssistants && <HomeTabs activeAssistant={activeAssistant} position="left" />}
+        <Chat assistant={activeAssistant} />
+        {topicPosition === 'right' && showTopics && <HomeTabs activeAssistant={activeAssistant} position="right" />}
       </ContentContainer>
     </Container>
   )

@@ -1,8 +1,7 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { VStack } from '@renderer/components/Layout'
-import { useAssistants } from '@renderer/hooks/useAssistant'
 import useScrollPosition from '@renderer/hooks/useScrollPosition'
-import { getTopicById } from '@renderer/hooks/useTopic'
+import { getTopicById, useTopics } from '@renderer/hooks/useTopic'
 import { Topic } from '@renderer/types'
 import { Button, Divider, Empty } from 'antd'
 import dayjs from 'dayjs'
@@ -17,11 +16,11 @@ type Props = {
 } & React.HTMLAttributes<HTMLDivElement>
 
 const TopicsHistory: React.FC<Props> = ({ keywords, onClick, onSearch, ...props }) => {
-  const { assistants } = useAssistants()
+  const { topics: allTopics } = useTopics()
   const { t } = useTranslation()
   const { handleScroll, containerRef } = useScrollPosition('TopicsHistory')
 
-  const topics = orderBy(assistants.map((assistant) => assistant.topics).flat(), 'createdAt', 'desc')
+  const topics = orderBy(allTopics, 'createdAt', 'desc')
 
   const filteredTopics = topics.filter((topic) => {
     return topic.name.toLowerCase().includes(keywords.toLowerCase())
@@ -56,7 +55,9 @@ const TopicsHistory: React.FC<Props> = ({ keywords, onClick, onSearch, ...props 
                 key={topic.id}
                 onClick={async () => {
                   const _topic = await getTopicById(topic.id)
-                  onClick(_topic)
+                  if (_topic) {
+                    onClick(_topic)
+                  }
                 }}>
                 <TopicName>{topic.name.substring(0, 50)}</TopicName>
                 <TopicDate>{dayjs(topic.updatedAt).format('HH:mm')}</TopicDate>

@@ -1,51 +1,55 @@
-import { DeleteOutlined, EditOutlined, MinusCircleOutlined, SaveOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, MessageOutlined, MinusCircleOutlined, SaveOutlined } from '@ant-design/icons'
 import ModelAvatar from '@renderer/components/Avatar/ModelAvatar'
 import CopyIcon from '@renderer/components/Icons/CopyIcon'
-import { useAssistant } from '@renderer/hooks/useAssistant'
-import { modelGenerating } from '@renderer/hooks/useRuntime'
+import { useTopicsQueueStateWithEvent } from '@renderer/hooks/useQueue'
 import { useSettings } from '@renderer/hooks/useSettings'
+import { useActiveTopic, useAssistantTopics } from '@renderer/hooks/useTopic'
 import AssistantSettingsPopup from '@renderer/pages/settings/AssistantSettings'
-import { getDefaultModel, getDefaultTopic } from '@renderer/services/AssistantService'
+import { getDefaultModel } from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import { Assistant } from '@renderer/types'
 import { uuid } from '@renderer/utils'
-import { hasTopicPendingRequests } from '@renderer/utils/queue'
 import { Dropdown } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import { omit } from 'lodash'
-import { FC, useCallback, useEffect, useState } from 'react'
+import { FC, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 interface AssistantItemProps {
   assistant: Assistant
-  isActive: boolean
-  onSwitch: (assistant: Assistant) => void
   onDelete: (assistant: Assistant) => void
   onCreateDefaultAssistant: () => void
   addAgent: (agent: any) => void
   addAssistant: (assistant: Assistant) => void
 }
 
-const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, onDelete, addAgent, addAssistant }) => {
+const AssistantItem: FC<AssistantItemProps> = ({ assistant, onDelete, addAgent, addAssistant }) => {
   const { t } = useTranslation()
-  const { removeAllTopics } = useAssistant(assistant.id) // 使用当前助手的ID
-  const { clickAssistantToShowTopic, topicPosition, showAssistantIcon } = useSettings()
+  const { showAssistantIcon } = useSettings()
   const defaultModel = getDefaultModel()
 
-  const [isPending, setIsPending] = useState(false)
-  useEffect(() => {
-    if (isActive) {
-      setIsPending(false)
-    }
-    const hasPending = assistant.topics.some((topic) => hasTopicPendingRequests(topic.id))
-    if (hasPending) {
-      setIsPending(true)
-    }
-  }, [isActive, assistant.topics])
+  const { activeTopic } = useActiveTopic()
+  const topics = useAssistantTopics(assistant.id)
+
+  // 使用基于事件的Hook监听队列状态
+  const isChatting = useTopicsQueueStateWithEvent(topics)
+
+  // 计算当前助手是否是活动话题对应的助手
+  const isCurrentAssistant = useMemo(() => {
+    return activeTopic && activeTopic.assistantId === assistant.id
+  }, [assistant.id, activeTopic])
 
   const getMenuItems = useCallback(
     (assistant: Assistant): ItemType[] => [
+      {
+        label: t('assistants.new_topic.title'),
+        key: 'new_topic',
+        icon: <MessageOutlined />,
+        onClick: async () => {
+          EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC, assistant.id)
+        }
+      },
       {
         label: t('assistants.edit.title'),
         key: 'edit',
@@ -57,9 +61,7 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
         key: 'duplicate',
         icon: <CopyIcon />,
         onClick: async () => {
-          const _assistant: Assistant = { ...assistant, id: uuid(), topics: [getDefaultTopic(assistant.id)] }
-          addAssistant(_assistant)
-          onSwitch(_assistant)
+          addAssistant({ ...assistant, id: uuid() })
         }
       },
       {
@@ -72,7 +74,7 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
             content: t('assistants.clear.content'),
             centered: true,
             okButtonProps: { danger: true },
-            onOk: () => removeAllTopics() // 使用当前助手的removeAllTopics
+            onOk: () => EventEmitter.emit(EVENT_NAMES.CLEAR_ASSISTANT_TOPICS, assistant.id)
           })
         }
       },
@@ -98,50 +100,56 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
         icon: <DeleteOutlined />,
         danger: true,
         onClick: () => {
-          window.modal.confirm({
-            title: t('assistants.delete.title'),
-            content: t('assistants.delete.content'),
-            centered: true,
-            okButtonProps: { danger: true },
-            onOk: () => onDelete(assistant)
-          })
+          if (topics.length > 0) {
+            window.modal.warning({
+              title: t('assistants.delete.has_topics.title'),
+              content: t('assistants.delete.has_topics.content', { count: topics.length }),
+              centered: true
+            })
+          } else {
+            window.modal.confirm({
+              title: t('assistants.delete.title'),
+              content: (
+                <div>
+                  <span>
+                    {t('assistants.delete.double_check_name')}
+                    {assistant.emoji ? assistant.emoji : ''}
+                    {assistant.name}
+                  </span>
+                  <div>{t('assistants.delete.content')}</div>
+                </div>
+              ),
+              centered: true,
+              okButtonProps: { danger: true },
+              onOk: () => onDelete(assistant)
+            })
+          }
         }
       }
     ],
-    [addAgent, addAssistant, onSwitch, removeAllTopics, t, onDelete]
+    [t, addAssistant, addAgent, topics.length, onDelete]
   )
-
-  const handleSwitch = useCallback(async () => {
-    await modelGenerating()
-
-    if (topicPosition === 'left' && clickAssistantToShowTopic) {
-      EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)
-    }
-
-    onSwitch(assistant)
-  }, [clickAssistantToShowTopic, onSwitch, assistant, topicPosition])
 
   const assistantName = assistant.name || t('chat.default.name')
   const fullAssistantName = assistant.emoji ? `${assistant.emoji} ${assistantName}` : assistantName
 
   return (
     <Dropdown menu={{ items: getMenuItems(assistant) }} trigger={['contextMenu']}>
-      <Container onClick={handleSwitch} className={isActive ? 'active' : ''}>
+      <Container className={isCurrentAssistant ? 'active' : ''}>
         <AssistantNameRow className="name" title={fullAssistantName}>
           {showAssistantIcon && (
             <ModelAvatar
               model={assistant.model || defaultModel}
               size={22}
-              className={isPending && !isActive ? 'animation-pulse' : ''}
+              className={isChatting ? 'animation-pulse' : ''}
             />
           )}
           <AssistantName className="text-nowrap">{showAssistantIcon ? assistantName : fullAssistantName}</AssistantName>
         </AssistantNameRow>
-        {isActive && (
-          <MenuButton onClick={() => EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)}>
-            <TopicCount className="topics-count">{assistant.topics.length}</TopicCount>
-          </MenuButton>
-        )}
+        {/* FIXME: 点击后应该显示经过筛选的话题 */}
+        <MenuButton onClick={() => EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)}>
+          <TopicCount className="topics-count">{topics.length}</TopicCount>
+        </MenuButton>
       </Container>
     </Dropdown>
   )

@@ -40,7 +40,7 @@ export function getDefaultAssistantSettings() {
   return store.getState().assistants.defaultAssistant.settings
 }
 
-export function getDefaultTopic(assistantId: string): Topic {
+export function getDefaultTopic(assistantId: string = 'default'): Topic {
   return {
     id: uuid(),
     assistantId,

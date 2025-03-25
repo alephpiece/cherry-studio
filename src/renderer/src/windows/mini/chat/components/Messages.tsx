@@ -1,6 +1,8 @@
 import Scrollbar from '@renderer/components/Scrollbar'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import { getAssistantMessage } from '@renderer/services/MessagesService'
+import store from '@renderer/store'
+import { selectTopicsByAssistantId } from '@renderer/store/topics'
 import { Assistant, Message } from '@renderer/types'
 import { last } from 'lodash'
 import { FC, useCallback, useEffect, useRef, useState } from 'react'
@@ -32,7 +34,19 @@ const Messages: FC<Props> = ({ assistant, route }) => {
   const onSendMessage = useCallback(
     async (message: Message) => {
       setMessages((prev) => {
-        const assistantMessage = getAssistantMessage({ assistant, topic: assistant.topics[0] })
+        const topics = selectTopicsByAssistantId(store.getState(), assistant.id)
+        const topic =
+          topics.length > 0
+            ? topics[0]
+            : {
+                id: message.topicId,
+                assistantId: assistant.id,
+                name: '',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                messages: []
+              }
+        const assistantMessage = getAssistantMessage({ assistant, topic })
         const messages = prev.concat([message, assistantMessage])
         return messages
       })

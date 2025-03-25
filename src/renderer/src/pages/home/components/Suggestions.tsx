@@ -1,3 +1,4 @@
+import { useAssistantTopics } from '@renderer/hooks/useTopic'
 import { fetchSuggestions } from '@renderer/services/ApiService'
 import { getUserMessage } from '@renderer/services/MessagesService'
 import { useAppDispatch } from '@renderer/store'
@@ -23,10 +24,21 @@ const Suggestions: FC<Props> = ({ assistant, messages }) => {
   )
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
 
-  const handleSuggestionClick = async (content: string) => {
-    const userMessage = getUserMessage({ assistant, topic: assistant.topics[0], type: 'text', content })
+  const topics = useAssistantTopics(assistant.id)
 
-    await dispatch(sendMessage(userMessage, assistant, assistant.topics[0]))
+  const handleSuggestionClick = async (content: string) => {
+    const topic = topics.length > 0 ? topics[0] : null
+
+    if (!topic) return
+
+    const userMessage = getUserMessage({
+      assistant,
+      topic,
+      type: 'text',
+      content
+    })
+
+    await dispatch(sendMessage(userMessage, assistant, topic))
   }
 
   const suggestionsHandle = async () => {

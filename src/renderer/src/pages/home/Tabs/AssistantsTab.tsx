@@ -3,42 +3,52 @@ import DragableList from '@renderer/components/DragableList'
 import Scrollbar from '@renderer/components/Scrollbar'
 import { useAgents } from '@renderer/hooks/useAgents'
 import { useAssistants } from '@renderer/hooks/useAssistant'
+import { modelGenerating } from '@renderer/hooks/useRuntime'
+import { useTopics } from '@renderer/hooks/useTopic'
+import { EventEmitter } from '@renderer/services/EventService'
+import { EVENT_NAMES } from '@renderer/services/EventService'
 import { Assistant } from '@renderer/types'
-import { FC, useCallback, useState } from 'react'
+import { FC, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 import AssistantItem from './AssistantItem'
 
 interface AssistantsTabProps {
-  activeAssistant: Assistant
-  setActiveAssistant: (assistant: Assistant) => void
   onCreateAssistant: () => void
   onCreateDefaultAssistant: () => void
 }
 
-const Assistants: FC<AssistantsTabProps> = ({
-  activeAssistant,
-  setActiveAssistant,
-  onCreateAssistant,
-  onCreateDefaultAssistant
-}) => {
+const Assistants: FC<AssistantsTabProps> = ({ onCreateAssistant, onCreateDefaultAssistant }) => {
   const { assistants, removeAssistant, addAssistant, updateAssistants } = useAssistants()
+  const { removeAssistantTopics } = useTopics()
   const [dragging, setDragging] = useState(false)
   const { addAgent } = useAgents()
   const { t } = useTranslation()
 
   const onDelete = useCallback(
     (assistant: Assistant) => {
-      const remaining = assistants.filter((a) => a.id !== assistant.id)
-      if (assistant.id === activeAssistant?.id) {
-        const newActive = remaining[remaining.length - 1]
-        newActive ? setActiveAssistant(newActive) : onCreateDefaultAssistant()
-      }
       removeAssistant(assistant.id)
     },
-    [activeAssistant, assistants, removeAssistant, setActiveAssistant, onCreateDefaultAssistant]
+    [removeAssistant]
   )
+
+  const clearAssistantTopics = useCallback(
+    async (assistantId: string) => {
+      await modelGenerating()
+      removeAssistantTopics(assistantId)
+    },
+    [removeAssistantTopics]
+  )
+
+  useEffect(() => {
+    const handleClearAssistantTopics = (assistantId: string) => clearAssistantTopics(assistantId)
+    EventEmitter.on(EVENT_NAMES.CLEAR_ASSISTANT_TOPICS, handleClearAssistantTopics)
+
+    return () => {
+      EventEmitter.off(EVENT_NAMES.CLEAR_ASSISTANT_TOPICS, handleClearAssistantTopics)
+    }
+  }, [clearAssistantTopics])
 
   return (
     <Container className="assistants-tab">
@@ -52,8 +62,6 @@ const Assistants: FC<AssistantsTabProps> = ({
           <AssistantItem
             key={assistant.id}
             assistant={assistant}
-            isActive={assistant.id === activeAssistant.id}
-            onSwitch={setActiveAssistant}
             onDelete={onDelete}
             addAgent={addAgent}
             addAssistant={addAssistant}

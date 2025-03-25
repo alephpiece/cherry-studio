@@ -38,9 +38,13 @@
       "clear.content": "Clearing the topic will delete all topics and files in the assistant. Are you sure you want to continue?",
       "clear.title": "Clear topics",
       "copy.title": "Copy Assistant",
-      "delete.content": "Deleting an assistant will delete all topics and files under the assistant. Are you sure you want to delete it?",
+      "delete.content": "Are you sure you want to delete it?",
+      "delete.double_check_name": "You are deleting the assistant:",
       "delete.title": "Delete Assistant",
+      "delete.has_topics.title": "Cannot delete assistant",
+      "delete.has_topics.content": "Cannot delete the assistant because it has {{count}} topics. Please clear the topics first",
       "edit.title": "Edit Assistant",
+      "new_topic.title": "New Topic",
       "save.success": "Saved successfully",
       "save.title": "Save to agent",
       "search": "Search assistants...",
@@ -215,12 +219,12 @@
       "topics.export.word": "Export as Word",
       "topics.export.yuque": "Export to Yuque",
       "topics.list": "Topic List",
-      "topics.move_to": "Move to",
       "topics.new": "New Topic",
       "topics.pinned": "Pinned Topics",
       "topics.prompt": "Topic Prompts",
       "topics.prompt.edit.title": "Edit Topic Prompts",
       "topics.prompt.tips": "Topic Prompts: Additional supplementary prompts provided for the current topic",
+      "topics.switch_assistant": "Switch Assistant",
       "topics.title": "Topics",
       "topics.unpinned": "Unpinned Topics",
       "translate": "Translate",
@@ -1229,6 +1233,10 @@
         "title": "Web Search"
       }
     },
+    "topics": {
+      "tab.group_by_assistant": "Group by assistant",
+      "tab.no_topics": "No topics in this assistant"
+    },
     "translate": {
       "any.language": "Any language",
       "button.translate": "Translate",
@@ -1256,7 +1264,7 @@
     },
     "tray": {
       "quit": "Quit",
-      "show_mini_window": "Quick Assistant",
+      "show_mini_window": "Show Mini Window",
       "show_window": "Show Window"
     },
     "words": {
