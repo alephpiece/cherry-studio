@@ -1,4 +1,3 @@
-import { getDefaultTopic } from '@renderer/services/AssistantService'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import {
   addAssistant,
@@ -10,7 +9,7 @@ import {
   updateDefaultAssistant
 } from '@renderer/store/assistants'
 import { setDefaultModel, setTopicNamingModel, setTranslateModel } from '@renderer/store/llm'
-import { removeAssistantTopics } from '@renderer/store/topics'
+import { removeAssistantTopics, selectTopicsByAssistantId } from '@renderer/store/topics'
 import { addTopic as addTopicToState } from '@renderer/store/topics'
 import { Assistant, AssistantSettings, Model, Topic } from '@renderer/types'
 
@@ -29,11 +28,14 @@ export function useAssistants() {
 
 export function useAssistant(id: string) {
   const assistant = useAppSelector((state) => state.assistants.assistants.find((a) => a.id === id) as Assistant)
+  const topics = useAppSelector((state) => selectTopicsByAssistantId(state, assistant.id))
+
   const dispatch = useAppDispatch()
   const { defaultModel } = useDefaultModel()
 
   return {
     assistant,
+    topics, // 该助手负责的话题（不一定是所有它参与的话题）
     model: assistant?.model ?? assistant?.defaultModel ?? defaultModel,
     addTopic: (topic: Topic) => {
       dispatch(addTopicToState({ topic, assistantId: assistant.id }))
@@ -54,10 +56,7 @@ export function useDefaultAssistant() {
   const dispatch = useAppDispatch()
 
   return {
-    defaultAssistant: {
-      ...defaultAssistant,
-      topics: [getDefaultTopic(defaultAssistant.id)]
-    },
+    defaultAssistant,
     updateDefaultAssistant: (assistant: Assistant) => dispatch(updateDefaultAssistant({ assistant }))
   }
 }

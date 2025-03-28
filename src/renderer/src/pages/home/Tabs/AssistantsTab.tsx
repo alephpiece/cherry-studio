@@ -3,12 +3,8 @@ import DragableList from '@renderer/components/DragableList'
 import Scrollbar from '@renderer/components/Scrollbar'
 import { useAgents } from '@renderer/hooks/useAgents'
 import { useAssistants } from '@renderer/hooks/useAssistant'
-import { modelGenerating } from '@renderer/hooks/useRuntime'
-import { useTopics } from '@renderer/hooks/useTopic'
-import { EventEmitter } from '@renderer/services/EventService'
-import { EVENT_NAMES } from '@renderer/services/EventService'
 import { Assistant } from '@renderer/types'
-import { FC, useCallback, useEffect, useState } from 'react'
+import { FC, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -21,7 +17,6 @@ interface AssistantsTabProps {
 
 const Assistants: FC<AssistantsTabProps> = ({ onCreateAssistant, onCreateDefaultAssistant }) => {
   const { assistants, removeAssistant, addAssistant, updateAssistants } = useAssistants()
-  const { removeAssistantTopics } = useTopics()
   const [dragging, setDragging] = useState(false)
   const { addAgent } = useAgents()
   const { t } = useTranslation()
@@ -32,23 +27,6 @@ const Assistants: FC<AssistantsTabProps> = ({ onCreateAssistant, onCreateDefault
     },
     [removeAssistant]
   )
-
-  const clearAssistantTopics = useCallback(
-    async (assistantId: string) => {
-      await modelGenerating()
-      removeAssistantTopics(assistantId)
-    },
-    [removeAssistantTopics]
-  )
-
-  useEffect(() => {
-    const handleClearAssistantTopics = (assistantId: string) => clearAssistantTopics(assistantId)
-    EventEmitter.on(EVENT_NAMES.CLEAR_ASSISTANT_TOPICS, handleClearAssistantTopics)
-
-    return () => {
-      EventEmitter.off(EVENT_NAMES.CLEAR_ASSISTANT_TOPICS, handleClearAssistantTopics)
-    }
-  }, [clearAssistantTopics])
 
   return (
     <Container className="assistants-tab">

@@ -1,7 +1,7 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { TopicManager } from '@renderer/hooks/useTopic'
 import { getDefaultTopic } from '@renderer/services/TopicService'
-import type { RootState } from '@renderer/store'
+import type { AppDispatch, RootState } from '@renderer/store'
 import { Topic } from '@renderer/types'
 import { isEmpty, uniqBy } from 'lodash'
 
@@ -35,19 +35,24 @@ const topicsSlice = createSlice({
       state.topics = uniqBy([topic, ...state.topics], 'id')
     },
     removeTopic: (state, action: PayloadAction<string>) => {
-      state.topics = state.topics.filter((topic) => topic.id !== action.payload)
-      if (state.topics.length === 0) {
+      if (state.topics.length === 1) {
         state.topics = [getDefaultTopic()]
+        return
       }
+
+      if (state.activeTopic?.id === action.payload) {
+        const index = state.topics.findIndex(({ id }) => id === action.payload)
+        state.activeTopic = state.topics[index + 1 === state.topics.length ? index - 1 : index + 1]
+      }
+
+      state.topics = state.topics.filter(({ id }) => id !== action.payload)
     },
     removeAssistantTopics: (state, action: PayloadAction<string>) => {
-      state.topics.forEach((topic) => {
-        topic.assistantId === action.payload && TopicManager.removeTopic(topic.id)
-      })
       state.topics = state.topics.filter((topic) => topic.assistantId !== action.payload)
       if (state.topics.length === 0) {
         state.topics = [getDefaultTopic()]
       }
+
       if (state.activeTopic?.assistantId === action.payload) {
         state.activeTopic = state.topics[0]
       }
@@ -60,7 +65,7 @@ const topicsSlice = createSlice({
           updatedAt: new Date().toISOString(),
           messages: []
         }
-        // 如果更新的是当前话题，同时更新 activeTopic
+
         if (state.activeTopic && state.activeTopic.id === action.payload.id) {
           state.activeTopic = action.payload
         }
@@ -81,5 +86,22 @@ export const selectTopicsByAssistantId = createSelector(
   [selectAllTopics, (_, assistantId: string) => assistantId],
   (topics, assistantId) => topics.filter((topic) => topic.assistantId === assistantId)
 )
+
+export const removeTopicThunk = (topicId: string) => async (dispatch: AppDispatch) => {
+  await TopicManager.removeTopic(topicId)
+  dispatch(removeTopic(topicId))
+}
+
+export const removeAssistantTopicsThunk =
+  (assistantId: string) => async (dispatch: AppDispatch, getState: () => RootState) => {
+    const state = getState()
+    const topicsToRemove = state.topics.topics.filter((topic: Topic) => topic.assistantId === assistantId)
+
+    for (const topic of topicsToRemove) {
+      await TopicManager.removeTopic(topic.id)
+    }
+
+    dispatch(removeAssistantTopics(assistantId))
+  }
 
 export default topicsSlice.reducer

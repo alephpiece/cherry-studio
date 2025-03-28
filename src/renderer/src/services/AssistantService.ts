@@ -155,7 +155,6 @@ export async function createAssistantFromAgent(agent: Agent) {
     id: assistantId,
     name: agent.name,
     emoji: agent.emoji,
-    topics: [topic],
     model: agent.defaultModel,
     type: 'assistant'
   }

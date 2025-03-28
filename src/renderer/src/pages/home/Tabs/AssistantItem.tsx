@@ -1,9 +1,10 @@
 import { DeleteOutlined, EditOutlined, MessageOutlined, MinusCircleOutlined, SaveOutlined } from '@ant-design/icons'
 import ModelAvatar from '@renderer/components/Avatar/ModelAvatar'
 import CopyIcon from '@renderer/components/Icons/CopyIcon'
+import { useAssistant } from '@renderer/hooks/useAssistant'
 import { useTopicsQueueStateWithEvent } from '@renderer/hooks/useQueue'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { useActiveTopic, useAssistantTopics } from '@renderer/hooks/useTopic'
+import { useActiveTopic } from '@renderer/hooks/useTopic'
 import AssistantSettingsPopup from '@renderer/pages/settings/AssistantSettings'
 import { getDefaultModel } from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
@@ -30,7 +31,7 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, onDelete, addAgent, 
   const defaultModel = getDefaultModel()
 
   const { activeTopic } = useActiveTopic()
-  const topics = useAssistantTopics(assistant.id)
+  const { topics, removeAllTopics } = useAssistant(assistant.id)
 
   // 使用基于事件的Hook监听队列状态
   const isChatting = useTopicsQueueStateWithEvent(topics)
@@ -74,7 +75,7 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, onDelete, addAgent, 
             content: t('assistants.clear.content'),
             centered: true,
             okButtonProps: { danger: true },
-            onOk: () => EventEmitter.emit(EVENT_NAMES.CLEAR_ASSISTANT_TOPICS, assistant.id)
+            onOk: async () => removeAllTopics() // 使用当前助手的removeAllTopics
           })
         }
       },
@@ -127,7 +128,7 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, onDelete, addAgent, 
         }
       }
     ],
-    [t, addAssistant, addAgent, topics.length, onDelete]
+    [t, addAssistant, removeAllTopics, addAgent, topics.length, onDelete]
   )
 
   const assistantName = assistant.name || t('chat.default.name')

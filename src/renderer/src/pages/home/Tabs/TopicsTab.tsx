@@ -59,15 +59,9 @@ const Topics: FC = () => {
         return
       }
 
-      // 如果删除的是当前活动话题，需要切换到另一个话题
-      if (topic.id === activeTopic.id) {
-        const index = topics.findIndex((t) => t.id === topic.id)
-        setActiveTopic(topics[index + 1 === topics.length ? index - 1 : index + 1])
-      }
-
       removeTopic(topic)
     },
-    [topics, removeTopic, updateTopic, setActiveTopic, activeTopic]
+    [topics, removeTopic, updateTopic, setActiveTopic]
   )
 
   useEffect(() => {

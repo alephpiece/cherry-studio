@@ -1,13 +1,12 @@
 import db from '@renderer/databases'
 import i18n from '@renderer/i18n'
 import { deleteMessageFiles } from '@renderer/services/MessagesService'
-import { getDefaultTopic } from '@renderer/services/TopicService'
 import store, { useAppDispatch, useAppSelector } from '@renderer/store'
 import { prepareTopicMessages } from '@renderer/store/messages'
 import {
   addTopic,
-  removeAssistantTopics,
-  removeTopic,
+  removeAssistantTopicsThunk,
+  removeTopicThunk,
   selectActiveTopic,
   selectTopicsByAssistantId,
   setActiveTopic,
@@ -23,19 +22,10 @@ import { getStoreSetting } from './useSettings'
 const renamingTopics = new Set<string>()
 
 export function useActiveTopic() {
-  const topic = useAppSelector(selectActiveTopic)
   const topics = useAppSelector((state) => state.topics.topics)
   const dispatch = useAppDispatch()
 
-  useEffect(() => {
-    if (topics.length === 0) {
-      const defaultTopic = getDefaultTopic()
-      dispatch(addTopic({ topic: defaultTopic, assistantId: 'default' }))
-      dispatch(setActiveTopic(defaultTopic))
-    } else if (!topic) {
-      dispatch(setActiveTopic(topics[0]))
-    }
-  }, [dispatch, topics.length, topics, topic])
+  const topic = useAppSelector(selectActiveTopic) || topics[0]
 
   useEffect(() => {
     if (topic) {
@@ -44,13 +34,9 @@ export function useActiveTopic() {
   }, [topic, dispatch])
 
   return {
-    activeTopic: topic || topics[0],
+    activeTopic: topic,
     setActiveTopic: (topic: Topic) => dispatch(setActiveTopic(topic))
   }
-}
-
-export function useAssistantTopics(assistantId: string) {
-  return useAppSelector((state) => selectTopicsByAssistantId(state, assistantId))
 }
 
 export function useTopics() {
@@ -63,11 +49,10 @@ export function useTopics() {
       dispatch(addTopic({ topic, assistantId: assistantId || 'default' }))
     },
     removeTopic: (topic: Topic) => {
-      TopicManager.removeTopic(topic.id)
-      dispatch(removeTopic(topic.id))
+      dispatch(removeTopicThunk(topic.id))
     },
     removeAssistantTopics: (assistantId: string) => {
-      dispatch(removeAssistantTopics(assistantId))
+      dispatch(removeAssistantTopicsThunk(assistantId))
     },
     switchAssistant: (topic: Topic, toAssistant: Assistant) => {
       dispatch(updateTopic({ ...topic, assistantId: toAssistant.id }))
