@@ -60,12 +60,9 @@ const Topics: FC = () => {
       }
 
       // 如果删除的是当前活动话题，需要切换到另一个话题
-      // 优先选择同一助手下的其他话题
       if (topic.id === activeTopic.id) {
-        const sameAssistantTopics = topics.filter((t) => t.assistantId === topic.assistantId)
-        const currentTopics = sameAssistantTopics.length > 1 ? sameAssistantTopics : topics
-        const index = currentTopics.findIndex((t) => t.id === topic.id)
-        setActiveTopic(currentTopics[index + 1 === currentTopics.length ? index - 1 : index + 1])
+        const index = topics.findIndex((t) => t.id === topic.id)
+        setActiveTopic(topics[index + 1 === topics.length ? index - 1 : index + 1])
       }
 
       removeTopic(topic)
