@@ -20,6 +20,13 @@ export type Assistant = {
   enableGenerateImage?: boolean
 }
 
+export type MentionedAssistant = {
+  id: string
+  name: string
+  emoji?: string
+  model: Model
+}
+
 export type AssistantMessage = {
   role: 'user' | 'assistant'
   content: string
@@ -65,7 +72,7 @@ export type Message = {
   knowledgeBaseIds?: string[]
   type: 'text' | '@' | 'clear'
   isPreset?: boolean
-  mentions?: Model[]
+  mentions?: MentionedAssistant[]
   askId?: string
   useful?: boolean
   error?: Record<string, any>

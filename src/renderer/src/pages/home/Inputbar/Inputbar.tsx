@@ -19,7 +19,12 @@ import { useMessageStyle, useSettings } from '@renderer/hooks/useSettings'
 import { useShortcut, useShortcutDisplay } from '@renderer/hooks/useShortcuts'
 import { useSidebarIconShow } from '@renderer/hooks/useSidebarIcon'
 import { useTopics } from '@renderer/hooks/useTopic'
-import { addAssistantMessagesToTopic, getAssistantById, getDefaultTopic } from '@renderer/services/AssistantService'
+import {
+  addAssistantMessagesToTopic,
+  createMentionedAssistant,
+  getAssistantById,
+  getDefaultTopic
+} from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import FileManager from '@renderer/services/FileManager'
 import { checkRateLimit, getUserMessage } from '@renderer/services/MessagesService'
@@ -173,7 +178,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       }
 
       if (mentionModels) {
-        userMessage.mentions = mentionModels
+        userMessage.mentions = mentionModels.map((model) => createMentionedAssistant(assistant, model))
       }
 
       if (enabledMCPs) {
@@ -185,7 +190,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
 
       dispatch(
         _sendMessage(userMessage, assistant, topic, {
-          mentions: mentionModels
+          mentions: mentionModels.map((model) => createMentionedAssistant(assistant, model))
         })
       )
 
