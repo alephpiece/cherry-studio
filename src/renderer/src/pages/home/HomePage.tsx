@@ -20,7 +20,7 @@ const HomePage: FC = () => {
   const location = useLocation()
   const state = location.state
 
-  const { activeTopic } = useActiveTopic()
+  const { activeTopic, setActiveTopic } = useActiveTopic()
 
   const activeAssistant = useMemo(
     () =>
@@ -51,11 +51,25 @@ const HomePage: FC = () => {
 
   return (
     <Container id="home-page">
-      <Navbar />
+      <Navbar activeTopic={activeTopic} />
       <ContentContainer id="content-container">
-        {showAssistants && <HomeTabs activeAssistant={activeAssistant} position="left" />}
-        <Chat assistant={activeAssistant} />
-        {topicPosition === 'right' && showTopics && <HomeTabs activeAssistant={activeAssistant} position="right" />}
+        {showAssistants && (
+          <HomeTabs
+            activeAssistant={activeAssistant}
+            activeTopic={activeTopic}
+            setActiveTopic={setActiveTopic}
+            position="left"
+          />
+        )}
+        <Chat assistant={activeAssistant} activeTopic={activeTopic} setActiveTopic={setActiveTopic} />
+        {topicPosition === 'right' && showTopics && (
+          <HomeTabs
+            activeAssistant={activeAssistant}
+            activeTopic={activeTopic}
+            setActiveTopic={setActiveTopic}
+            position="right"
+          />
+        )}
       </ContentContainer>
     </Container>
   )

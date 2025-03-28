@@ -3,9 +3,9 @@ import Scrollbar from '@renderer/components/Scrollbar'
 import { useAssistants } from '@renderer/hooks/useAssistant'
 import { modelGenerating } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { useActiveTopic, useTopics } from '@renderer/hooks/useTopic'
+import { useTopics } from '@renderer/hooks/useTopic'
+import { getDefaultTopic } from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
-import { getDefaultTopic } from '@renderer/services/TopicService'
 import { Topic } from '@renderer/types'
 import { Tooltip } from 'antd'
 import { FC, useCallback, useEffect, useMemo, useState } from 'react'
@@ -15,11 +15,15 @@ import styled from 'styled-components'
 import AssistantTopics from './AssistantTopics'
 import TopicList from './TopicList'
 
-const Topics: FC = () => {
+interface Props {
+  activeTopic: Topic
+  setActiveTopic: (topic: Topic) => void
+}
+
+const Topics: FC<Props> = ({ activeTopic, setActiveTopic }) => {
   const { topicPosition } = useSettings()
   const { assistants } = useAssistants()
   const { topics, removeTopic, updateTopic } = useTopics()
-  const { activeTopic, setActiveTopic } = useActiveTopic()
   const { t } = useTranslation()
   const [isGroupedByAssistant, setIsGroupedByAssistant] = useState(false)
   const [collapsedAssistants, setCollapsedAssistants] = useState<Record<string, boolean>>({})
@@ -65,11 +69,10 @@ const Topics: FC = () => {
   )
 
   useEffect(() => {
-    const handleDeleteTopic = (topic: Topic) => deleteTopic(topic)
-    EventEmitter.on(EVENT_NAMES.DELETE_TOPIC, handleDeleteTopic)
+    EventEmitter.on(EVENT_NAMES.DELETE_TOPIC, deleteTopic)
 
     return () => {
-      EventEmitter.off(EVENT_NAMES.DELETE_TOPIC, handleDeleteTopic)
+      EventEmitter.off(EVENT_NAMES.DELETE_TOPIC, deleteTopic)
     }
   }, [deleteTopic])
 

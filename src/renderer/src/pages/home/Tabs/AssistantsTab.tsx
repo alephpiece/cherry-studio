@@ -3,7 +3,7 @@ import DragableList from '@renderer/components/DragableList'
 import Scrollbar from '@renderer/components/Scrollbar'
 import { useAgents } from '@renderer/hooks/useAgents'
 import { useAssistants } from '@renderer/hooks/useAssistant'
-import { Assistant } from '@renderer/types'
+import { Assistant, Topic } from '@renderer/types'
 import { FC, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -11,11 +11,12 @@ import styled from 'styled-components'
 import AssistantItem from './AssistantItem'
 
 interface AssistantsTabProps {
+  activeTopic: Topic
   onCreateAssistant: () => void
   onCreateDefaultAssistant: () => void
 }
 
-const Assistants: FC<AssistantsTabProps> = ({ onCreateAssistant, onCreateDefaultAssistant }) => {
+const Assistants: FC<AssistantsTabProps> = ({ activeTopic, onCreateAssistant, onCreateDefaultAssistant }) => {
   const { assistants, removeAssistant, addAssistant, updateAssistants } = useAssistants()
   const [dragging, setDragging] = useState(false)
   const { addAgent } = useAgents()
@@ -40,6 +41,7 @@ const Assistants: FC<AssistantsTabProps> = ({ onCreateAssistant, onCreateDefault
           <AssistantItem
             key={assistant.id}
             assistant={assistant}
+            activeTopic={activeTopic}
             onDelete={onDelete}
             addAgent={addAgent}
             addAssistant={addAssistant}

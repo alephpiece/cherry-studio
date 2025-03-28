@@ -18,7 +18,7 @@ import { modelGenerating, useRuntime } from '@renderer/hooks/useRuntime'
 import { useMessageStyle, useSettings } from '@renderer/hooks/useSettings'
 import { useShortcut, useShortcutDisplay } from '@renderer/hooks/useShortcuts'
 import { useSidebarIconShow } from '@renderer/hooks/useSidebarIcon'
-import { useActiveTopic, useTopics } from '@renderer/hooks/useTopic'
+import { useTopics } from '@renderer/hooks/useTopic'
 import { addAssistantMessagesToTopic, getAssistantById, getDefaultTopic } from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import FileManager from '@renderer/services/FileManager'
@@ -29,7 +29,7 @@ import WebSearchService from '@renderer/services/WebSearchService'
 import { useAppDispatch } from '@renderer/store'
 import { sendMessage as _sendMessage } from '@renderer/store/messages'
 import { setSearching } from '@renderer/store/runtime'
-import { Assistant, FileType, KnowledgeBase, MCPServer, Message, Model } from '@renderer/types'
+import { Assistant, FileType, KnowledgeBase, MCPServer, Message, Model, Topic } from '@renderer/types'
 import { classNames, delay, getFileExtension } from '@renderer/utils'
 import { getFilesFromDropEvent } from '@renderer/utils/input'
 import { documentExts, imageExts, textExts } from '@shared/config/constant'
@@ -55,17 +55,18 @@ import SendMessageButton from './SendMessageButton'
 import TokenCount from './TokenCount'
 interface Props {
   assistant: Assistant
+  setActiveTopic: (topic: Topic) => void
+  topic: Topic
 }
 
 let _text = ''
 let _files: FileType[] = []
 
-const Inputbar: FC<Props> = ({ assistant: _assistant }) => {
+const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) => {
   const [text, setText] = useState(_text)
   const [inputFocus, setInputFocus] = useState(false)
   const { assistant, model, setModel, updateAssistant } = useAssistant(_assistant.id)
   const { addTopic } = useTopics()
-  const { activeTopic: topic, setActiveTopic } = useActiveTopic()
   const {
     targetLanguage,
     sendMessageShortcut,

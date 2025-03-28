@@ -8,10 +8,10 @@ import { modelGenerating } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { useShortcut } from '@renderer/hooks/useShortcuts'
 import { useShowAssistants, useShowTopics } from '@renderer/hooks/useStore'
-import { useActiveTopic } from '@renderer/hooks/useTopic'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import { useAppDispatch } from '@renderer/store'
 import { setNarrowMode } from '@renderer/store/settings'
+import { Topic } from '@renderer/types'
 import { Tooltip } from 'antd'
 import { t } from 'i18next'
 import { FC } from 'react'
@@ -21,8 +21,11 @@ import SelectAssistantButton from './components/SelectAssistantButton'
 import SelectModelButton from './components/SelectModelButton'
 import UpdateAppButton from './components/UpdateAppButton'
 
-const HeaderNavbar: FC = () => {
-  const { activeTopic } = useActiveTopic()
+interface Props {
+  activeTopic: Topic
+}
+
+const HeaderNavbar: FC<Props> = ({ activeTopic }) => {
   const { showAssistants, toggleShowAssistants } = useShowAssistants()
   const { topicPosition, sidebarIcons, narrowMode } = useSettings()
   const { showTopics, toggleShowTopics } = useShowTopics()
@@ -61,7 +64,7 @@ const HeaderNavbar: FC = () => {
           <Tooltip title={t('settings.shortcuts.new_topic')} mouseEnterDelay={0.8}>
             <NavbarIcon
               onClick={() => {
-                EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC, activeTopic.assistantId)
+                EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC)
               }}>
               <FormOutlined />
             </NavbarIcon>
@@ -80,9 +83,9 @@ const HeaderNavbar: FC = () => {
             </Tooltip>
           )}
           <HStack alignItems="center" gap={2}>
-            <SelectAssistantButton />
+            <SelectAssistantButton activeTopic={activeTopic} />
             <RightOutlined />
-            <SelectModelButton />
+            <SelectModelButton activeTopic={activeTopic} />
           </HStack>
         </HStack>
         <HStack alignItems="center" gap={8}>

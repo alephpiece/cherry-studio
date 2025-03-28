@@ -4,11 +4,10 @@ import CopyIcon from '@renderer/components/Icons/CopyIcon'
 import { useAssistant } from '@renderer/hooks/useAssistant'
 import { useTopicsQueueStateWithEvent } from '@renderer/hooks/useQueue'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { useActiveTopic } from '@renderer/hooks/useTopic'
 import AssistantSettingsPopup from '@renderer/pages/settings/AssistantSettings'
 import { getDefaultModel } from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
-import { Assistant } from '@renderer/types'
+import { Assistant, Topic } from '@renderer/types'
 import { uuid } from '@renderer/utils'
 import { Dropdown } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
@@ -19,18 +18,18 @@ import styled from 'styled-components'
 
 interface AssistantItemProps {
   assistant: Assistant
+  activeTopic: Topic
   onDelete: (assistant: Assistant) => void
   onCreateDefaultAssistant: () => void
   addAgent: (agent: any) => void
   addAssistant: (assistant: Assistant) => void
 }
 
-const AssistantItem: FC<AssistantItemProps> = ({ assistant, onDelete, addAgent, addAssistant }) => {
+const AssistantItem: FC<AssistantItemProps> = ({ assistant, activeTopic, onDelete, addAgent, addAssistant }) => {
   const { t } = useTranslation()
   const { showAssistantIcon } = useSettings()
   const defaultModel = getDefaultModel()
 
-  const { activeTopic } = useActiveTopic()
   const { topics, removeAllTopics } = useAssistant(assistant.id)
 
   // 使用基于事件的Hook监听队列状态
@@ -75,7 +74,7 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, onDelete, addAgent, 
             content: t('assistants.clear.content'),
             centered: true,
             okButtonProps: { danger: true },
-            onOk: async () => removeAllTopics() // 使用当前助手的removeAllTopics
+            onOk: () => removeAllTopics() // 使用当前助手的removeAllTopics
           })
         }
       },

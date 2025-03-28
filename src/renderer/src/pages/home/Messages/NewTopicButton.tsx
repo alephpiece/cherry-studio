@@ -1,6 +1,5 @@
 import { FormOutlined } from '@ant-design/icons'
 import { useTheme } from '@renderer/context/ThemeProvider'
-import { useActiveTopic } from '@renderer/hooks/useTopic'
 import { EventEmitter } from '@renderer/services/EventService'
 import { EVENT_NAMES } from '@renderer/services/EventService'
 import { ThemeMode } from '@renderer/types'
@@ -12,15 +11,15 @@ import styled from 'styled-components'
 const NewTopicButton: FC = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { activeTopic } = useActiveTopic()
-
-  const addNewTopic = () => {
-    EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC, activeTopic.assistantId)
-  }
 
   return (
     <Container>
-      <Button size="small" color="primary" icon={<FormOutlined />} onClick={addNewTopic} $theme={theme}>
+      <Button
+        size="small"
+        color="primary"
+        icon={<FormOutlined />}
+        onClick={() => EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC)}
+        $theme={theme}>
         {t('chat.topics.new')}
       </Button>
     </Container>

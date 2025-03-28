@@ -1,13 +1,17 @@
 import AssistantAvatar from '@renderer/components/Avatar/AssistantAvatar'
 import SelectAssistantPopup from '@renderer/components/Popups/SelectAssistantPopup'
 import { useAssistants } from '@renderer/hooks/useAssistant'
-import { useActiveTopic, useTopics } from '@renderer/hooks/useTopic'
+import { useTopics } from '@renderer/hooks/useTopic'
 import { getAssistantById } from '@renderer/services/AssistantService'
+import { Topic } from '@renderer/types'
 import { Button } from 'antd'
 import styled from 'styled-components'
 
-const SelectAssistantButton: React.FC = () => {
-  const { activeTopic } = useActiveTopic()
+interface Props {
+  activeTopic: Topic
+}
+
+const SelectAssistantButton: React.FC<Props> = ({ activeTopic }) => {
   const { switchAssistant } = useTopics()
   const { assistants } = useAssistants()
 
