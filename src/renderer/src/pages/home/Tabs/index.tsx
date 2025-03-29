@@ -28,7 +28,7 @@ let _tab: any = ''
 
 const HomeTabs: FC<Props> = ({ selectedAssistant, setSelectedAssistant, activeAssistant, position }) => {
   const { addAssistant } = useAssistants()
-  const [tab, setTab] = useState<Tab>(position === 'left' ? _tab || 'topic' : 'assistants')
+  const [tab, setTab] = useState<Tab>(position === 'left' ? _tab || 'assistants' : 'topic')
   const { topicPosition } = useSettings()
   const { defaultAssistant } = useDefaultAssistant()
   const { toggleShowTopics } = useShowTopics()
@@ -124,7 +124,7 @@ const HomeTabs: FC<Props> = ({ selectedAssistant, setSelectedAssistant, activeAs
             onCreateDefaultAssistant={onCreateDefaultAssistant}
           />
         )}
-        {tab === 'topic' && <Topics assistant={selectedAssistant || activeAssistant} />}
+        {tab === 'topic' && <Topics assistant={activeAssistant} selectedAssistant={selectedAssistant} />}
         {tab === 'settings' && <Settings assistant={selectedAssistant || activeAssistant} />}
       </TabContent>
     </Container>

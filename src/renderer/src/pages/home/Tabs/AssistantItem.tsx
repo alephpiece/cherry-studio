@@ -1,6 +1,7 @@
 import { DeleteOutlined, EditOutlined, MessageOutlined, MinusCircleOutlined, SaveOutlined } from '@ant-design/icons'
 import ModelAvatar from '@renderer/components/Avatar/ModelAvatar'
 import CopyIcon from '@renderer/components/Icons/CopyIcon'
+import { useActiveTopicContext } from '@renderer/context/ActiveTopicContext'
 import { useAssistant } from '@renderer/hooks/useAssistant'
 import { useTopicsQueueStateWithEvent } from '@renderer/hooks/useQueue'
 import { modelGenerating } from '@renderer/hooks/useRuntime'
@@ -32,6 +33,7 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
   const { clickAssistantToShowTopic, topicPosition, showAssistantIcon } = useSettings()
   const defaultModel = getDefaultModel()
 
+  const { setActiveTopic } = useActiveTopicContext()
   const { topics, removeAllTopics } = useAssistant(assistant.id)
 
   // 使用基于事件的Hook监听队列状态
@@ -139,8 +141,12 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
       EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)
     }
 
+    if (topics.length > 0) {
+      setActiveTopic(topics[0])
+    }
+
     onSwitch(assistant)
-  }, [isActive, topicPosition, clickAssistantToShowTopic, onSwitch, assistant])
+  }, [isActive, topicPosition, clickAssistantToShowTopic, onSwitch, assistant, setActiveTopic, topics])
 
   const assistantName = assistant.name || t('chat.default.name')
   const fullAssistantName = assistant.emoji ? `${assistant.emoji} ${assistantName}` : assistantName

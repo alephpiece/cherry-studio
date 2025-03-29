@@ -43,9 +43,10 @@ import styled from 'styled-components'
 
 interface Props {
   assistant: Assistant
+  selectedAssistant: Assistant | null // 为了保持旧的 UI 习惯
 }
 
-const Topics: FC<Props> = ({ assistant }) => {
+const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
   const { activeTopic, setActiveTopic } = useActiveTopicContext()
   const { assistants } = useAssistants()
   const { topics, removeTopic, switchAssistant, updateTopic, updateTopics } = useTopics()
@@ -151,7 +152,10 @@ const Topics: FC<Props> = ({ assistant }) => {
           async onClick() {
             const messages = await TopicManager.getTopicMessages(topic.id)
             if (messages.length >= 2) {
-              const summaryText = await fetchMessagesSummary({ messages, assistant })
+              const summaryText = await fetchMessagesSummary({
+                messages,
+                assistant: selectedAssistant || assistant
+              })
               if (summaryText) {
                 updateTopic({ ...topic, name: summaryText, isNameManuallyEdited: false })
               }
@@ -327,26 +331,37 @@ const Topics: FC<Props> = ({ assistant }) => {
 
       return menus
     },
-    [assistant, assistants, onClearMessages, onDeleteTopic, onPinTopic, onSwitchAssistant, t, updateTopic, topics]
+    [
+      t,
+      assistants,
+      topics.length,
+      selectedAssistant,
+      assistant,
+      updateTopic,
+      onPinTopic,
+      onClearMessages,
+      onSwitchAssistant,
+      onDeleteTopic
+    ]
   )
 
   const displayTopics = useMemo(() => {
-    if (assistant) {
-      return topics.filter((topic) => topic.assistantId === assistant.id)
+    if (selectedAssistant) {
+      return topics.filter((topic) => topic.assistantId === selectedAssistant.id)
     }
     return topics
-  }, [topics, assistant])
+  }, [topics, selectedAssistant])
 
   const handleTopicsUpdate = useCallback(
     (updatedTopics: Topic[]) => {
-      if (assistant) {
-        const otherTopics = topics.filter((topic) => topic.assistantId !== assistant.id)
+      if (selectedAssistant) {
+        const otherTopics = topics.filter((topic) => topic.assistantId !== selectedAssistant.id)
         updateTopics([...updatedTopics, ...otherTopics])
       } else {
         updateTopics(updatedTopics)
       }
     },
-    [assistant, topics, updateTopics]
+    [selectedAssistant, topics, updateTopics]
   )
 
   return (
