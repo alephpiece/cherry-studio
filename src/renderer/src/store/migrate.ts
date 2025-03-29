@@ -954,7 +954,6 @@ const migrateConfig = {
   },
   '87': (state: RootState) => {
     if (!state.assistants?.assistants && !state.assistants?.defaultAssistant) {
-      console.log('[Migration-86] No assistant data found, skipping topic migration')
       return state
     }
 
@@ -1037,11 +1036,9 @@ const migrateConfig = {
       state.assistants.assistants?.forEach((assistant) => {
         assistant.topics = []
       })
-
-      console.log(`[Migration-86] Topic migration completed: ${state.topics.topics.length} topics`)
       return state
     } catch (error) {
-      console.error('[Migration-86] Topic migration failed:', error instanceof Error ? error.message : String(error))
+      console.error(error)
       return state
     }
   }
