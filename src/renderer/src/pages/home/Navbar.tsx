@@ -1,4 +1,4 @@
-import { FormOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
+import { FormOutlined, MoreOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
 import { Navbar, NavbarLeft, NavbarRight } from '@renderer/components/app/Navbar'
 import { HStack } from '@renderer/components/Layout'
 import MinAppsPopover from '@renderer/components/Popups/MinAppsPopover'
@@ -13,7 +13,7 @@ import { useAppDispatch } from '@renderer/store'
 import { setNarrowMode } from '@renderer/store/settings'
 import { Tooltip } from 'antd'
 import { t } from 'i18next'
-import { FC } from 'react'
+import { FC, useState } from 'react'
 import styled from 'styled-components'
 
 import SelectAssistantButton from './components/SelectAssistantButton'
@@ -25,6 +25,7 @@ const HeaderNavbar: FC = () => {
   const { topicPosition, sidebarIcons, narrowMode } = useSettings()
   const { showTopics, toggleShowTopics } = useShowTopics()
   const dispatch = useAppDispatch()
+  const [showSelectModelButton, setShowSelectModelButton] = useState(true)
 
   useShortcut('toggle_show_assistants', () => {
     toggleShowAssistants()
@@ -79,8 +80,14 @@ const HeaderNavbar: FC = () => {
           )}
           <HStack alignItems="center" gap={2}>
             <SelectAssistantButton />
-            <RightOutlined style={{ fontSize: 12, paddingTop: 1, color: 'var(--color-text-2)' }} />
-            <SelectModelButton />
+            <Tooltip
+              title={showSelectModelButton ? t('navbar.hide_select_model') : t('navbar.show_select_model')}
+              mouseEnterDelay={0.8}>
+              <CollapsableIcon onClick={() => setShowSelectModelButton(!showSelectModelButton)}>
+                {showSelectModelButton ? <RightOutlined /> : <MoreOutlined />}
+              </CollapsableIcon>
+            </Tooltip>
+            {showSelectModelButton && <SelectModelButton />}
           </HStack>
         </HStack>
         <HStack alignItems="center" gap={8}>
@@ -152,6 +159,17 @@ export const NavbarIcon = styled.div`
 const NarrowIcon = styled(NavbarIcon)`
   @media (max-width: 1000px) {
     display: none;
+  }
+`
+
+const CollapsableIcon = styled(NavbarIcon)`
+  height: 24px;
+  width: 24px;
+  padding-top: 1px;
+  font-size: 12px;
+
+  .anticon {
+    font-size: 12px;
   }
 `
 

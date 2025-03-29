@@ -621,7 +621,9 @@
     },
     "navbar": {
       "expand": "Развернуть диалоговое окно",
+      "hide_select_model": "Скрыть модель",
       "hide_sidebar": "Скрыть боковую панель",
+      "show_select_model": "Показать модель",
       "show_sidebar": "Показать боковую панель"
     },
     "ollama": {

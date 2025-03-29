@@ -621,7 +621,9 @@
     },
     "navbar": {
       "expand": "伸縮對話框",
+      "hide_select_model": "隱藏模型選擇",
       "hide_sidebar": "隱藏側邊欄",
+      "show_select_model": "顯示模型選擇",
       "show_sidebar": "顯示側邊欄"
     },
     "ollama": {

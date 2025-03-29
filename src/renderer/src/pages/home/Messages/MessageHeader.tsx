@@ -69,10 +69,6 @@ const MessageHeader: FC<Props> = memo(({ assistant, model, message }) => {
       }
     : undefined
 
-  const toggleAssistantName = useCallback(() => {
-    setShowAssistantName((prev) => !prev)
-  }, [])
-
   return (
     <Container className="message-header">
       <AvatarWrapper style={avatarStyle}>
@@ -109,7 +105,7 @@ const MessageHeader: FC<Props> = memo(({ assistant, model, message }) => {
               {username}
             </UserName>
             {isAssistantMessage && (
-              <CollapseIconWrapper onClick={toggleAssistantName}>
+              <CollapseIconWrapper onClick={() => setShowAssistantName(!showAssistantName)}>
                 {showAssistantName ? <RightOutlined /> : <MoreOutlined />}
               </CollapseIconWrapper>
             )}

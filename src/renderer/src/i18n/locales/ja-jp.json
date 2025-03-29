@@ -621,7 +621,9 @@
     },
     "navbar": {
       "expand": "ダイアログを展開",
+      "hide_select_model": "モデル選択を非表示",
       "hide_sidebar": "サイドバーを非表示",
+      "show_select_model": "モデル選択を表示",
       "show_sidebar": "サイドバーを表示"
     },
     "ollama": {
