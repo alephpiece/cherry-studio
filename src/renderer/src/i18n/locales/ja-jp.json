@@ -45,6 +45,7 @@
       "delete.has_topics.content": "アシスタントを削除できません。アシスタントには {{count}} 個のトピックが含まれているため、まずトピックを削除してください。",
       "edit.title": "アシスタントを編集",
       "new_topic.title": "新トピック",
+      "no_topics.title": "このアシスタントのトピックが見つかりません",
       "save.success": "保存に成功しました",
       "save.title": "エージェントに保存",
       "search": "アシスタントを検索...",

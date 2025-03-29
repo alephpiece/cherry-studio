@@ -45,6 +45,7 @@
       "delete.has_topics.content": "Cannot delete the assistant because it has {{count}} topics. Please clear the topics first",
       "edit.title": "Edit Assistant",
       "new_topic.title": "New Topic",
+      "no_topics.title": "No topics found for this assistant",
       "save.success": "Saved successfully",
       "save.title": "Save to agent",
       "search": "Search assistants...",

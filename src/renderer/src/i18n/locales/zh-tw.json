@@ -45,6 +45,7 @@
       "delete.has_topics.content": "無法刪除，因為該助手下有 {{count}} 個話題，請先刪除話題",
       "edit.title": "編輯助手",
       "new_topic.title": "新的話題",
+      "no_topics.title": "沒有找到和這個助手的話題",
       "save.success": "儲存成功",
       "save.title": "儲存到智慧代理人",
       "search": "搜尋助手...",

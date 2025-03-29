@@ -129,9 +129,19 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
     [t, addAssistant, removeAllTopics, addAgent, topics.length, onDelete]
   )
 
+  // 在这里“切换”助手只是筛选话题列表，这尽量保持了以前的行为
   const handleSwitch = useCallback(async () => {
+    // 取消选中，不筛选话题
     if (isActive) {
       onSwitch(null)
+      return
+    }
+
+    if (topics.length === 0) {
+      window.message.warning({
+        content: t('assistants.no_topics.title'),
+        key: 'no-topics'
+      })
       return
     }
 
@@ -141,12 +151,11 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
       EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)
     }
 
-    if (topics.length > 0) {
-      setActiveTopic(topics[0])
-    }
+    // 保持以前的行为，“切换”助手也切换话题
+    setActiveTopic(topics[0])
 
     onSwitch(assistant)
-  }, [isActive, topicPosition, clickAssistantToShowTopic, onSwitch, assistant, setActiveTopic, topics])
+  }, [isActive, topics, topicPosition, clickAssistantToShowTopic, setActiveTopic, onSwitch, assistant, t])
 
   const assistantName = assistant.name || t('chat.default.name')
   const fullAssistantName = assistant.emoji ? `${assistant.emoji} ${assistantName}` : assistantName
