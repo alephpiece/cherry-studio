@@ -1,111 +1,418 @@
-import { PartitionOutlined } from '@ant-design/icons'
+import {
+  ClearOutlined,
+  CloseOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PushpinOutlined,
+  QuestionCircleOutlined,
+  RobotOutlined,
+  UploadOutlined
+} from '@ant-design/icons'
+import DragableList from '@renderer/components/DragableList'
+import CopyIcon from '@renderer/components/Icons/CopyIcon'
+import ObsidianExportPopup from '@renderer/components/Popups/ObsidianExportPopup'
+import PromptPopup from '@renderer/components/Popups/PromptPopup'
 import Scrollbar from '@renderer/components/Scrollbar'
+import { isMac } from '@renderer/config/constant'
 import { useAssistants } from '@renderer/hooks/useAssistant'
 import { modelGenerating } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { useTopics } from '@renderer/hooks/useTopic'
-import { getDefaultTopic } from '@renderer/services/AssistantService'
+import { TopicManager, useTopics } from '@renderer/hooks/useTopic'
+import { fetchMessagesSummary } from '@renderer/services/ApiService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
-import { Topic } from '@renderer/types'
-import { Tooltip } from 'antd'
-import { FC, useCallback, useEffect, useMemo, useState } from 'react'
+import store from '@renderer/store'
+import { setGenerating } from '@renderer/store/runtime'
+import { Assistant, Topic } from '@renderer/types'
+import { removeSpecialCharactersForFileName } from '@renderer/utils'
+import { copyTopicAsMarkdown } from '@renderer/utils/copy'
+import {
+  exportMarkdownToJoplin,
+  exportMarkdownToSiyuan,
+  exportMarkdownToYuque,
+  exportTopicAsMarkdown,
+  exportTopicToNotion,
+  topicToMarkdown
+} from '@renderer/utils/export'
+import { hasTopicPendingRequests } from '@renderer/utils/queue'
+import { Dropdown, MenuProps, Tooltip } from 'antd'
+import dayjs from 'dayjs'
+import { FC, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
-import AssistantTopics from './AssistantTopics'
-import TopicList from './TopicList'
-
 interface Props {
+  assistant: Assistant
   activeTopic: Topic
   setActiveTopic: (topic: Topic) => void
 }
 
-const Topics: FC<Props> = ({ activeTopic, setActiveTopic }) => {
-  const { topicPosition } = useSettings()
+const Topics: FC<Props> = ({ assistant, activeTopic, setActiveTopic }) => {
   const { assistants } = useAssistants()
-  const { topics, removeTopic, updateTopic } = useTopics()
+  const { topics, removeTopic, switchAssistant, updateTopic, updateTopics } = useTopics()
   const { t } = useTranslation()
-  const [isGroupedByAssistant, setIsGroupedByAssistant] = useState(false)
-  const [collapsedAssistants, setCollapsedAssistants] = useState<Record<string, boolean>>({})
+  const { showTopicTime, topicPosition } = useSettings()
 
-  // 在分组模式下计算助手话题数量
-  const assistantTopicCounts = useMemo(() => {
-    if (!isGroupedByAssistant) return {}
+  const borderRadius = showTopicTime ? 12 : 'var(--list-item-border-radius)'
 
-    const counts: Record<string, number> = {}
-    topics.forEach((topic) => {
-      counts[topic.assistantId] = (counts[topic.assistantId] || 0) + 1
-    })
-    return counts
-  }, [topics, isGroupedByAssistant])
+  const [deletingTopicId, setDeletingTopicId] = useState<string | null>(null)
+  const deleteTimerRef = useRef<NodeJS.Timeout>(null)
 
-  const toggleAssistantCollapse = (assistantId: string) => {
-    setCollapsedAssistants((prev) => ({
-      ...prev,
-      [assistantId]: !prev[assistantId]
-    }))
-  }
-
-  const deleteTopic = useCallback(
-    async (topic: Topic) => {
-      await modelGenerating()
-
-      // 如果只剩一个话题，重置为默认话题而不是删除
-      if (topics.length === 1) {
-        const defaultTopic = getDefaultTopic()
-        const resetTopic = {
-          ...defaultTopic,
-          assistantId: topic.assistantId
-        }
-
-        updateTopic(resetTopic)
-        setActiveTopic(resetTopic)
-        return
+  const pendingTopics = useMemo(() => {
+    return new Set<string>()
+  }, [])
+  const isPending = useCallback(
+    (topicId: string) => {
+      const hasPending = hasTopicPendingRequests(topicId)
+      if (topicId === activeTopic.id && !hasPending) {
+        pendingTopics.delete(topicId)
+        return false
       }
-
-      removeTopic(topic)
+      if (pendingTopics.has(topicId)) {
+        return true
+      }
+      if (hasPending) {
+        pendingTopics.add(topicId)
+        return true
+      }
+      return false
     },
-    [topics, removeTopic, updateTopic, setActiveTopic]
+    [activeTopic.id, pendingTopics]
   )
 
-  useEffect(() => {
-    EventEmitter.on(EVENT_NAMES.DELETE_TOPIC, deleteTopic)
+  const handleShowDeleteClick = useCallback((topicId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
 
-    return () => {
-      EventEmitter.off(EVENT_NAMES.DELETE_TOPIC, deleteTopic)
+    if (deleteTimerRef.current) {
+      clearTimeout(deleteTimerRef.current)
     }
-  }, [deleteTopic])
+
+    setDeletingTopicId(topicId)
+
+    deleteTimerRef.current = setTimeout(() => setDeletingTopicId(null), 2000)
+  }, [])
+
+  const onClearMessages = useCallback((topic: Topic) => {
+    // window.keyv.set(EVENT_NAMES.CHAT_COMPLETION_PAUSED, true)
+    store.dispatch(setGenerating(false))
+    EventEmitter.emit(EVENT_NAMES.CLEAR_MESSAGES, topic)
+  }, [])
+
+  const onDeleteTopic = useCallback(
+    async (topic: Topic) => {
+      await modelGenerating()
+      removeTopic(topic)
+    },
+    [removeTopic]
+  )
+
+  const handleDeleteAfterShown = useCallback(
+    async (topic: Topic, e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (topics.length === 1) {
+        return onClearMessages(topic)
+      }
+      onDeleteTopic(topic)
+      setDeletingTopicId(null)
+    },
+    [topics, onClearMessages, onDeleteTopic]
+  )
+
+  const onPinTopic = useCallback(
+    (topic: Topic) => {
+      const updatedTopic = { ...topic, pinned: !topic.pinned }
+      updateTopic(updatedTopic)
+    },
+    [updateTopic]
+  )
+
+  const onSwitchAssistant = useCallback(
+    async (topic: Topic, toAssistant: Assistant) => {
+      await modelGenerating()
+      switchAssistant(topic, toAssistant)
+    },
+    [switchAssistant]
+  )
+
+  const onSwitchTopic = useCallback(
+    async (topic: Topic) => {
+      // await modelGenerating()
+      setActiveTopic(topic)
+    },
+    [setActiveTopic]
+  )
+
+  const getTopicMenuItems = useCallback(
+    (topic: Topic) => {
+      const menus: MenuProps['items'] = [
+        {
+          label: t('chat.topics.auto_rename'),
+          key: 'auto-rename',
+          icon: <i className="iconfont icon-business-smart-assistant" style={{ fontSize: '14px' }} />,
+          async onClick() {
+            const messages = await TopicManager.getTopicMessages(topic.id)
+            if (messages.length >= 2) {
+              const summaryText = await fetchMessagesSummary({ messages, assistant })
+              if (summaryText) {
+                updateTopic({ ...topic, name: summaryText, isNameManuallyEdited: false })
+              }
+            }
+          }
+        },
+        {
+          label: t('chat.topics.edit.title'),
+          key: 'rename',
+          icon: <EditOutlined />,
+          async onClick() {
+            const name = await PromptPopup.show({
+              title: t('chat.topics.edit.title'),
+              message: '',
+              defaultValue: topic?.name || ''
+            })
+            if (name && topic?.name !== name) {
+              updateTopic({ ...topic, name, isNameManuallyEdited: true })
+            }
+          }
+        },
+        {
+          label: t('chat.topics.prompt'),
+          key: 'topic-prompt',
+          icon: <i className="iconfont icon-ai-model1" style={{ fontSize: '14px' }} />,
+          extra: (
+            <Tooltip title={t('chat.topics.prompt.tips')}>
+              <QuestionIcon />
+            </Tooltip>
+          ),
+          async onClick() {
+            const prompt = await PromptPopup.show({
+              title: t('chat.topics.prompt.edit.title'),
+              message: '',
+              defaultValue: topic?.prompt || '',
+              inputProps: {
+                rows: 8,
+                allowClear: true
+              }
+            })
+            prompt && updateTopic({ ...topic, prompt: prompt.trim() })
+          }
+        },
+        {
+          label: topic.pinned ? t('chat.topics.unpinned') : t('chat.topics.pinned'),
+          key: 'pin',
+          icon: <PushpinOutlined />,
+          onClick() {
+            onPinTopic(topic)
+          }
+        },
+        {
+          label: t('chat.topics.clear.title'),
+          key: 'clear-messages',
+          icon: <ClearOutlined />,
+          async onClick() {
+            window.modal.confirm({
+              title: t('chat.input.clear.content'),
+              centered: true,
+              onOk: () => onClearMessages(topic)
+            })
+          }
+        },
+        {
+          label: t('chat.topics.copy.title'),
+          key: 'copy',
+          icon: <CopyIcon />,
+          children: [
+            {
+              label: t('chat.topics.copy.image'),
+              key: 'img',
+              onClick: () => EventEmitter.emit(EVENT_NAMES.COPY_TOPIC_IMAGE, topic)
+            },
+            {
+              label: t('chat.topics.copy.md'),
+              key: 'md',
+              onClick: () => copyTopicAsMarkdown(topic)
+            }
+          ]
+        },
+        {
+          label: t('chat.topics.export.title'),
+          key: 'export',
+          icon: <UploadOutlined />,
+          children: [
+            {
+              label: t('chat.topics.export.image'),
+              key: 'image',
+              onClick: () => EventEmitter.emit(EVENT_NAMES.EXPORT_TOPIC_IMAGE, topic)
+            },
+            {
+              label: t('chat.topics.export.md'),
+              key: 'markdown',
+              onClick: () => exportTopicAsMarkdown(topic)
+            },
+
+            {
+              label: t('chat.topics.export.word'),
+              key: 'word',
+              onClick: async () => {
+                const markdown = await topicToMarkdown(topic)
+                window.api.export.toWord(markdown, removeSpecialCharactersForFileName(topic.name))
+              }
+            },
+            {
+              label: t('chat.topics.export.notion'),
+              key: 'notion',
+              onClick: async () => {
+                exportTopicToNotion(topic)
+              }
+            },
+            {
+              label: t('chat.topics.export.yuque'),
+              key: 'yuque',
+              onClick: async () => {
+                const markdown = await topicToMarkdown(topic)
+                exportMarkdownToYuque(topic.name, markdown)
+              }
+            },
+            {
+              label: t('chat.topics.export.obsidian'),
+              key: 'obsidian',
+              onClick: async () => {
+                const markdown = await topicToMarkdown(topic)
+                await ObsidianExportPopup.show({ title: topic.name, markdown, processingMethod: '3' })
+              }
+            },
+            {
+              label: t('chat.topics.export.joplin'),
+              key: 'joplin',
+              onClick: async () => {
+                const markdown = await topicToMarkdown(topic)
+                exportMarkdownToJoplin(topic.name, markdown)
+              }
+            },
+            {
+              label: t('chat.topics.export.siyuan'),
+              key: 'siyuan',
+              onClick: async () => {
+                const markdown = await topicToMarkdown(topic)
+                exportMarkdownToSiyuan(topic.name, markdown)
+              }
+            }
+          ]
+        }
+      ]
+
+      // FIXME: 还需要真正的 move topic 功能，需要文件夹结构（包括按助手分类视图中的 move）
+      // 切换助手：助手可以没有话题，所以不需要检查助手关联的话题数量
+      if (assistants.length > 1) {
+        menus.push({
+          label: t('chat.topics.switch_assistant'),
+          key: 'switch-assistant',
+          icon: <RobotOutlined />,
+          children: assistants.map((a) => ({
+            label: a.name,
+            key: a.id,
+            disabled: a.id === topic.assistantId,
+            onClick: () => onSwitchAssistant(topic, a)
+          }))
+        })
+      }
+
+      if (topics.length > 1 && !topic.pinned) {
+        menus.push({ type: 'divider' })
+        menus.push({
+          label: t('common.delete'),
+          danger: true,
+          key: 'delete',
+          icon: <DeleteOutlined />,
+          onClick: () => onDeleteTopic(topic)
+        })
+      }
+
+      return menus
+    },
+    [assistant, assistants, onClearMessages, onDeleteTopic, onPinTopic, onSwitchAssistant, t, updateTopic, topics]
+  )
+
+  const displayTopics = useMemo(() => {
+    if (assistant) {
+      return topics.filter((topic) => topic.assistantId === assistant.id)
+    }
+    return topics
+  }, [topics, assistant])
+
+  const handleTopicsUpdate = useCallback(
+    (updatedTopics: Topic[]) => {
+      if (assistant) {
+        const otherTopics = topics.filter((topic) => topic.assistantId !== assistant.id)
+        updateTopics([...updatedTopics, ...otherTopics])
+      } else {
+        updateTopics(updatedTopics)
+      }
+    },
+    [assistant, topics, updateTopics]
+  )
 
   return (
     <Container right={topicPosition === 'right'} className="topics-tab">
-      <TabNavBar>
-        <Tooltip title={t('topics.tab.group_by_assistant')} mouseEnterDelay={0.5}>
-          <TabNavBarItem active={isGroupedByAssistant} onClick={() => setIsGroupedByAssistant(!isGroupedByAssistant)}>
-            <PartitionOutlined />
-          </TabNavBarItem>
-        </Tooltip>
-      </TabNavBar>
-
-      {isGroupedByAssistant ? (
-        <AssistantTopicsContainer>
-          {assistants.map((assistant) => (
-            <AssistantTopics
-              key={assistant.id}
-              assistant={assistant}
-              isCollapsed={!!collapsedAssistants[assistant.id]}
-              topicCount={assistantTopicCounts[assistant.id] || 0}
-              activeTopic={activeTopic}
-              setActiveTopic={setActiveTopic}
-              onToggleCollapse={() => toggleAssistantCollapse(assistant.id)}
-            />
-          ))}
-        </AssistantTopicsContainer>
-      ) : (
-        <div>
-          <TopicList activeTopic={activeTopic} setActiveTopic={setActiveTopic} />
-          <div style={{ minHeight: '10px' }}></div>
-        </div>
-      )}
+      <DragableList list={displayTopics} onUpdate={handleTopicsUpdate}>
+        {(topic) => {
+          const isActive = topic.id === activeTopic?.id
+          const topicName = topic.name.replace('`', '')
+          const topicPrompt = topic.prompt
+          const fullTopicPrompt = t('common.prompt') + ': ' + topicPrompt
+          return (
+            <Dropdown menu={{ items: getTopicMenuItems(topic) }} trigger={['contextMenu']} key={topic.id}>
+              <TopicListItem
+                className={isActive ? 'active' : ''}
+                onClick={() => onSwitchTopic(topic)}
+                style={{ borderRadius }}>
+                {isPending(topic.id) && !isActive && <PendingIndicator />}
+                <TopicName className="name" title={topicName}>
+                  {topicName}
+                </TopicName>
+                {topicPrompt && (
+                  <TopicPromptText className="prompt" title={fullTopicPrompt}>
+                    {fullTopicPrompt}
+                  </TopicPromptText>
+                )}
+                {showTopicTime && (
+                  <TopicTime className="time">{dayjs(topic.createdAt).format('MM/DD HH:mm')}</TopicTime>
+                )}
+                <MenuButton className="pin">{topic.pinned && <PushpinOutlined />}</MenuButton>
+                {isActive && !topic.pinned && (
+                  <Tooltip
+                    placement="bottom"
+                    mouseEnterDelay={0.7}
+                    title={
+                      <div>
+                        <div style={{ fontSize: '12px', opacity: 0.8, fontStyle: 'italic' }}>
+                          {t('chat.topics.delete.shortcut', { key: isMac ? '⌘' : 'Ctrl' })}
+                        </div>
+                      </div>
+                    }>
+                    <MenuButton
+                      className="menu"
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                          handleDeleteAfterShown(topic, e)
+                        } else if (deletingTopicId === topic.id) {
+                          handleDeleteAfterShown(topic, e)
+                        } else {
+                          handleShowDeleteClick(topic.id, e)
+                        }
+                      }}>
+                      {deletingTopicId === topic.id ? (
+                        <DeleteOutlined style={{ color: 'var(--color-error)' }} />
+                      ) : (
+                        <CloseOutlined />
+                      )}
+                    </MenuButton>
+                  </Tooltip>
+                )}
+              </TopicListItem>
+            </Dropdown>
+          )
+        }}
+      </DragableList>{' '}
+      <div style={{ minHeight: '10px' }}></div>
     </Container>
   )
 }
@@ -116,34 +423,100 @@ const Container = styled(Scrollbar)`
   padding: 10px;
 `
 
-const TabNavBar = styled.div`
+const TopicListItem = styled.div`
+  padding: 7px 12px;
+  border-radius: var(--list-item-border-radius);
+  font-family: Ubuntu;
+  font-size: 13px;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 36px;
-  padding: 0 10px;
-`
-
-const TabNavBarItem = styled.div<{ active: boolean }>`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 10px 0 10px 0;
-  width: 26px;
-  height: 26px;
-  border-radius: 4px;
-  color: ${(props) => (props.active ? 'var(--color-primary)' : 'var(--color-text-3)')};
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  font-family: Ubuntu;
   cursor: pointer;
-  transition: all 0.2s ease;
-
+  border: 0.5px solid transparent;
+  position: relative;
+  width: calc(var(--assistants-width) - 20px);
+  .menu {
+    opacity: 0;
+    color: var(--color-text-3);
+  }
   &:hover {
     background-color: var(--color-background-soft);
+    .name {
+    }
+  }
+  &.active {
+    background-color: var(--color-background-soft);
+    border: 0.5px solid var(--color-border);
+    .name {
+    }
+    .menu {
+      opacity: 1;
+      background-color: var(--color-background-soft);
+      &:hover {
+        color: var(--color-text-2);
+      }
+    }
   }
 `
 
-const AssistantTopicsContainer = styled.div`
+const TopicName = styled.div`
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+`
+
+const PendingIndicator = styled.div.attrs({
+  className: 'animation-pulse'
+})`
+  --pulse-size: 5px;
+  width: 5px;
+  height: 5px;
+  position: absolute;
+  left: 3px;
+  top: 15px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+`
+
+const TopicPromptText = styled.div`
+  color: var(--color-text-2);
+  font-size: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  ~ .prompt-text {
+    margin-top: 10px;
+  }
+`
+
+const TopicTime = styled.div`
+  color: var(--color-text-3);
+  font-size: 11px;
+`
+
+const MenuButton = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  min-width: 22px;
+  min-height: 22px;
+  position: absolute;
+  right: 8px;
+  top: 6px;
+  .anticon {
+    font-size: 12px;
+  }
+`
+const QuestionIcon = styled(QuestionCircleOutlined)`
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--color-text-3);
 `
 
 export default Topics

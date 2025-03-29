@@ -11,12 +11,19 @@ import styled from 'styled-components'
 import AssistantItem from './AssistantItem'
 
 interface AssistantsTabProps {
+  selectedAssistant: Assistant | null
+  setSelectedAssistant: (assistant: Assistant | null) => void
   activeTopic: Topic
   onCreateAssistant: () => void
   onCreateDefaultAssistant: () => void
 }
 
-const Assistants: FC<AssistantsTabProps> = ({ activeTopic, onCreateAssistant, onCreateDefaultAssistant }) => {
+const Assistants: FC<AssistantsTabProps> = ({
+  selectedAssistant,
+  setSelectedAssistant,
+  onCreateAssistant,
+  onCreateDefaultAssistant
+}) => {
   const { assistants, removeAssistant, addAssistant, updateAssistants } = useAssistants()
   const [dragging, setDragging] = useState(false)
   const { addAgent } = useAgents()
@@ -41,7 +48,8 @@ const Assistants: FC<AssistantsTabProps> = ({ activeTopic, onCreateAssistant, on
           <AssistantItem
             key={assistant.id}
             assistant={assistant}
-            activeTopic={activeTopic}
+            isActive={assistant.id === selectedAssistant?.id}
+            onSwitch={setSelectedAssistant}
             onDelete={onDelete}
             addAgent={addAgent}
             addAssistant={addAssistant}

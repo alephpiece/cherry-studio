@@ -3,42 +3,39 @@ import ModelAvatar from '@renderer/components/Avatar/ModelAvatar'
 import CopyIcon from '@renderer/components/Icons/CopyIcon'
 import { useAssistant } from '@renderer/hooks/useAssistant'
 import { useTopicsQueueStateWithEvent } from '@renderer/hooks/useQueue'
+import { modelGenerating } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
 import AssistantSettingsPopup from '@renderer/pages/settings/AssistantSettings'
 import { getDefaultModel } from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
-import { Assistant, Topic } from '@renderer/types'
+import { Assistant } from '@renderer/types'
 import { uuid } from '@renderer/utils'
 import { Dropdown } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import { omit } from 'lodash'
-import { FC, useCallback, useMemo } from 'react'
+import { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 interface AssistantItemProps {
   assistant: Assistant
-  activeTopic: Topic
+  isActive: boolean
+  onSwitch: (assistant: Assistant | null) => void
   onDelete: (assistant: Assistant) => void
   onCreateDefaultAssistant: () => void
   addAgent: (agent: any) => void
   addAssistant: (assistant: Assistant) => void
 }
 
-const AssistantItem: FC<AssistantItemProps> = ({ assistant, activeTopic, onDelete, addAgent, addAssistant }) => {
+const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, onDelete, addAgent, addAssistant }) => {
   const { t } = useTranslation()
-  const { showAssistantIcon } = useSettings()
+  const { clickAssistantToShowTopic, topicPosition, showAssistantIcon } = useSettings()
   const defaultModel = getDefaultModel()
 
   const { topics, removeAllTopics } = useAssistant(assistant.id)
 
   // 使用基于事件的Hook监听队列状态
   const isChatting = useTopicsQueueStateWithEvent(topics)
-
-  // 计算当前助手是否是活动话题对应的助手
-  const isCurrentAssistant = useMemo(() => {
-    return activeTopic && activeTopic.assistantId === assistant.id
-  }, [assistant.id, activeTopic])
 
   const getMenuItems = useCallback(
     (assistant: Assistant): ItemType[] => [
@@ -130,12 +127,27 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, activeTopic, onDelet
     [t, addAssistant, removeAllTopics, addAgent, topics.length, onDelete]
   )
 
+  const handleSwitch = useCallback(async () => {
+    if (isActive) {
+      onSwitch(null)
+      return
+    }
+
+    await modelGenerating()
+
+    if (topicPosition === 'left' && clickAssistantToShowTopic) {
+      EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)
+    }
+
+    onSwitch(assistant)
+  }, [isActive, topicPosition, clickAssistantToShowTopic, onSwitch, assistant])
+
   const assistantName = assistant.name || t('chat.default.name')
   const fullAssistantName = assistant.emoji ? `${assistant.emoji} ${assistantName}` : assistantName
 
   return (
     <Dropdown menu={{ items: getMenuItems(assistant) }} trigger={['contextMenu']}>
-      <Container className={isCurrentAssistant ? 'active' : ''}>
+      <Container onClick={handleSwitch} className={isActive ? 'active' : ''}>
         <AssistantNameRow className="name" title={fullAssistantName}>
           {showAssistantIcon && (
             <ModelAvatar

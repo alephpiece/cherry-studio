@@ -23,9 +23,8 @@ const renamingTopics = new Set<string>()
 
 export function useActiveTopic() {
   const topics = useAppSelector((state) => state.topics.topics)
-  const dispatch = useAppDispatch()
-
   const topic = useAppSelector(selectActiveTopic) || topics[0]
+  const dispatch = useAppDispatch()
 
   useEffect(() => {
     if (topic) {

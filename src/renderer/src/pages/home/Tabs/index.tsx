@@ -16,6 +16,8 @@ import Settings from './SettingsTab'
 import Topics from './TopicsTab'
 
 interface Props {
+  selectedAssistant: Assistant | null
+  setSelectedAssistant: (assistant: Assistant | null) => void
   activeAssistant: Assistant
   activeTopic: Topic
   setActiveTopic: (topic: Topic) => void
@@ -26,7 +28,14 @@ type Tab = 'assistants' | 'topic' | 'settings'
 
 let _tab: any = ''
 
-const HomeTabs: FC<Props> = ({ activeAssistant, activeTopic, setActiveTopic, position }) => {
+const HomeTabs: FC<Props> = ({
+  selectedAssistant,
+  setSelectedAssistant,
+  activeAssistant,
+  activeTopic,
+  setActiveTopic,
+  position
+}) => {
   const { addAssistant } = useAssistants()
   const [tab, setTab] = useState<Tab>(position === 'left' ? _tab || 'topic' : 'assistants')
   const { topicPosition } = useSettings()
@@ -118,13 +127,21 @@ const HomeTabs: FC<Props> = ({ activeAssistant, activeTopic, setActiveTopic, pos
       <TabContent className="home-tabs-content">
         {tab === 'assistants' && (
           <Assistants
+            selectedAssistant={selectedAssistant}
+            setSelectedAssistant={setSelectedAssistant}
             activeTopic={activeTopic}
             onCreateAssistant={onCreateAssistant}
             onCreateDefaultAssistant={onCreateDefaultAssistant}
           />
         )}
-        {tab === 'topic' && <Topics activeTopic={activeTopic} setActiveTopic={setActiveTopic} />}
-        {tab === 'settings' && <Settings assistant={activeAssistant} />}
+        {tab === 'topic' && (
+          <Topics
+            assistant={selectedAssistant || activeAssistant}
+            activeTopic={activeTopic}
+            setActiveTopic={setActiveTopic}
+          />
+        )}
+        {tab === 'settings' && <Settings assistant={selectedAssistant || activeAssistant} />}
       </TabContent>
     </Container>
   )

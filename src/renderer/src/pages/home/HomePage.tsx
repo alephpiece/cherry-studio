@@ -4,13 +4,16 @@ import { useActiveTopic } from '@renderer/hooks/useTopic'
 import NavigationService from '@renderer/services/NavigationService'
 import { useAppDispatch } from '@renderer/store'
 import { setActiveTopic as setActiveTopicAction } from '@renderer/store/topics'
-import { FC, useEffect, useMemo } from 'react'
+import { Assistant } from '@renderer/types'
+import { FC, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
 import Chat from './Chat'
 import Navbar from './Navbar'
 import HomeTabs from './Tabs'
+
+let _selectedAssistant: Assistant | null
 
 const HomePage: FC = () => {
   const { assistants } = useAssistants()
@@ -31,6 +34,11 @@ const HomePage: FC = () => {
   )
 
   const { showAssistants, showTopics, topicPosition } = useSettings()
+
+  // 兼容旧版本，仅仅用于筛选话题
+  const [selectedAssistant, setSelectedAssistant] = useState(state?.assistant || _selectedAssistant || null)
+
+  _selectedAssistant = selectedAssistant
 
   useEffect(() => {
     NavigationService.setNavigate(navigate)
@@ -55,6 +63,8 @@ const HomePage: FC = () => {
       <ContentContainer id="content-container">
         {showAssistants && (
           <HomeTabs
+            selectedAssistant={selectedAssistant}
+            setSelectedAssistant={setSelectedAssistant}
             activeAssistant={activeAssistant}
             activeTopic={activeTopic}
             setActiveTopic={setActiveTopic}
@@ -64,6 +74,8 @@ const HomePage: FC = () => {
         <Chat assistant={activeAssistant} activeTopic={activeTopic} setActiveTopic={setActiveTopic} />
         {topicPosition === 'right' && showTopics && (
           <HomeTabs
+            selectedAssistant={selectedAssistant}
+            setSelectedAssistant={setSelectedAssistant}
             activeAssistant={activeAssistant}
             activeTopic={activeTopic}
             setActiveTopic={setActiveTopic}

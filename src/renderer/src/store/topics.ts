@@ -36,7 +36,13 @@ const topicsSlice = createSlice({
     },
     removeTopic: (state, action: PayloadAction<string>) => {
       if (state.topics.length === 1) {
-        state.topics = [getDefaultTopic()]
+        state.topics = [
+          {
+            ...getDefaultTopic(),
+            assistantId: state.topics[0].assistantId
+          }
+        ]
+        state.activeTopic = state.topics[0]
         return
       }
 
