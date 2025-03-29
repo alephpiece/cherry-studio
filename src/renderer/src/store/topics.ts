@@ -63,6 +63,16 @@ const topicsSlice = createSlice({
         state.activeTopic = state.topics[0]
       }
     },
+    switchAssistant: (state, action: PayloadAction<{ topicId: string; assistantId: string }>) => {
+      const { topicId, assistantId } = action.payload
+      const topic = state.topics.find(({ id }) => id === topicId)
+      if (topic) {
+        topic.assistantId = assistantId
+        if (state.activeTopic?.id === topicId) {
+          state.activeTopic.assistantId = assistantId
+        }
+      }
+    },
     updateTopic: (state, action: PayloadAction<Topic>) => {
       const index = state.topics.findIndex((topic) => topic.id === action.payload.id)
       if (index !== -1) {
@@ -83,8 +93,16 @@ const topicsSlice = createSlice({
   }
 })
 
-export const { setAllTopics, setActiveTopic, addTopic, removeTopic, removeAssistantTopics, updateTopic, updateTopics } =
-  topicsSlice.actions
+export const {
+  setAllTopics,
+  setActiveTopic,
+  addTopic,
+  removeTopic,
+  removeAssistantTopics,
+  switchAssistant,
+  updateTopic,
+  updateTopics
+} = topicsSlice.actions
 
 export const selectAllTopics = (state: RootState) => state.topics.topics
 export const selectActiveTopic = (state: RootState) => state.topics.activeTopic

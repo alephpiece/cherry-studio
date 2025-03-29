@@ -10,6 +10,7 @@ import {
   selectActiveTopic,
   selectTopicsByAssistantId,
   setActiveTopic,
+  switchAssistant,
   updateTopic,
   updateTopics
 } from '@renderer/store/topics'
@@ -27,9 +28,7 @@ export function useActiveTopic() {
   const dispatch = useAppDispatch()
 
   useEffect(() => {
-    if (topic) {
-      dispatch(prepareTopicMessages(topic))
-    }
+    dispatch(prepareTopicMessages(topic))
   }, [topic, dispatch])
 
   return {
@@ -54,7 +53,7 @@ export function useTopics() {
       dispatch(removeAssistantTopicsThunk(assistantId))
     },
     switchAssistant: (topic: Topic, toAssistant: Assistant) => {
-      dispatch(updateTopic({ ...topic, assistantId: toAssistant.id }))
+      dispatch(switchAssistant({ topicId: topic.id, assistantId: toAssistant.id }))
     },
     updateTopic: (topic: Topic) => dispatch(updateTopic(topic)),
     updateTopics: (topics: Topic[]) => dispatch(updateTopics(topics))
