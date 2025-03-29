@@ -58,10 +58,7 @@ const HeaderNavbar: FC = () => {
             </NavbarIcon>
           </Tooltip>
           <Tooltip title={t('settings.shortcuts.new_topic')} mouseEnterDelay={0.8}>
-            <NavbarIcon
-              onClick={() => {
-                EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC)
-              }}>
+            <NavbarIcon onClick={() => EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC)}>
               <FormOutlined />
             </NavbarIcon>
           </Tooltip>
