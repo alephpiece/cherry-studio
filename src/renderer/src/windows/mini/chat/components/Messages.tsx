@@ -1,8 +1,7 @@
 import Scrollbar from '@renderer/components/Scrollbar'
+import { useAssistant } from '@renderer/hooks/useAssistant'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import { getAssistantMessage } from '@renderer/services/MessagesService'
-import store from '@renderer/store'
-import { selectTopicsByAssistantId } from '@renderer/store/topics'
 import { Assistant, Message } from '@renderer/types'
 import { last } from 'lodash'
 import { FC, useCallback, useEffect, useRef, useState } from 'react'
@@ -21,37 +20,26 @@ interface ContainerProps {
   right?: boolean
 }
 
-const Messages: FC<Props> = ({ assistant, route }) => {
+const Messages: FC<Props> = ({ assistant: _assistant, route }) => {
   const [messages, setMessages] = useState<Message[]>([])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const messagesRef = useRef(messages)
 
   const { t } = useTranslation()
+  const { assistant, topics } = useAssistant(_assistant.id)
 
   messagesRef.current = messages
 
   const onSendMessage = useCallback(
     async (message: Message) => {
       setMessages((prev) => {
-        const topics = selectTopicsByAssistantId(store.getState(), assistant.id)
-        const topic =
-          topics.length > 0
-            ? topics[0]
-            : {
-                id: message.topicId,
-                assistantId: assistant.id,
-                name: '',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                messages: []
-              }
-        const assistantMessage = getAssistantMessage({ assistant, topic })
+        const assistantMessage = getAssistantMessage({ assistant, topic: topics[0] })
         const messages = prev.concat([message, assistantMessage])
         return messages
       })
     },
-    [assistant]
+    [assistant, topics]
   )
 
   const onGetMessages = useCallback(() => {

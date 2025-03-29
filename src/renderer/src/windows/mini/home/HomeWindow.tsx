@@ -1,10 +1,11 @@
 import { isMac } from '@renderer/config/constant'
-import { useDefaultAssistant, useDefaultModel } from '@renderer/hooks/useAssistant'
+import { useAssistant, useDefaultAssistant, useDefaultModel } from '@renderer/hooks/useAssistant'
 import { useSettings } from '@renderer/hooks/useSettings'
 import i18n from '@renderer/i18n'
+import { getDefaultTopic } from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
-import store from '@renderer/store'
-import { selectTopicsByAssistantId } from '@renderer/store/topics'
+import { useAppDispatch } from '@renderer/store'
+import { addTopic } from '@renderer/store/topics'
 import { uuid } from '@renderer/utils'
 import { Divider } from 'antd'
 import dayjs from 'dayjs'
@@ -29,12 +30,14 @@ const HomeWindow: FC = () => {
   const [text, setText] = useState('')
   const [lastClipboardText, setLastClipboardText] = useState<string | null>(null)
   const textChange = useState(() => {})[1]
-  const { defaultAssistant } = useDefaultAssistant()
+  const { defaultAssistant: _defaultAssistant } = useDefaultAssistant()
+  const { assistant: defaultAssistant, topics } = useAssistant(_defaultAssistant.id)
   const { defaultModel: model } = useDefaultModel()
   const { language, readClipboardAtStartup, windowStyle, theme } = useSettings()
   const { t } = useTranslation()
   const inputBarRef = useRef<HTMLDivElement>(null)
   const featureMenusRef = useRef<FeatureMenusRef>(null)
+  const dispatch = useAppDispatch()
 
   const referenceText = selectedText || clipboardText || text
 
@@ -149,9 +152,14 @@ const HomeWindow: FC = () => {
       }
 
       setTimeout(() => {
-        const state = store.getState()
-        const topics = selectTopicsByAssistantId(state, defaultAssistant.id)
-        const topicId = topics.length > 0 ? topics[0].id : uuid()
+        let topicId: string
+        if (topics?.length > 0) {
+          topicId = topics[0].id
+        } else {
+          const defaultTopic = getDefaultTopic(defaultAssistant.id)
+          dispatch(addTopic({ topic: defaultTopic, assistantId: defaultAssistant.id }))
+          topicId = defaultTopic.id
+        }
 
         const message = {
           id: uuid(),
@@ -167,7 +175,7 @@ const HomeWindow: FC = () => {
         setIsFirstMessage(false)
       }, 0)
     },
-    [content, defaultAssistant.id]
+    [content, defaultAssistant, dispatch, topics]
   )
 
   const clearClipboard = () => {
