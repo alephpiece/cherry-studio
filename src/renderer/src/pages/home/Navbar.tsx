@@ -25,7 +25,7 @@ const HeaderNavbar: FC = () => {
   const { topicPosition, sidebarIcons, narrowMode } = useSettings()
   const { showTopics, toggleShowTopics } = useShowTopics()
   const dispatch = useAppDispatch()
-  const [showSelectModelButton, setShowSelectModelButton] = useState(true)
+  const [showModelSelector, setShowModelSelector] = useState(true)
 
   useShortcut('toggle_show_assistants', () => {
     toggleShowAssistants()
@@ -78,16 +78,16 @@ const HeaderNavbar: FC = () => {
           <HStack alignItems="center" gap={2}>
             <SelectAssistantButton />
             <Tooltip
-              title={showSelectModelButton ? t('navbar.hide_select_model') : t('navbar.show_select_model')}
+              title={showModelSelector ? t('navbar.hide_select_model') : t('navbar.show_select_model')}
               mouseEnterDelay={0.8}>
               <ShowModelSelectorButton
                 size="small"
                 type="text"
-                icon={showSelectModelButton ? <RightOutlined /> : <MoreOutlined />}
-                onClick={() => setShowSelectModelButton(!showSelectModelButton)}
+                icon={showModelSelector ? <RightOutlined /> : <MoreOutlined />}
+                onClick={() => setShowModelSelector(!showModelSelector)}
               />
             </Tooltip>
-            {showSelectModelButton && <SelectModelButton />}
+            {showModelSelector && <SelectModelButton />}
           </HStack>
         </HStack>
         <HStack alignItems="center" gap={8}>
@@ -164,6 +164,7 @@ const NarrowIcon = styled(NavbarIcon)`
 
 const ShowModelSelectorButton = styled(Button)`
   -webkit-app-region: none;
+  width: 18px !important;
   color: var(--color-text-3);
 
   &:hover {
