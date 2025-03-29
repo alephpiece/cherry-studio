@@ -1235,10 +1235,6 @@
         "title": "Web Search"
       }
     },
-    "topics": {
-      "tab.group_by_assistant": "Group by assistant",
-      "tab.no_topics": "No topics in this assistant"
-    },
     "translate": {
       "any.language": "Any language",
       "button.translate": "Translate",
@@ -1266,7 +1262,7 @@
     },
     "tray": {
       "quit": "Quit",
-      "show_mini_window": "Show Mini Window",
+      "show_mini_window": "Quick Assistant",
       "show_window": "Show Window"
     },
     "words": {

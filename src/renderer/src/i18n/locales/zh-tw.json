@@ -1235,10 +1235,6 @@
       },
       "general.auto_check_update.title": "啟用自動更新檢查"
     },
-    "topics": {
-      "tab.group_by_assistant": "按助手分組顯示",
-      "tab.no_topics": "該助手下暫無話題"
-    },
     "translate": {
       "any.language": "任意語言",
       "button.translate": "翻譯",

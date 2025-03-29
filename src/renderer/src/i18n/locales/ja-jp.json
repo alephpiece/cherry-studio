@@ -1235,10 +1235,6 @@
       },
       "general.auto_check_update.title": "自動更新チェックを有効にする"
     },
-    "topics": {
-      "tab.group_by_assistant": "助手ごとにグループ化",
-      "tab.no_topics": "この助手にはトピックがありません"
-    },
     "translate": {
       "any.language": "任意の言語",
       "button.translate": "翻訳",
