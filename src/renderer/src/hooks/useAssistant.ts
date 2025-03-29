@@ -21,7 +21,6 @@ export function useAssistants() {
     assistants,
     updateAssistants: (assistants: Assistant[]) => dispatch(updateAssistants(assistants)),
     addAssistant: (assistant: Assistant) => dispatch(addAssistant(assistant)),
-    // FIXME: 应该提示用户是否需要删除助手相关的话题
     removeAssistant: (id: string) => dispatch(removeAssistant({ id }))
   }
 }

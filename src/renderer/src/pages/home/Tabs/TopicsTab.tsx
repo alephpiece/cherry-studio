@@ -299,7 +299,6 @@ const Topics: FC<Props> = ({ assistant }) => {
         }
       ]
 
-      // FIXME: 还需要真正的 move topic 功能，需要文件夹结构（包括按助手分类视图中的 move）
       // 切换助手：助手可以没有话题，所以不需要检查助手关联的话题数量
       if (assistants.length > 1) {
         menus.push({
