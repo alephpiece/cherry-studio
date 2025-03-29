@@ -11,7 +11,7 @@ import { useShowAssistants, useShowTopics } from '@renderer/hooks/useStore'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import { useAppDispatch } from '@renderer/store'
 import { setNarrowMode } from '@renderer/store/settings'
-import { Tooltip } from 'antd'
+import { Button, Tooltip } from 'antd'
 import { t } from 'i18next'
 import { FC, useState } from 'react'
 import styled from 'styled-components'
@@ -83,9 +83,12 @@ const HeaderNavbar: FC = () => {
             <Tooltip
               title={showSelectModelButton ? t('navbar.hide_select_model') : t('navbar.show_select_model')}
               mouseEnterDelay={0.8}>
-              <CollapsableIcon onClick={() => setShowSelectModelButton(!showSelectModelButton)}>
-                {showSelectModelButton ? <RightOutlined /> : <MoreOutlined />}
-              </CollapsableIcon>
+              <ShowModelSelectorButton
+                size="small"
+                type="text"
+                icon={showSelectModelButton ? <RightOutlined /> : <MoreOutlined />}
+                onClick={() => setShowSelectModelButton(!showSelectModelButton)}
+              />
             </Tooltip>
             {showSelectModelButton && <SelectModelButton />}
           </HStack>
@@ -162,14 +165,13 @@ const NarrowIcon = styled(NavbarIcon)`
   }
 `
 
-const CollapsableIcon = styled(NavbarIcon)`
-  height: 24px;
-  width: 24px;
-  padding-top: 1px;
-  font-size: 12px;
+const ShowModelSelectorButton = styled(Button)`
+  -webkit-app-region: none;
+  color: var(--color-text-3);
 
-  .anticon {
-    font-size: 12px;
+  &:hover {
+    background-color: transparent !important;
+    color: var(--color-primary) !important;
   }
 `
 

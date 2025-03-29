@@ -10,7 +10,7 @@ import { getMessageModelId } from '@renderer/services/MessagesService'
 import { getModelName } from '@renderer/services/ModelService'
 import { Assistant, Message, Model } from '@renderer/types'
 import { firstLetter, isEmoji, removeLeadingEmoji } from '@renderer/utils'
-import { Avatar } from 'antd'
+import { Avatar, Button } from 'antd'
 import dayjs from 'dayjs'
 import { CSSProperties, FC, memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -105,9 +105,12 @@ const MessageHeader: FC<Props> = memo(({ assistant, model, message }) => {
               {username}
             </UserName>
             {isAssistantMessage && (
-              <CollapseIconWrapper onClick={() => setShowAssistantName(!showAssistantName)}>
-                {showAssistantName ? <RightOutlined /> : <MoreOutlined />}
-              </CollapseIconWrapper>
+              <ShowAssistantButton
+                size="small"
+                type="text"
+                icon={showAssistantName ? <RightOutlined /> : <MoreOutlined />}
+                onClick={() => setShowAssistantName(!showAssistantName)}
+              />
             )}
             {isAssistantMessage && showAssistantName && <AssistantName>{assistant?.name}</AssistantName>}
           </UserNameWrapper>
@@ -173,26 +176,17 @@ const MessageTime = styled.div`
   font-family: 'Ubuntu';
 `
 
-const CollapseIconWrapper = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
+const ShowAssistantButton = styled(Button)`
   height: 18px;
-  border-radius: 20%;
-  cursor: pointer;
   color: var(--color-text-3);
-  transition: all 0.2s ease;
 
   &:hover {
-    background-color: var(--color-background-mute);
+    background-color: transparent !important;
+    color: var(--color-primary) !important;
   }
 `
 
 const AssistantName = styled.span`
-  font-size: 14px;
-  font-weight: normal;
   color: var(--color-text-3);
 `
 
