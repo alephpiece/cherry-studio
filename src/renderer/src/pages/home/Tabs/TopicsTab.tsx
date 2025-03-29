@@ -14,6 +14,7 @@ import ObsidianExportPopup from '@renderer/components/Popups/ObsidianExportPopup
 import PromptPopup from '@renderer/components/Popups/PromptPopup'
 import Scrollbar from '@renderer/components/Scrollbar'
 import { isMac } from '@renderer/config/constant'
+import { useActiveTopicContext } from '@renderer/context/ActiveTopicContext'
 import { useAssistants } from '@renderer/hooks/useAssistant'
 import { modelGenerating } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
@@ -42,11 +43,10 @@ import styled from 'styled-components'
 
 interface Props {
   assistant: Assistant
-  activeTopic: Topic
-  setActiveTopic: (topic: Topic) => void
 }
 
-const Topics: FC<Props> = ({ assistant, activeTopic, setActiveTopic }) => {
+const Topics: FC<Props> = ({ assistant }) => {
+  const { activeTopic, setActiveTopic } = useActiveTopicContext()
   const { assistants } = useAssistants()
   const { topics, removeTopic, switchAssistant, updateTopic, updateTopics } = useTopics()
   const { t } = useTranslation()

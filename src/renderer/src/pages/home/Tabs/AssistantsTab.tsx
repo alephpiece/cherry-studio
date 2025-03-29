@@ -3,7 +3,7 @@ import DragableList from '@renderer/components/DragableList'
 import Scrollbar from '@renderer/components/Scrollbar'
 import { useAgents } from '@renderer/hooks/useAgents'
 import { useAssistants } from '@renderer/hooks/useAssistant'
-import { Assistant, Topic } from '@renderer/types'
+import { Assistant } from '@renderer/types'
 import { FC, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -13,7 +13,6 @@ import AssistantItem from './AssistantItem'
 interface AssistantsTabProps {
   selectedAssistant: Assistant | null
   setSelectedAssistant: (assistant: Assistant | null) => void
-  activeTopic: Topic
   onCreateAssistant: () => void
   onCreateDefaultAssistant: () => void
 }

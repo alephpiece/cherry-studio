@@ -158,7 +158,6 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
           )}
           <AssistantName className="text-nowrap">{showAssistantIcon ? assistantName : fullAssistantName}</AssistantName>
         </AssistantNameRow>
-        {/* FIXME: 点击后应该显示经过筛选的话题 */}
         <MenuButton onClick={() => EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)}>
           <TopicCount className="topics-count">{topics.length}</TopicCount>
         </MenuButton>

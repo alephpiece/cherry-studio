@@ -1,6 +1,6 @@
+import { ActiveTopicProvider, useActiveTopicContext } from '@renderer/context/ActiveTopicContext'
 import { useAssistants } from '@renderer/hooks/useAssistant'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { useActiveTopic } from '@renderer/hooks/useTopic'
 import NavigationService from '@renderer/services/NavigationService'
 import { useAppDispatch } from '@renderer/store'
 import { setActiveTopic as setActiveTopicAction } from '@renderer/store/topics'
@@ -15,7 +15,7 @@ import HomeTabs from './Tabs'
 
 let _selectedAssistant: Assistant | null
 
-const HomePage: FC = () => {
+const HomePageContent: FC = () => {
   const { assistants } = useAssistants()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -23,7 +23,14 @@ const HomePage: FC = () => {
   const location = useLocation()
   const state = location.state
 
-  const { activeTopic, setActiveTopic } = useActiveTopic()
+  const { activeTopic } = useActiveTopicContext()
+
+  // 兼容旧版本，仅仅用于筛选话题
+  const [selectedAssistant, setSelectedAssistant] = useState(state?.assistant || _selectedAssistant || null)
+
+  _selectedAssistant = selectedAssistant
+
+  const { showAssistants, showTopics, topicPosition } = useSettings()
 
   const activeAssistant = useMemo(
     () =>
@@ -32,13 +39,6 @@ const HomePage: FC = () => {
         : assistants[0],
     [activeTopic, assistants]
   )
-
-  const { showAssistants, showTopics, topicPosition } = useSettings()
-
-  // 兼容旧版本，仅仅用于筛选话题
-  const [selectedAssistant, setSelectedAssistant] = useState(state?.assistant || _selectedAssistant || null)
-
-  _selectedAssistant = selectedAssistant
 
   useEffect(() => {
     NavigationService.setNavigate(navigate)
@@ -59,31 +59,36 @@ const HomePage: FC = () => {
 
   return (
     <Container id="home-page">
-      <Navbar activeTopic={activeTopic} />
+      <Navbar />
       <ContentContainer id="content-container">
         {showAssistants && (
           <HomeTabs
             selectedAssistant={selectedAssistant}
             setSelectedAssistant={setSelectedAssistant}
             activeAssistant={activeAssistant}
-            activeTopic={activeTopic}
-            setActiveTopic={setActiveTopic}
             position="left"
           />
         )}
-        <Chat assistant={activeAssistant} activeTopic={activeTopic} setActiveTopic={setActiveTopic} />
+
+        <Chat assistant={activeAssistant} />
         {topicPosition === 'right' && showTopics && (
           <HomeTabs
             selectedAssistant={selectedAssistant}
             setSelectedAssistant={setSelectedAssistant}
             activeAssistant={activeAssistant}
-            activeTopic={activeTopic}
-            setActiveTopic={setActiveTopic}
             position="right"
           />
         )}
       </ContentContainer>
     </Container>
+  )
+}
+
+const HomePage: FC = () => {
+  return (
+    <ActiveTopicProvider>
+      <HomePageContent />
+    </ActiveTopicProvider>
   )
 }
 

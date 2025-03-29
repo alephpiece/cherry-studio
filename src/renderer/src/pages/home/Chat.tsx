@@ -1,6 +1,7 @@
+import { useActiveTopicContext } from '@renderer/context/ActiveTopicContext'
 import { useAssistant } from '@renderer/hooks/useAssistant'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { Assistant, Topic } from '@renderer/types'
+import { Assistant } from '@renderer/types'
 import { Flex } from 'antd'
 import { FC } from 'react'
 import styled from 'styled-components'
@@ -10,24 +11,18 @@ import Messages from './Messages/Messages'
 
 interface Props {
   assistant: Assistant
-  activeTopic: Topic
-  setActiveTopic: (topic: Topic) => void
 }
 
 const Chat: FC<Props> = (props) => {
   const { assistant } = useAssistant(props.assistant.id)
   const { messageStyle } = useSettings()
+  const { activeTopic, setActiveTopic } = useActiveTopicContext()
 
   return (
     <Container id="chat" className={messageStyle}>
       <Main id="chat-main" vertical flex={1} justify="space-between">
-        <Messages
-          key={props.activeTopic.id}
-          assistant={assistant}
-          topic={props.activeTopic}
-          setActiveTopic={props.setActiveTopic}
-        />
-        <Inputbar assistant={assistant} setActiveTopic={props.setActiveTopic} topic={props.activeTopic} />
+        <Messages key={activeTopic.id} assistant={assistant} topic={activeTopic} setActiveTopic={setActiveTopic} />
+        <Inputbar assistant={assistant} topic={activeTopic} setActiveTopic={setActiveTopic} />
       </Main>
     </Container>
   )

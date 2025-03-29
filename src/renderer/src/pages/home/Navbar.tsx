@@ -11,7 +11,6 @@ import { useShowAssistants, useShowTopics } from '@renderer/hooks/useStore'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import { useAppDispatch } from '@renderer/store'
 import { setNarrowMode } from '@renderer/store/settings'
-import { Topic } from '@renderer/types'
 import { Tooltip } from 'antd'
 import { t } from 'i18next'
 import { FC } from 'react'
@@ -21,11 +20,7 @@ import SelectAssistantButton from './components/SelectAssistantButton'
 import SelectModelButton from './components/SelectModelButton'
 import UpdateAppButton from './components/UpdateAppButton'
 
-interface Props {
-  activeTopic: Topic
-}
-
-const HeaderNavbar: FC<Props> = ({ activeTopic }) => {
+const HeaderNavbar: FC = () => {
   const { showAssistants, toggleShowAssistants } = useShowAssistants()
   const { topicPosition, sidebarIcons, narrowMode } = useSettings()
   const { showTopics, toggleShowTopics } = useShowTopics()
@@ -83,9 +78,9 @@ const HeaderNavbar: FC<Props> = ({ activeTopic }) => {
             </Tooltip>
           )}
           <HStack alignItems="center" gap={2}>
-            <SelectAssistantButton activeTopic={activeTopic} />
+            <SelectAssistantButton />
             <RightOutlined />
-            <SelectModelButton activeTopic={activeTopic} />
+            <SelectModelButton />
           </HStack>
         </HStack>
         <HStack alignItems="center" gap={8}>

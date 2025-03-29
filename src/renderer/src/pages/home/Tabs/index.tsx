@@ -4,7 +4,7 @@ import { useAssistants, useDefaultAssistant } from '@renderer/hooks/useAssistant
 import { useSettings } from '@renderer/hooks/useSettings'
 import { useShowTopics } from '@renderer/hooks/useStore'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
-import { Assistant, Topic } from '@renderer/types'
+import { Assistant } from '@renderer/types'
 import { uuid } from '@renderer/utils'
 import { Segmented as AntSegmented, SegmentedProps } from 'antd'
 import { FC, useEffect, useState } from 'react'
@@ -19,8 +19,6 @@ interface Props {
   selectedAssistant: Assistant | null
   setSelectedAssistant: (assistant: Assistant | null) => void
   activeAssistant: Assistant
-  activeTopic: Topic
-  setActiveTopic: (topic: Topic) => void
   position: 'left' | 'right'
 }
 
@@ -28,14 +26,7 @@ type Tab = 'assistants' | 'topic' | 'settings'
 
 let _tab: any = ''
 
-const HomeTabs: FC<Props> = ({
-  selectedAssistant,
-  setSelectedAssistant,
-  activeAssistant,
-  activeTopic,
-  setActiveTopic,
-  position
-}) => {
+const HomeTabs: FC<Props> = ({ selectedAssistant, setSelectedAssistant, activeAssistant, position }) => {
   const { addAssistant } = useAssistants()
   const [tab, setTab] = useState<Tab>(position === 'left' ? _tab || 'topic' : 'assistants')
   const { topicPosition } = useSettings()
@@ -129,18 +120,11 @@ const HomeTabs: FC<Props> = ({
           <Assistants
             selectedAssistant={selectedAssistant}
             setSelectedAssistant={setSelectedAssistant}
-            activeTopic={activeTopic}
             onCreateAssistant={onCreateAssistant}
             onCreateDefaultAssistant={onCreateDefaultAssistant}
           />
         )}
-        {tab === 'topic' && (
-          <Topics
-            assistant={selectedAssistant || activeAssistant}
-            activeTopic={activeTopic}
-            setActiveTopic={setActiveTopic}
-          />
-        )}
+        {tab === 'topic' && <Topics assistant={selectedAssistant || activeAssistant} />}
         {tab === 'settings' && <Settings assistant={selectedAssistant || activeAssistant} />}
       </TabContent>
     </Container>
