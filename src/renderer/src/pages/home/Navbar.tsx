@@ -79,7 +79,7 @@ const HeaderNavbar: FC = () => {
           )}
           <HStack alignItems="center" gap={2}>
             <SelectAssistantButton />
-            <RightOutlined />
+            <RightOutlined style={{ fontSize: 12, paddingTop: 1, color: 'var(--color-text-2)' }} />
             <SelectModelButton />
           </HStack>
         </HStack>
