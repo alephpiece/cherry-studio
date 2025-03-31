@@ -64,30 +64,34 @@ const migrateConfig = {
     }
   },
   '8': (state: RootState) => {
-    const fixAssistantName = (assistant: Assistant) => {
-      if (isEmpty(assistant.name)) {
-        assistant.name = i18n.t(`assistant.${assistant.id}.name`)
+    try {
+      const fixAssistantName = (assistant: Assistant) => {
+        if (isEmpty(assistant.name)) {
+          assistant.name = i18n.t(`assistant.${assistant.id}.name`)
+        }
+
+        if (assistant.topics) {
+          assistant.topics = assistant.topics.map((topic) => {
+            if (isEmpty(topic.name)) {
+              topic.name = i18n.t(`assistant.${assistant.id}.topic.name`)
+            }
+            return topic
+          })
+        }
+
+        return assistant
       }
 
-      if (assistant.topics) {
-        assistant.topics = assistant.topics.map((topic) => {
-          if (isEmpty(topic.name)) {
-            topic.name = i18n.t(`assistant.${assistant.id}.topic.name`)
-          }
-          return topic
-        })
+      return {
+        ...state,
+        assistants: {
+          ...state.assistants,
+          defaultAssistant: fixAssistantName(state.assistants.defaultAssistant),
+          assistants: state.assistants.assistants.map((assistant) => fixAssistantName(assistant))
+        }
       }
-
-      return assistant
-    }
-
-    return {
-      ...state,
-      assistants: {
-        ...state.assistants,
-        defaultAssistant: fixAssistantName(state.assistants.defaultAssistant),
-        assistants: state.assistants.assistants.map((assistant) => fixAssistantName(assistant))
-      }
+    } catch (error) {
+      return state
     }
   },
   '9': (state: RootState) => {
@@ -216,24 +220,28 @@ const migrateConfig = {
     }
   },
   '24': (state: RootState) => {
-    return {
-      ...state,
-      assistants: {
-        ...state.assistants,
-        assistants: state.assistants.assistants.map((assistant) => ({
-          ...assistant,
-          topics:
-            assistant.topics?.map((topic) => ({
-              ...topic,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            })) || []
-        }))
-      },
-      settings: {
-        ...state.settings,
-        topicPosition: 'right'
+    try {
+      return {
+        ...state,
+        assistants: {
+          ...state.assistants,
+          assistants: state.assistants.assistants.map((assistant) => ({
+            ...assistant,
+            topics:
+              assistant.topics?.map((topic) => ({
+                ...topic,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              })) || []
+          }))
+        },
+        settings: {
+          ...state.settings,
+          topicPosition: 'right'
+        }
       }
+    } catch (error) {
+      return state
     }
   },
   '25': (state: RootState) => {
@@ -261,20 +269,24 @@ const migrateConfig = {
     addProvider(state, 'nvidia')
   },
   '29': (state: RootState) => {
-    return {
-      ...state,
-      assistants: {
-        ...state.assistants,
-        assistants: state.assistants.assistants.map((assistant) => {
-          if (assistant.topics) {
-            assistant.topics = assistant.topics.map((topic) => ({
-              ...topic,
-              assistantId: assistant.id
-            }))
-          }
-          return assistant
-        })
+    try {
+      return {
+        ...state,
+        assistants: {
+          ...state.assistants,
+          assistants: state.assistants.assistants.map((assistant) => {
+            if (assistant.topics) {
+              assistant.topics = assistant.topics.map((topic) => ({
+                ...topic,
+                assistantId: assistant.id
+              }))
+            }
+            return assistant
+          })
+        }
       }
+    } catch (error) {
+      return state
     }
   },
   '30': (state: RootState) => {
@@ -325,19 +337,23 @@ const migrateConfig = {
     }
   },
   '34': (state: RootState) => {
-    state.assistants.assistants.forEach((assistant) => {
-      assistant.topics?.forEach((topic) => {
-        topic.assistantId = assistant.id
-        runAsyncFunction(async () => {
-          const _topic = await db.topics.get(topic.id)
-          if (_topic) {
-            const messages = (_topic?.messages || []).map((message) => ({ ...message, assistantId: assistant.id }))
-            db.topics.put({ ..._topic, messages }, topic.id)
-          }
+    try {
+      state.assistants.assistants.forEach((assistant) => {
+        assistant.topics?.forEach((topic) => {
+          topic.assistantId = assistant.id
+          runAsyncFunction(async () => {
+            const _topic = await db.topics.get(topic.id)
+            if (_topic) {
+              const messages = (_topic?.messages || []).map((message) => ({ ...message, assistantId: assistant.id }))
+              db.topics.put({ ..._topic, messages }, topic.id)
+            }
+          })
         })
       })
-    })
-    return state
+      return state
+    } catch (error) {
+      return state
+    }
   },
   '35': (state: RootState) => {
     state.settings.mathEngine = 'KaTeX'
@@ -952,7 +968,7 @@ const migrateConfig = {
 
     return state
   },
-  '87': (state: RootState) => {
+  '89': (state: RootState) => {
     if (!state.assistants?.assistants && !state.assistants?.defaultAssistant) {
       return state
     }
