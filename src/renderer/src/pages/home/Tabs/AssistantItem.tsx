@@ -14,7 +14,7 @@ import { uuid } from '@renderer/utils'
 import { Dropdown } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
 import { omit } from 'lodash'
-import { FC, useCallback } from 'react'
+import { FC, startTransition, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -147,13 +147,19 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
 
     await modelGenerating()
 
-    if (topicPosition === 'left' && clickAssistantToShowTopic) {
-      EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)
+    if (clickAssistantToShowTopic) {
+      if (topicPosition === 'left') {
+        EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)
+      }
+      // 保持以前的行为，“切换”助手也切换话题
+      setActiveTopic(topics[0])
+    } else {
+      startTransition(() => {
+        setActiveTopic(topics[0])
+      })
     }
 
-    // 保持以前的行为，“切换”助手也切换话题
-    setActiveTopic(topics[0])
-
+    // 仅切换助手
     onSwitch(assistant)
   }, [isActive, topics, topicPosition, clickAssistantToShowTopic, setActiveTopic, onSwitch, assistant, t])
 

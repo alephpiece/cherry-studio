@@ -98,7 +98,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
   const [isTranslating, setIsTranslating] = useState(false)
   const [selectedKnowledgeBases, setSelectedKnowledgeBases] = useState<KnowledgeBase[]>([])
   const [mentionModels, setMentionModels] = useState<Model[]>([])
-  const [enabledMCPs, setEnabledMCPs] = useState<MCPServer[]>([])
+  const [enabledMCPs, setEnabledMCPs] = useState<MCPServer[]>(assistant.mcpServers || [])
   const [isMentionPopupOpen, setIsMentionPopupOpen] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [textareaHeight, setTextareaHeight] = useState<number>()
@@ -151,6 +151,15 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       textArea.style.height = textArea?.scrollHeight > 400 ? '400px' : `${textArea?.scrollHeight}px`
     }
   }, [textareaHeight])
+
+  // reset state when assistant changes
+  useEffect(() => {
+    // Reset to assistant default model
+    assistant.defaultModel && setModel(assistant.defaultModel)
+
+    // Reset to assistant knowledge mcp servers
+    setEnabledMCPs(assistant.mcpServers || [])
+  }, [assistant, setModel])
 
   const sendMessage = useCallback(async () => {
     if (inputEmpty || loading) {
@@ -334,8 +343,11 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       await db.topics.add({ id: topic.id, messages: [] })
       await addAssistantMessagesToTopic({ assistant: targetAssistant, topic })
 
+      // Clear previous state
       // Reset to assistant default model
       targetAssistant.defaultModel && setModel(targetAssistant.defaultModel)
+      // Reset to assistant knowledge mcp servers
+      setEnabledMCPs(targetAssistant.mcpServers || [])
 
       addTopic(topic, targetAssistant.id)
       setActiveTopic(topic)

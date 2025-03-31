@@ -14,6 +14,7 @@ import rehypeKatex from 'rehype-katex'
 // @ts-ignore next-line
 import rehypeMathjax from 'rehype-mathjax'
 import rehypeRaw from 'rehype-raw'
+import remarkCjkFriendly from 'remark-cjk-friendly'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 
@@ -63,7 +64,8 @@ const Markdown: FC<Props> = ({ message, citationsData }) => {
         return <Link {...props} />
       },
       code: CodeBlock,
-      img: ImagePreview
+      img: ImagePreview,
+      pre: (props: any) => <pre style={{ overflow: 'visible' }} {...props} />
     } as Partial<Components>
 
     if (messageContent.includes('<style>')) {
@@ -80,7 +82,7 @@ const Markdown: FC<Props> = ({ message, citationsData }) => {
   return (
     <ReactMarkdown
       rehypePlugins={rehypePlugins}
-      remarkPlugins={[remarkMath, remarkGfm]}
+      remarkPlugins={[remarkMath, remarkGfm, remarkCjkFriendly]}
       className="markdown"
       components={components()}
       disallowedElements={['iframe']}

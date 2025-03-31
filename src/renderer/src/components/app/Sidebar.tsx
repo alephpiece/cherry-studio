@@ -173,6 +173,7 @@ const MainMenus: FC = () => {
 const SidebarOpenedMinappTabs: FC = () => {
   const { minappShow, openedKeepAliveMinapps, currentMinappId } = useRuntime()
   const { openMinappKeepAlive, hideMinappPopup, closeMinapp, closeAllMinapps } = useMinappPopup()
+  const { showOpenedMinappsInSidebar } = useSettings() // 获取控制显示的设置
   const { theme } = useTheme()
   const { t } = useTranslation()
 
@@ -208,7 +209,10 @@ const SidebarOpenedMinappTabs: FC = () => {
     container.style.setProperty('--indicator-right', `${indicatorRight}px`)
   }, [currentMinappId, openedKeepAliveMinapps, minappShow])
 
-  const isShowOpened = openedKeepAliveMinapps.length > 0
+  // 检查是否需要显示已打开小程序组件
+  const isShowOpened = showOpenedMinappsInSidebar && openedKeepAliveMinapps.length > 0
+
+  // 如果不需要显示，返回空容器保持动画效果但不显示内容
   if (!isShowOpened) return <TabsContainer className="TabsContainer" />
 
   return (
@@ -357,6 +361,7 @@ const Icon = styled.div<{ theme: string }>`
   justify-content: center;
   align-items: center;
   border-radius: 50%;
+  box-sizing: border-box;
   -webkit-app-region: none;
   border: 0.5px solid transparent;
   .iconfont,
@@ -388,18 +393,34 @@ const Icon = styled.div<{ theme: string }>`
 
   @keyframes borderBreath {
     0% {
-      border-color: var(--color-primary-mute);
+      opacity: 0.1;
     }
     50% {
-      border-color: var(--color-primary);
+      opacity: 1;
     }
     100% {
-      border-color: var(--color-primary-mute);
+      opacity: 0.1;
     }
   }
 
   &.opened-animation {
+    position: relative;
+  }
+
+  &.opened-animation::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: inherit;
+    opacity: 0;
+    will-change: opacity;
     border: 0.5px solid var(--color-primary);
+    /* NOTICE: although we have optimized for the performance, 
+     * the infinite animation will still consume a little GPU resources,
+     * it's a trade-off balance between performance and animation smoothness*/
     animation: borderBreath 4s ease-in-out infinite;
   }
 `

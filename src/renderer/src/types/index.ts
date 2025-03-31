@@ -18,6 +18,7 @@ export type Assistant = {
   messages?: AssistantMessage[]
   enableWebSearch?: boolean
   enableGenerateImage?: boolean
+  mcpServers?: MCPServer[]
 }
 
 export type MentionedAssistant = {
@@ -375,6 +376,7 @@ export interface MCPServer {
   description?: string
   baseUrl?: string
   command?: string
+  registryUrl?: string
   args?: string[]
   env?: Record<string, string>
   isActive: boolean

@@ -37,7 +37,7 @@ import {
 import { hasTopicPendingRequests } from '@renderer/utils/queue'
 import { Dropdown, MenuProps, Tooltip } from 'antd'
 import dayjs from 'dayjs'
-import { FC, useCallback, useMemo, useRef, useState } from 'react'
+import { FC, startTransition, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -137,7 +137,9 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
   const onSwitchTopic = useCallback(
     async (topic: Topic) => {
       // await modelGenerating()
-      setActiveTopic(topic)
+      startTransition(() => {
+        setActiveTopic(topic)
+      })
     },
     [setActiveTopic]
   )
