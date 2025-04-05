@@ -39,7 +39,7 @@ export async function upgradeToV5(tx: Transaction): Promise<void> {
 
 // 把消息中的 Model[] 转换为 MentionedAssistant[]
 // 没有必要修复其中的 name 和 emoji 等属性
-export async function upgradeToV6(tx: Transaction): Promise<void> {
+export async function upgradeToV7(tx: Transaction): Promise<void> {
   const topics = await tx.table('topics').toArray()
 
   for (const topic of topics) {
@@ -64,7 +64,7 @@ export async function upgradeToV6(tx: Transaction): Promise<void> {
 }
 
 // 为每个 topic 添加时间戳,兼容老数据,默认按照最新的时间戳来,不确定是否要加
-export async function upgradeToV7(tx: Transaction): Promise<void> {
+export async function upgradeToV8(tx: Transaction): Promise<void> {
   const topics = await tx.table('topics').toArray()
 
   // 为每个 topic 添加时间戳,兼容老数据,默认按照最新的时间戳来
