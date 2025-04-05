@@ -10,6 +10,7 @@ import {
   PaperClipOutlined,
   PauseCircleOutlined,
   QuestionCircleOutlined,
+  RobotOutlined,
   ThunderboltOutlined,
   TranslationOutlined
 } from '@ant-design/icons'
@@ -30,6 +31,7 @@ import {
   addAssistantMessagesToTopic,
   createMentionedAssistant,
   getAssistantById,
+  getDefaultModel,
   getDefaultTopic
 } from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
@@ -42,7 +44,17 @@ import WebSearchService from '@renderer/services/WebSearchService'
 import { useAppDispatch } from '@renderer/store'
 import { sendMessage as _sendMessage } from '@renderer/store/messages'
 import { setSearching } from '@renderer/store/runtime'
-import { Assistant, FileType, KnowledgeBase, KnowledgeItem, MCPServer, Message, Model, Topic } from '@renderer/types'
+import {
+  Assistant,
+  FileType,
+  KnowledgeBase,
+  KnowledgeItem,
+  MCPServer,
+  MentionedAssistant,
+  Message,
+  Model,
+  Topic
+} from '@renderer/types'
 import { classNames, delay, formatFileSize, getFileExtension } from '@renderer/utils'
 import { getFilesFromDropEvent } from '@renderer/utils/input'
 import { documentExts, imageExts, textExts } from '@shared/config/constant'
@@ -63,6 +75,8 @@ import GenerateImageButton from './GenerateImageButton'
 import KnowledgeBaseButton, { KnowledgeBaseButtonRef } from './KnowledgeBaseButton'
 import KnowledgeBaseInput from './KnowledgeBaseInput'
 import MCPToolsButton, { MCPToolsButtonRef } from './MCPToolsButton'
+import MentionAssistantsButton, { MentionAssistantsButtonRef } from './MentionAssistantsButton'
+import MentionAssistantsInput from './MentionAssistantsInput'
 import MentionModelsButton, { MentionModelsButtonRef } from './MentionModelsButton'
 import MentionModelsInput from './MentionModelsInput'
 import NewContextButton from './NewContextButton'
@@ -110,6 +124,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
   const [isTranslating, setIsTranslating] = useState(false)
   const [selectedKnowledgeBases, setSelectedKnowledgeBases] = useState<KnowledgeBase[]>([])
   const [mentionModels, setMentionModels] = useState<Model[]>([])
+  const [mentionedAssistants, setMentionedAssistants] = useState<MentionedAssistant[]>([])
   const [enabledMCPs, setEnabledMCPs] = useState<MCPServer[]>(assistant.mcpServers || [])
   const [isDragging, setIsDragging] = useState(false)
   const [textareaHeight, setTextareaHeight] = useState<number>()
@@ -131,6 +146,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
 
   const quickPhrasesButtonRef = useRef<QuickPhrasesButtonRef>(null)
   const mentionModelsButtonRef = useRef<MentionModelsButtonRef>(null)
+  const mentionAssistantsButtonRef = useRef<MentionAssistantsButtonRef>(null)
   const knowledgeBaseButtonRef = useRef<KnowledgeBaseButtonRef>(null)
   const mcpToolsButtonRef = useRef<MCPToolsButtonRef>(null)
   const attachmentButtonRef = useRef<AttachmentButtonRef>(null)
@@ -201,8 +217,11 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
         userMessage.knowledgeBaseIds = knowledgeBaseIds
       }
 
-      if (mentionModels) {
-        userMessage.mentions = mentionModels.map((model) => createMentionedAssistant(assistant, model))
+      if (mentionModels.length > 0 || mentionedAssistants.length > 0) {
+        userMessage.mentions = [
+          ...mentionModels.map((model) => createMentionedAssistant(assistant, model)),
+          ...mentionedAssistants
+        ]
       }
 
       if (isFunctionCallingModel(model)) {
@@ -216,13 +235,17 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
 
       dispatch(
         _sendMessage(userMessage, assistant, topic, {
-          mentions: mentionModels.map((model) => createMentionedAssistant(assistant, model))
+          mentions: [
+            ...mentionModels.map((model) => createMentionedAssistant(assistant, model)),
+            ...mentionedAssistants
+          ]
         })
       )
 
       // Clear input
       setText('')
       setFiles([])
+      setMentionedAssistants([])
       setTimeout(() => setText(''), 500)
       setTimeout(() => resizeTextArea(), 0)
       setExpend(false)
@@ -237,6 +260,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     inputEmpty,
     loading,
     mentionModels,
+    mentionedAssistants,
     model,
     resizeTextArea,
     selectedKnowledgeBases,
@@ -346,6 +370,15 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
         isMenu: true,
         action: () => {
           mentionModelsButtonRef.current?.openQuickPanel()
+        }
+      },
+      {
+        label: t('chat.input.mention_assistant'),
+        description: '',
+        icon: <RobotOutlined />,
+        isMenu: true,
+        action: () => {
+          mentionAssistantsButtonRef.current?.openQuickPanel()
         }
       },
       {
@@ -473,20 +506,27 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       return event.preventDefault()
     }
 
-    if (event.key === 'Backspace' && text.trim() === '' && mentionModels.length > 0) {
-      setMentionModels((prev) => prev.slice(0, -1))
-      return event.preventDefault()
-    }
+    if (event.key === 'Backspace' && text.trim() === '') {
+      if (mentionModels.length > 0) {
+        setMentionModels((prev) => prev.slice(0, -1))
+        return event.preventDefault()
+      }
 
-    if (event.key === 'Backspace' && text.trim() === '' && selectedKnowledgeBases.length > 0) {
-      setSelectedKnowledgeBases((prev) => {
-        const newSelectedKnowledgeBases = prev.slice(0, -1)
-        updateAssistant({ ...assistant, knowledge_bases: newSelectedKnowledgeBases })
-        return newSelectedKnowledgeBases
-      })
-      return event.preventDefault()
+      if (mentionedAssistants.length > 0) {
+        setMentionedAssistants((prev) => prev.slice(0, -1))
+        return event.preventDefault()
+      }
 
-      if (event.key === 'Backspace' && text.trim() === '' && files.length > 0) {
+      if (selectedKnowledgeBases.length > 0) {
+        setSelectedKnowledgeBases((prev) => {
+          const newSelectedKnowledgeBases = prev.slice(0, -1)
+          updateAssistant({ ...assistant, knowledge_bases: newSelectedKnowledgeBases })
+          return newSelectedKnowledgeBases
+        })
+        return event.preventDefault()
+      }
+
+      if (files.length > 0) {
         setFiles((prev) => prev.slice(0, -1))
         return event.preventDefault()
       }
@@ -769,6 +809,10 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     setMentionModels(mentionModels.filter((m) => m.id !== model.id))
   }
 
+  const handleRemoveAssistant = (assistant: MentionedAssistant) => {
+    setMentionedAssistants((prev) => prev.filter((a) => a.id !== assistant.id))
+  }
+
   const handleRemoveKnowledgeBase = (knowledgeBase: KnowledgeBase) => {
     setSelectedKnowledgeBases(selectedKnowledgeBases.filter((kb) => kb.id !== knowledgeBase.id))
   }
@@ -823,6 +867,26 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       return exists ? prev.filter((m) => getModelUniqId(m) !== modelId) : [...prev, model]
     })
   }
+
+  const onMentionAssistant = useCallback((asst: Assistant) => {
+    setMentionedAssistants((prev) => {
+      const exists = prev.some((a) => a.id === asst.id)
+      if (exists) {
+        return prev.filter((a) => a.id !== asst.id)
+      } else {
+        return [
+          ...prev,
+          {
+            id: asst.id,
+            name: asst.name,
+            emoji: asst.emoji,
+            description: asst.description,
+            model: asst.model ?? asst.defaultModel ?? getDefaultModel()
+          }
+        ]
+      }
+    })
+  }, [])
 
   const onToggleExpended = () => {
     if (textareaHeight) {
@@ -885,6 +949,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
             onRemoveKnowledgeBase={handleRemoveKnowledgeBase}
           />
           <MentionModelsInput selectedModels={mentionModels} onRemoveModel={handleRemoveModel} />
+          <MentionAssistantsInput selectedAssistants={mentionedAssistants} onRemoveAssistant={handleRemoveAssistant} />
           <Textarea
             value={text}
             onChange={onChange}
@@ -966,6 +1031,12 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
                 ref={mentionModelsButtonRef}
                 mentionModels={mentionModels}
                 onMentionModel={onMentionModel}
+                ToolbarButton={ToolbarButton}
+              />
+              <MentionAssistantsButton
+                ref={mentionAssistantsButtonRef}
+                mentionedAssistants={mentionedAssistants}
+                onMentionAssistant={onMentionAssistant}
                 ToolbarButton={ToolbarButton}
               />
               <QuickPhrasesButton

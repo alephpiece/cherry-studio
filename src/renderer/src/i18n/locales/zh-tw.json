@@ -130,6 +130,7 @@
       "input.generate_image": "生成圖片",
       "input.generate_image_not_supported": "模型不支援生成圖片",
       "input.knowledge_base": "知識庫",
+      "input.mention_assistant": "選擇助手",
       "input.new.context": "清除上下文 {{Command}}",
       "input.new_topic": "新話題 {{Command}}",
       "input.pause": "暫停",

@@ -130,6 +130,7 @@
       "input.generate_image": "画像を生成する",
       "input.generate_image_not_supported": "モデルは画像の生成をサポートしていません。",
       "input.knowledge_base": "ナレッジベース",
+      "input.mention_assistant": "アシスタントを選択",
       "input.new.context": "コンテキストをクリア {{Command}}",
       "input.new_topic": "新しいトピック {{Command}}",
       "input.pause": "一時停止",

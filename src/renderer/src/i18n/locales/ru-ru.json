@@ -130,6 +130,7 @@
       "input.generate_image": "Сгенерировать изображение",
       "input.generate_image_not_supported": "Модель не поддерживает генерацию изображений.",
       "input.knowledge_base": "База знаний",
+      "input.mention_assistant": "Выбрать ассистента",
       "input.new.context": "Очистить контекст {{Command}}",
       "input.new_topic": "Новый топик {{Command}}",
       "input.pause": "Остановить",
