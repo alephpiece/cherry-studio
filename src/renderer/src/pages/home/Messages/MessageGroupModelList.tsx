@@ -190,7 +190,7 @@ const AvatarWrapper = styled.div<{ isSelected: boolean }>`
   display: inline-flex;
   border-radius: 50%;
   /* Keep z-index separate from transitions to avoid rendering issues */
-  z-index: ${(props) => (props.isSelected ? 2 : 0)};
+  z-index: ${(props) => (props.isSelected ? 1 : 0)};
   background: var(--color-background);
   /* Simplify transitions to reduce jittering */
   transition:
@@ -207,7 +207,6 @@ const AvatarWrapper = styled.div<{ isSelected: boolean }>`
 
   &:hover {
     /* z-index is applied immediately, not part of the transition */
-    z-index: 10;
     transform: translateX(var(--hover-x-offset)) scale(var(--hover-scale));
     box-shadow: var(--hover-shadow);
     filter: brightness(1.02);
