@@ -1,12 +1,13 @@
 import { ArrowsAltOutlined, ShrinkOutlined } from '@ant-design/icons'
 import ModelAvatar from '@renderer/components/Avatar/ModelAvatar'
 import Scrollbar from '@renderer/components/Scrollbar'
+import { useAssistants } from '@renderer/hooks/useAssistant'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { useAppDispatch } from '@renderer/store'
 import { setFoldDisplayMode } from '@renderer/store/settings'
 import { Message, Model } from '@renderer/types'
 import { Avatar, Segmented as AntdSegmented, Tooltip } from 'antd'
-import { FC } from 'react'
+import { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -22,7 +23,39 @@ const MessageGroupModelList: FC<MessageGroupModelListProps> = ({ messages, selec
   const dispatch = useAppDispatch()
   const { t } = useTranslation()
   const { foldDisplayMode } = useSettings()
+  const { assistants } = useAssistants()
   const isCompact = foldDisplayMode === 'compact'
+
+  const renderLabel = useCallback(
+    (message: Message) => {
+      const asst = assistants.find((asst) => asst.id === message.assistantId)
+      const asstTip = asst ? `${asst?.emoji} ${asst?.name}` : ''
+
+      if (isCompact) {
+        return (
+          <Tooltip key={message.id} title={`${asstTip} ${message.model?.name}`} mouseEnterDelay={0.2}>
+            <AvatarWrapper
+              className="avatar-wrapper"
+              isSelected={message.id === selectMessageId}
+              onClick={() => {
+                setSelectedMessage(message)
+              }}>
+              <ModelAvatar model={message.model as Model} size={22} />
+            </AvatarWrapper>
+          </Tooltip>
+        )
+      }
+      return (
+        <Tooltip title={`${asstTip}`} mouseEnterDelay={0.2}>
+          <SegmentedLabel>
+            <ModelAvatar model={message.model as Model} size={20} />
+            <ModelName>{message.model?.name}</ModelName>
+          </SegmentedLabel>
+        </Tooltip>
+      )
+    },
+    [assistants, isCompact, selectMessageId, setSelectedMessage]
+  )
 
   return (
     <ModelsWrapper>
@@ -43,20 +76,7 @@ const MessageGroupModelList: FC<MessageGroupModelListProps> = ({ messages, selec
       <ModelsContainer $displayMode={foldDisplayMode}>
         {foldDisplayMode === 'compact' ? (
           /* Compact style display */
-          <Avatar.Group className="avatar-group">
-            {messages.map((message, index) => (
-              <Tooltip key={index} title={message.model?.name} placement="top" mouseEnterDelay={0.2}>
-                <AvatarWrapper
-                  className="avatar-wrapper"
-                  isSelected={message.id === selectMessageId}
-                  onClick={() => {
-                    setSelectedMessage(message)
-                  }}>
-                  <ModelAvatar model={message.model as Model} size={28} />
-                </AvatarWrapper>
-              </Tooltip>
-            ))}
-          </Avatar.Group>
+          <Avatar.Group className="avatar-group">{messages.map((message) => renderLabel(message))}</Avatar.Group>
         ) : (
           /* Expanded style display */
           <Segmented
@@ -66,12 +86,7 @@ const MessageGroupModelList: FC<MessageGroupModelListProps> = ({ messages, selec
               setSelectedMessage(message)
             }}
             options={messages.map((message) => ({
-              label: (
-                <SegmentedLabel>
-                  <ModelAvatar model={message.model as Model} size={20} />
-                  <ModelName>{message.model?.name}</ModelName>
-                </SegmentedLabel>
-              ),
+              label: renderLabel(message),
               value: message.id
             }))}
             size="small"

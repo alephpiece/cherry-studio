@@ -196,6 +196,6 @@ export function consolidateMentionedAssistant(mentioned: MentionedAssistant): As
   }
   return {
     ...assistant,
-    model: mentioned.model
+    model: mentioned.model ?? assistant.model ?? assistant.defaultModel ?? getDefaultModel()
   }
 }
