@@ -38,7 +38,7 @@ export async function upgradeToV5(tx: Transaction): Promise<void> {
 }
 
 // 把消息中的 Model[] 转换为 MentionedAssistant[]
-// 没有必要修复其中的 name 和 emoji
+// 没有必要修复其中的 name 和 emoji 等属性
 export async function upgradeToV6(tx: Transaction): Promise<void> {
   const topics = await tx.table('topics').toArray()
 

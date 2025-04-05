@@ -23,6 +23,7 @@ export type MentionedAssistant = {
   id: string
   name: string
   emoji?: string
+  description?: string
   model: Model
 }
 

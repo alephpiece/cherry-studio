@@ -184,6 +184,7 @@ export function createMentionedAssistant(assistant: Assistant, model: Model): Me
     id: assistant.id,
     name: assistant.name,
     emoji: assistant.emoji,
+    description: assistant.description,
     model
   }
 }
