@@ -1,4 +1,3 @@
-import { MoreOutlined, RightOutlined } from '@ant-design/icons'
 import UserPopup from '@renderer/components/Popups/UserPopup'
 import { APP_NAME, AppLogo, isLocalAi } from '@renderer/config/env'
 import { getModelLogo } from '@renderer/config/models'
@@ -6,11 +5,12 @@ import { useTheme } from '@renderer/context/ThemeProvider'
 import useAvatar from '@renderer/hooks/useAvatar'
 import { useMinappPopup } from '@renderer/hooks/useMinappPopup'
 import { useMessageStyle, useSettings } from '@renderer/hooks/useSettings'
+import { getAssistantEmoji } from '@renderer/services/AssistantService'
 import { getMessageModelId } from '@renderer/services/MessagesService'
 import { getModelName } from '@renderer/services/ModelService'
 import { Assistant, Message, Model } from '@renderer/types'
 import { firstLetter, isEmoji, removeLeadingEmoji } from '@renderer/utils'
-import { Avatar, Button } from 'antd'
+import { Avatar } from 'antd'
 import dayjs from 'dayjs'
 import { CSSProperties, FC, memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -106,13 +106,12 @@ const MessageHeader: FC<Props> = memo(({ assistant, model, message }) => {
             </UserName>
             {isAssistantMessage && (
               <ShowAssistantButton
-                size="small"
-                type="text"
-                icon={showAssistantName ? <RightOutlined /> : <MoreOutlined />}
-                onClick={() => setShowAssistantName(!showAssistantName)}
-              />
+                isExpanded={showAssistantName}
+                onClick={() => setShowAssistantName(!showAssistantName)}>
+                {getAssistantEmoji(assistant)}
+              </ShowAssistantButton>
             )}
-            {isAssistantMessage && showAssistantName && <AssistantName>{assistant?.name}</AssistantName>}
+            {isAssistantMessage && showAssistantName && assistant?.name}
           </UserNameWrapper>
           <MessageTime>{dayjs(message.createdAt).format('MM/DD HH:mm')}</MessageTime>
         </UserWrap>
@@ -176,18 +175,14 @@ const MessageTime = styled.div`
   font-family: 'Ubuntu';
 `
 
-const ShowAssistantButton = styled(Button)`
-  height: 18px;
-  color: var(--color-text-3);
+const ShowAssistantButton = styled.div<{ isExpanded?: boolean }>`
+  cursor: pointer;
+  color: ${(props) => (props.isExpanded ? 'var(--color-primary)' : 'var(--color-text-3)')};
 
   &:hover {
     background-color: transparent !important;
     color: var(--color-primary) !important;
   }
-`
-
-const AssistantName = styled.span`
-  color: var(--color-text-3);
 `
 
 export default MessageHeader

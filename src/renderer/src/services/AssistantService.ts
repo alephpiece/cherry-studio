@@ -125,6 +125,10 @@ export function getAssistantById(id: string) {
   return assistants.find((a) => a.id === id)
 }
 
+export function getAssistantEmoji(assistant: Assistant) {
+  return assistant.emoji || '🤖'
+}
+
 export async function addAssistantMessagesToTopic({ assistant, topic }: { assistant: Assistant; topic: Topic }) {
   const messages: Message[] = []
   const defaultModel = getDefaultModel()
