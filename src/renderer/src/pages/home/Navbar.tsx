@@ -25,7 +25,7 @@ const HeaderNavbar: FC = () => {
   const { topicPosition, sidebarIcons, narrowMode } = useSettings()
   const { showTopics, toggleShowTopics } = useShowTopics()
   const dispatch = useAppDispatch()
-  const [showModelSelector, setShowModelSelector] = useState(true)
+  const [showModelSelector, setShowModelSelector] = useState(false)
 
   useShortcut('toggle_show_assistants', () => {
     toggleShowAssistants()
