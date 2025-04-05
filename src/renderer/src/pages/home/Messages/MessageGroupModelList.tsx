@@ -109,7 +109,6 @@ const DisplayModeToggle = styled.div<{ displayMode: DisplayMode }>`
   left: 4px; /* Add more space on the left */
   top: 50%;
   transform: translateY(-50%);
-  z-index: 5;
   width: 28px; /* Increase width */
   height: 28px; /* Add height */
   display: flex;
