@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { TRANSLATE_PROMPT } from '@renderer/config/prompts'
 import { CodeStyleVarious, LanguageVarious, ThemeMode, TranslateLanguageVarious } from '@renderer/types'
+import { IpcChannel } from '@shared/IpcChannel'
 
 import { WebDAVSyncState } from './backup'
 
@@ -85,6 +86,7 @@ export interface SettingsState {
   notionPageNameKey: string | null
   markdownExportPath: string | null
   forceDollarMathInMarkdown: boolean
+  useTopicNamingForMessageTitle: boolean
   thoughtAutoCollapse: boolean
   notionAutoSplit: boolean
   notionSplitSize: number
@@ -101,6 +103,8 @@ export interface SettingsState {
   siyuanRootPath: string | null
   maxKeepAliveMinapps: number
   showOpenedMinappsInSidebar: boolean
+  // 隐私设置
+  enableDataCollection: boolean
 }
 
 export type MultiModelMessageStyle = 'horizontal' | 'vertical' | 'fold' | 'grid'
@@ -129,7 +133,7 @@ const initialState: SettingsState = {
   showAssistantIcon: false,
   pasteLongTextAsFile: false,
   pasteLongTextThreshold: 1500,
-  clickAssistantToShowTopic: false,
+  clickAssistantToShowTopic: true,
   autoCheckUpdate: true,
   renderInputMessageAsMarkdown: false,
   codeShowLineNumbers: false,
@@ -167,6 +171,7 @@ const initialState: SettingsState = {
   notionPageNameKey: 'Name',
   markdownExportPath: null,
   forceDollarMathInMarkdown: false,
+  useTopicNamingForMessageTitle: false,
   thoughtAutoCollapse: true,
   notionAutoSplit: false,
   notionSplitSize: 90,
@@ -176,13 +181,13 @@ const initialState: SettingsState = {
   joplinToken: '',
   joplinUrl: '',
   defaultObsidianVault: null,
-  // 思源笔记配置初始值
   siyuanApiUrl: null,
   siyuanToken: null,
   siyuanBoxId: null,
   siyuanRootPath: null,
   maxKeepAliveMinapps: 3,
-  showOpenedMinappsInSidebar: true
+  showOpenedMinappsInSidebar: true,
+  enableDataCollection: false
 }
 
 const settingsSlice = createSlice({
@@ -206,7 +211,7 @@ const settingsSlice = createSlice({
     },
     setLanguage: (state, action: PayloadAction<LanguageVarious>) => {
       state.language = action.payload
-      window.electron.ipcRenderer.send('miniwindow-reload')
+      window.electron.ipcRenderer.send(IpcChannel.MiniWindowReload)
     },
     setTargetLanguage: (state, action: PayloadAction<TranslateLanguageVarious>) => {
       state.targetLanguage = action.payload
@@ -372,6 +377,9 @@ const settingsSlice = createSlice({
     setForceDollarMathInMarkdown: (state, action: PayloadAction<boolean>) => {
       state.forceDollarMathInMarkdown = action.payload
     },
+    setUseTopicNamingForMessageTitle: (state, action: PayloadAction<boolean>) => {
+      state.useTopicNamingForMessageTitle = action.payload
+    },
     setThoughtAutoCollapse: (state, action: PayloadAction<boolean>) => {
       state.thoughtAutoCollapse = action.payload
     },
@@ -419,6 +427,9 @@ const settingsSlice = createSlice({
     },
     setShowOpenedMinappsInSidebar: (state, action: PayloadAction<boolean>) => {
       state.showOpenedMinappsInSidebar = action.payload
+    },
+    setEnableDataCollection: (state, action: PayloadAction<boolean>) => {
+      state.enableDataCollection = action.payload
     }
   }
 })
@@ -483,6 +494,7 @@ export const {
   setNotionPageNameKey,
   setmarkdownExportPath,
   setForceDollarMathInMarkdown,
+  setUseTopicNamingForMessageTitle,
   setThoughtAutoCollapse,
   setNotionAutoSplit,
   setNotionSplitSize,
@@ -498,7 +510,8 @@ export const {
   setSiyuanBoxId,
   setSiyuanRootPath,
   setMaxKeepAliveMinapps,
-  setShowOpenedMinappsInSidebar
+  setShowOpenedMinappsInSidebar,
+  setEnableDataCollection
 } = settingsSlice.actions
 
 export default settingsSlice.reducer

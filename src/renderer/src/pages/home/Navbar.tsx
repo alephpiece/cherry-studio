@@ -1,4 +1,4 @@
-import { FormOutlined, MoreOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
+import { MoreOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
 import { Navbar, NavbarLeft, NavbarRight } from '@renderer/components/app/Navbar'
 import { HStack } from '@renderer/components/Layout'
 import MinAppsPopover from '@renderer/components/Popups/MinAppsPopover'
@@ -57,10 +57,10 @@ const HeaderNavbar: FC = () => {
               <i className="iconfont icon-hide-sidebar" />
             </NavbarIcon>
           </Tooltip>
-          <Tooltip title={t('settings.shortcuts.new_topic')} mouseEnterDelay={0.8}>
-            <NavbarIcon onClick={() => EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC)}>
-              <FormOutlined />
-            </NavbarIcon>
+          <Tooltip title={t('chat.assistant.search.placeholder')} mouseEnterDelay={0.8}>
+            <NarrowIcon onClick={() => SearchPopup.show()}>
+              <SearchOutlined />
+            </NarrowIcon>
           </Tooltip>
         </NavbarLeft>
       )}
@@ -92,11 +92,6 @@ const HeaderNavbar: FC = () => {
         </HStack>
         <HStack alignItems="center" gap={8}>
           <UpdateAppButton />
-          <Tooltip title={t('chat.assistant.search.placeholder')} mouseEnterDelay={0.8}>
-            <NarrowIcon onClick={() => SearchPopup.show()}>
-              <SearchOutlined />
-            </NarrowIcon>
-          </Tooltip>
           <Tooltip title={t('navbar.expand')} mouseEnterDelay={0.8}>
             <NarrowIcon onClick={handleNarrowModeToggle}>
               <i className="iconfont icon-icon-adaptive-width"></i>

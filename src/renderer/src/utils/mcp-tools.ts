@@ -1,24 +1,25 @@
 import { Tool, ToolUnion, ToolUseBlock } from '@anthropic-ai/sdk/resources'
-import { FunctionCall, FunctionDeclaration, SchemaType, Tool as geminiTool } from '@google/generative-ai'
 import {
   ArraySchema,
   BaseSchema,
   BooleanSchema,
   EnumStringSchema,
+  FunctionCall,
+  FunctionDeclaration,
   FunctionDeclarationSchema,
   FunctionDeclarationSchemaProperty,
   IntegerSchema,
   NumberSchema,
   ObjectSchema,
-  SimpleStringSchema
+  SchemaType,
+  SimpleStringSchema,
+  Tool as geminiTool
 } from '@google/generative-ai'
-import { nanoid } from '@reduxjs/toolkit'
 import store from '@renderer/store'
-import { addMCPServer } from '@renderer/store/mcp'
 import { MCPServer, MCPTool, MCPToolResponse } from '@renderer/types'
 import { ChatCompletionMessageToolCall, ChatCompletionTool } from 'openai/resources'
 
-import { ChunkCallbackData } from '../providers'
+import { ChunkCallbackData } from '../providers/AiProvider'
 
 const ensureValidSchema = (obj: Record<string, any>): FunctionDeclarationSchemaProperty => {
   // Filter out unsupported keys for Gemini
@@ -182,7 +183,9 @@ export function openAIToolsToMcpTool(
     return undefined
   }
 
-  const tool = mcpTools.find((mcptool) => mcptool.id === llmTool.function.name)
+  const tool = mcpTools.find(
+    (mcptool) => mcptool.id === llmTool.function.name || mcptool.name === llmTool.function.name
+  )
 
   if (!tool) {
     console.warn('No MCP Tool found for tool call:', llmTool)
@@ -229,23 +232,6 @@ export async function callMCPTool(tool: MCPTool): Promise<any> {
     })
 
     console.log(`[MCP] Tool called: ${tool.serverName} ${tool.name}`, resp)
-
-    if (tool.serverName === 'mcp-auto-install') {
-      if (resp.data) {
-        const mcpServer: MCPServer = {
-          id: `f${nanoid()}`,
-          name: resp.data.name,
-          description: resp.data.description,
-          baseUrl: resp.data.baseUrl,
-          command: resp.data.command,
-          args: resp.data.args,
-          env: resp.data.env,
-          isActive: false
-        }
-        store.dispatch(addMCPServer(mcpServer))
-      }
-    }
-
     return resp
   } catch (e) {
     console.error(`[MCP] Error calling Tool: ${tool.serverName} ${tool.name}`, e)

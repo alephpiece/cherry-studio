@@ -1,3 +1,4 @@
+import { QuickPanelProvider } from '@renderer/components/QuickPanel'
 import { useActiveTopicContext } from '@renderer/context/ActiveTopicContext'
 import { useAssistant } from '@renderer/hooks/useAssistant'
 import { useSettings } from '@renderer/hooks/useSettings'
@@ -22,7 +23,9 @@ const Chat: FC<Props> = (props) => {
     <Container id="chat" className={messageStyle}>
       <Main id="chat-main" vertical flex={1} justify="space-between">
         <Messages key={activeTopic.id} assistant={assistant} topic={activeTopic} setActiveTopic={setActiveTopic} />
-        <Inputbar assistant={assistant} topic={activeTopic} setActiveTopic={setActiveTopic} />
+        <QuickPanelProvider>
+          <Inputbar assistant={assistant} setActiveTopic={setActiveTopic} topic={activeTopic} />
+        </QuickPanelProvider>
       </Main>
     </Container>
   )

@@ -12,6 +12,7 @@ import { setDefaultModel, setTopicNamingModel, setTranslateModel } from '@render
 import { removeAssistantTopics, selectTopicsByAssistantId } from '@renderer/store/topics'
 import { addTopic as addTopicToState } from '@renderer/store/topics'
 import { Assistant, AssistantSettings, Model, Topic } from '@renderer/types'
+import { useCallback } from 'react'
 
 export function useAssistants() {
   const { assistants } = useAppSelector((state) => state.assistants)
@@ -42,7 +43,10 @@ export function useAssistant(id: string) {
     removeAllTopics: () => {
       dispatch(removeAssistantTopics(assistant.id))
     },
-    setModel: (model: Model) => dispatch(setModel({ assistantId: assistant.id, model })),
+    setModel: useCallback(
+      (model: Model) => dispatch(setModel({ assistantId: assistant.id, model })),
+      [dispatch, assistant.id]
+    ),
     updateAssistant: (assistant: Assistant) => dispatch(updateAssistant(assistant)),
     updateAssistantSettings: (settings: Partial<AssistantSettings>) => {
       dispatch(updateAssistantSettings({ assistantId: assistant.id, settings }))

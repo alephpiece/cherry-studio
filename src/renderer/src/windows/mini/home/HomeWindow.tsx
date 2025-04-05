@@ -7,6 +7,8 @@ import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import { useAppDispatch } from '@renderer/store'
 import { addTopic } from '@renderer/store/topics'
 import { uuid } from '@renderer/utils'
+import { defaultLanguage } from '@shared/config/constant'
+import { IpcChannel } from '@shared/IpcChannel'
 import { Divider } from 'antd'
 import dayjs from 'dayjs'
 import { isEmpty } from 'lodash'
@@ -73,7 +75,7 @@ const HomeWindow: FC = () => {
   }, [readClipboard])
 
   useEffect(() => {
-    i18n.changeLanguage(language || navigator.language || 'en-US')
+    i18n.changeLanguage(language || navigator.language || defaultLanguage)
   }, [language])
 
   const onCloseWindow = () => window.api.miniWindow.hide()
@@ -195,16 +197,16 @@ const HomeWindow: FC = () => {
   })
 
   useEffect(() => {
-    window.electron.ipcRenderer.on('show-mini-window', onWindowShow)
-    window.electron.ipcRenderer.on('selection-action', (_, { action, selectedText }) => {
+    window.electron.ipcRenderer.on(IpcChannel.ShowMiniWindow, onWindowShow)
+    window.electron.ipcRenderer.on(IpcChannel.SelectionAction, (_, { action, selectedText }) => {
       selectedText && setSelectedText(selectedText)
       action && setRoute(action)
       action === 'chat' && onSendMessage()
     })
 
     return () => {
-      window.electron.ipcRenderer.removeAllListeners('show-mini-window')
-      window.electron.ipcRenderer.removeAllListeners('selection-action')
+      window.electron.ipcRenderer.removeAllListeners(IpcChannel.ShowMiniWindow)
+      window.electron.ipcRenderer.removeAllListeners(IpcChannel.SelectionAction)
     }
   }, [onWindowShow, onSendMessage, setRoute])
 
@@ -292,6 +294,8 @@ const HomeWindow: FC = () => {
       <Divider style={{ margin: '10px 0' }} />
       <Footer
         route={route}
+        canUseBackspace={text.length > 0 || clipboardText.length == 0}
+        clearClipboard={clearClipboard}
         onExit={() => {
           setRoute('home')
           setText('')
@@ -306,6 +310,7 @@ const Container = styled.div`
   display: flex;
   flex: 1;
   height: 100%;
+  width: 100%;
   flex-direction: column;
   -webkit-app-region: drag;
   padding: 8px 10px;
@@ -313,6 +318,8 @@ const Container = styled.div`
 
 const Main = styled.main`
   display: flex;
+  flex-direction: column;
+
   flex: 1;
   overflow: hidden;
 `
