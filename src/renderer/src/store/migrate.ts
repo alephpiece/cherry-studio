@@ -5,7 +5,7 @@ import { SYSTEM_MODELS } from '@renderer/config/models'
 import { TRANSLATE_PROMPT } from '@renderer/config/prompts'
 import db from '@renderer/databases'
 import i18n from '@renderer/i18n'
-import { Assistant, Topic } from '@renderer/types'
+import { Topic } from '@renderer/types'
 import { getDefaultGroupName, getLeadingEmoji, runAsyncFunction, uuid } from '@renderer/utils'
 import { isEmpty } from 'lodash'
 import { createMigrate } from 'redux-persist'
@@ -97,19 +97,17 @@ const migrateConfig = {
   },
   '8': (state: RootState) => {
     try {
-      const fixAssistantName = (assistant: Assistant) => {
+      const fixAssistantName = (assistant: any) => {
         if (isEmpty(assistant.name)) {
           assistant.name = i18n.t(`assistant.${assistant.id}.name`)
         }
 
-        if (assistant.topics) {
-          assistant.topics = assistant.topics.map((topic) => {
-            if (isEmpty(topic.name)) {
-              topic.name = i18n.t(`assistant.${assistant.id}.topic.name`)
-            }
-            return topic
-          })
-        }
+        assistant.topics = assistant.topics.map((topic: any) => {
+          if (isEmpty(topic.name)) {
+            topic.name = i18n.t(`assistant.${assistant.id}.topic.name`)
+          }
+          return topic
+        })
 
         return assistant
       }
@@ -313,10 +311,10 @@ const migrateConfig = {
         ...state,
         assistants: {
           ...state.assistants,
-          assistants: state.assistants.assistants.map((assistant) => ({
+          assistants: state.assistants.assistants.map((assistant: any) => ({
             ...assistant,
             topics:
-              assistant.topics?.map((topic) => ({
+              assistant.topics.map((topic: any) => ({
                 ...topic,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
@@ -379,13 +377,11 @@ const migrateConfig = {
         ...state,
         assistants: {
           ...state.assistants,
-          assistants: state.assistants.assistants.map((assistant) => {
-            if (assistant.topics) {
-              assistant.topics = assistant.topics.map((topic) => ({
-                ...topic,
-                assistantId: assistant.id
-              }))
-            }
+          assistants: state.assistants.assistants.map((assistant: any) => {
+            assistant.topics = assistant.topics.map((topic: any) => ({
+              ...topic,
+              assistantId: assistant.id
+            }))
             return assistant
           })
         }
@@ -459,8 +455,8 @@ const migrateConfig = {
   },
   '34': (state: RootState) => {
     try {
-      state.assistants.assistants.forEach((assistant) => {
-        assistant.topics?.forEach((topic) => {
+      state.assistants.assistants.forEach((assistant: any) => {
+        assistant.topics.forEach((topic: any) => {
           topic.assistantId = assistant.id
           runAsyncFunction(async () => {
             const _topic = await db.topics.get(topic.id)
@@ -1205,6 +1201,7 @@ const migrateConfig = {
       const allTopics: any[] = []
 
       // Handle default assistant topics
+      // @ts-ignore eslint-disable-next-line
       const defaultTopics = state.assistants?.defaultAssistant?.topics || []
       if (defaultTopics.length > 0) {
         const defaultAssistantId = state.assistants.defaultAssistant.id
@@ -1219,6 +1216,7 @@ const migrateConfig = {
       // Handle topics from other assistants
       if (state.assistants?.assistants?.length > 0) {
         state.assistants.assistants.forEach((assistant) => {
+          // @ts-ignore eslint-disable-next-line
           const assistantTopics = assistant.topics || []
           if (assistantTopics.length > 0) {
             const topicsWithId = assistantTopics.map((topic) => ({
@@ -1268,13 +1266,18 @@ const migrateConfig = {
         state.topics.activeTopic = state.topics.topics[0]
       }
 
-      // After migration, clear all assistant.topics arrays
       if (state.assistants.defaultAssistant) {
-        state.assistants.defaultAssistant.topics = []
+        // @ts-ignore eslint-disable-next-line
+        if ((state.assistants.defaultAssistant as any).topics) {
+          delete (state.assistants.defaultAssistant as any).topics
+        }
       }
 
       state.assistants.assistants?.forEach((assistant) => {
-        assistant.topics = []
+        // @ts-ignore eslint-disable-next-line
+        if ((assistant as any).topics) {
+          delete (assistant as any).topics
+        }
       })
       return state
     } catch (error) {

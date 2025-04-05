@@ -7,8 +7,6 @@ export type Assistant = {
   name: string
   prompt: string
   knowledge_bases?: KnowledgeBase[]
-  /** @deprecated 已迁移到独立的topics状态。此字段仅用于版本迁移兼容，不应再被读取或写入 */
-  topics?: Topic[]
   type: string
   emoji?: string
   description?: string
