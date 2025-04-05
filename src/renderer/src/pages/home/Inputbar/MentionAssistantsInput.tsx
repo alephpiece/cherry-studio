@@ -22,7 +22,7 @@ const MentionAssistantsInput: FC<{
           <Tag
             icon={assistant.emoji ? <span>{assistant.emoji}</span> : <RobotOutlined />}
             bordered={false}
-            color="success" // 使用不同于模型的颜色
+            color="processing"
             key={assistant.id}
             closable
             onClose={() => onRemoveAssistant(assistant)}>
