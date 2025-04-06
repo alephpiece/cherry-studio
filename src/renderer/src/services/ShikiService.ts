@@ -4,6 +4,7 @@ import { CodeCacheService } from './CodeCacheService'
 interface PendingRequest {
   resolvers: Array<(html: string) => void>
   code: string
+  enableCache: boolean
   timeoutId?: ReturnType<typeof setTimeout>
 }
 
@@ -81,25 +82,12 @@ class ShikiService {
       }
 
       if (type === 'highlight' && cacheKey && this.pendingRequests.has(cacheKey)) {
-        const pendingRequest = this.pendingRequests.get(cacheKey)!
-
-        if (pendingRequest.timeoutId) {
-          clearTimeout(pendingRequest.timeoutId)
-        }
-
         if (result.success && result.html) {
-          CodeCacheService.setCachedResult(cacheKey, result.html, result.codeLength || 0)
-
-          // 调用所有等待的解析器
-          pendingRequest.resolvers.forEach((resolver) => resolver(result.html))
+          this.resolveRequest(cacheKey, result.html, result.codeLength)
         } else {
           console.warn(`[ShikiService] Failed to highlight:`, result.error || 'Unknown error')
-
-          // 出错时也需要通知所有等待的解析器
-          this.provideSimpleFallback(pendingRequest.code, cacheKey)
+          this.rejectRequest(cacheKey)
         }
-
-        this.pendingRequests.delete(cacheKey)
       }
     }
 
@@ -163,26 +151,8 @@ class ShikiService {
     }
 
     return new Promise((resolve) => {
-      // 合并相同请求，减少不必要的计算
-      if (this.pendingRequests.has(cacheKey)) {
-        const pendingRequest = this.pendingRequests.get(cacheKey)!
-        pendingRequest.resolvers.push(resolve)
-        return
-      }
-
-      // 设置整个请求的超时处理
-      const timeoutId = setTimeout(() => {
-        if (this.pendingRequests.has(cacheKey)) {
-          this.provideSimpleFallback(code, cacheKey)
-        }
-      }, 10000) // 10秒应该足够了
-
-      // 为新请求创建条目
-      this.pendingRequests.set(cacheKey, {
-        resolvers: [resolve],
-        code,
-        timeoutId
-      })
+      // 注册代码高亮请求
+      this.registerRequest(cacheKey, code, enableCache, resolve)
 
       // Worker => Main Thread => No highlight
       if (this.worker) {
@@ -199,7 +169,7 @@ class ShikiService {
       } else if (this.highlighter) {
         this.processInMainThread(code, language, theme, cacheKey)
       } else {
-        this.provideSimpleFallback(code, cacheKey)
+        this.rejectRequest(cacheKey)
       }
     })
   }
@@ -218,36 +188,80 @@ class ShikiService {
         theme: theme
       })
 
-      // 处理结果
-      if (this.pendingRequests.has(cacheKey)) {
-        const pendingRequest = this.pendingRequests.get(cacheKey)!
-        if (pendingRequest.timeoutId) clearTimeout(pendingRequest.timeoutId)
-        CodeCacheService.setCachedResult(cacheKey, html, code.length)
-
-        // 通知所有等待的解析器
-        pendingRequest.resolvers.forEach((resolver) => resolver(html))
-        this.pendingRequests.delete(cacheKey)
-      }
+      this.resolveRequest(cacheKey, html, code.length)
     } catch (error) {
-      this.provideSimpleFallback(code, cacheKey)
+      this.rejectRequest(cacheKey)
     }
   }
 
-  // 提供简单的fallback
-  private provideSimpleFallback(code: string, cacheKey: string) {
+  /**
+   * 注册新的高亮请求
+   */
+  private registerRequest(
+    cacheKey: string,
+    code: string,
+    enableCache: boolean,
+    resolver: (html: string) => void
+  ): void {
+    // 合并相同请求，减少不必要的计算
     if (this.pendingRequests.has(cacheKey)) {
       const pendingRequest = this.pendingRequests.get(cacheKey)!
-      const escapedCode = code?.replace(/[<>]/g, (char) => ({ '<': '&lt;', '>': '&gt;' })[char]!)
-      const fallbackHtml = `<pre style="padding: 10px"><code>${escapedCode}</code></pre>`
-
-      if (pendingRequest.timeoutId) {
-        clearTimeout(pendingRequest.timeoutId)
-      }
-
-      // 通知所有等待的解析器
-      pendingRequest.resolvers.forEach((resolver) => resolver(fallbackHtml))
-      this.pendingRequests.delete(cacheKey)
+      pendingRequest.resolvers.push(resolver)
+      return
     }
+
+    // 设置整个请求的超时处理
+    const timeoutId = setTimeout(() => {
+      this.rejectRequest(cacheKey)
+    }, 10000) // 10秒应该足够了
+
+    // 为新请求创建条目
+    this.pendingRequests.set(cacheKey, {
+      resolvers: [resolver],
+      code,
+      enableCache,
+      timeoutId
+    })
+  }
+
+  /**
+   * 处理高亮成功的情况
+   */
+  private resolveRequest(cacheKey: string, html: string, codeLength?: number): void {
+    if (!this.pendingRequests.has(cacheKey)) return
+
+    const pendingRequest = this.pendingRequests.get(cacheKey)!
+
+    if (pendingRequest.timeoutId) {
+      clearTimeout(pendingRequest.timeoutId)
+    }
+
+    if (pendingRequest.enableCache) {
+      CodeCacheService.setCachedResult(cacheKey, html, codeLength || pendingRequest.code.length)
+    }
+
+    pendingRequest.resolvers.forEach((resolver) => resolver(html))
+    this.pendingRequests.delete(cacheKey)
+  }
+
+  /**
+   * 处理高亮失败的情况，提供简单的回退方式
+   */
+  private rejectRequest(cacheKey: string): void {
+    if (!this.pendingRequests.has(cacheKey)) return
+
+    const pendingRequest = this.pendingRequests.get(cacheKey)!
+
+    if (pendingRequest.timeoutId) {
+      clearTimeout(pendingRequest.timeoutId)
+    }
+
+    // 提供简单的fallback
+    const escapedCode = pendingRequest.code.replace(/[<>]/g, (char) => ({ '<': '&lt;', '>': '&gt;' })[char]!)
+    const fallbackHtml = `<pre style="padding: 10px"><code>${escapedCode}</code></pre>`
+
+    pendingRequest.resolvers.forEach((resolver) => resolver(fallbackHtml))
+    this.pendingRequests.delete(cacheKey)
   }
 
   dispose() {
