@@ -1189,14 +1189,18 @@ const migrateConfig = {
     }
   },
   '91': (state: RootState) => {
-    if (!state.assistants?.assistants && !state.assistants?.defaultAssistant) {
+    try {
+      state.settings.codeCacheable = false
+      state.settings.codeCacheMaxSize = 1000
+      state.settings.codeCacheTTL = 15
+      state.settings.codeCacheThreshold = 2
+      addProvider(state, 'qiniu')
+      return state
+    } catch (error) {
       return state
     }
-
-    if (!state.topics) {
-      state.topics = { topics: [], activeTopic: null }
-    }
-
+  },
+  '92': (state: RootState) => {
     try {
       const allTopics: any[] = []
 
@@ -1281,7 +1285,6 @@ const migrateConfig = {
       })
       return state
     } catch (error) {
-      console.error(error)
       return state
     }
   }

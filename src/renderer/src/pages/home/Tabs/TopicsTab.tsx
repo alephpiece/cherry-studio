@@ -22,6 +22,7 @@ import { TopicManager, useTopics } from '@renderer/hooks/useTopic'
 import { fetchMessagesSummary } from '@renderer/services/ApiService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import store from '@renderer/store'
+import { RootState } from '@renderer/store'
 import { setGenerating } from '@renderer/store/runtime'
 import { Assistant, Topic } from '@renderer/types'
 import { removeSpecialCharactersForFileName } from '@renderer/utils'
@@ -36,9 +37,11 @@ import {
 } from '@renderer/utils/export'
 import { hasTopicPendingRequests } from '@renderer/utils/queue'
 import { Dropdown, MenuProps, Tooltip } from 'antd'
+import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import dayjs from 'dayjs'
 import { FC, startTransition, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSelector } from 'react-redux'
 import styled from 'styled-components'
 
 interface Props {
@@ -144,6 +147,21 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
     [setActiveTopic]
   )
 
+  const exportMenuOptions = useSelector(
+    (state: RootState) =>
+      state.settings.exportMenuOptions || {
+        image: true,
+        markdown: true,
+        markdown_reason: true,
+        notion: true,
+        yuque: true,
+        joplin: true,
+        obsidian: true,
+        siyuan: true,
+        docx: true
+      }
+  )
+
   const getTopicMenuItems = useCallback(
     (topic: Topic) => {
       const menus: MenuProps['items'] = [
@@ -243,18 +261,22 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
           key: 'export',
           icon: <UploadOutlined />,
           children: [
-            {
+            exportMenuOptions.image !== false && {
               label: t('chat.topics.export.image'),
               key: 'image',
               onClick: () => EventEmitter.emit(EVENT_NAMES.EXPORT_TOPIC_IMAGE, topic)
             },
-            {
+            exportMenuOptions.markdown !== false && {
               label: t('chat.topics.export.md'),
               key: 'markdown',
               onClick: () => exportTopicAsMarkdown(topic)
             },
-
-            {
+            exportMenuOptions.markdown_reason !== false && {
+              label: t('chat.topics.export.md.reason'),
+              key: 'markdown_reason',
+              onClick: () => exportTopicAsMarkdown(topic, true)
+            },
+            exportMenuOptions.docx !== false && {
               label: t('chat.topics.export.word'),
               key: 'word',
               onClick: async () => {
@@ -262,14 +284,14 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
                 window.api.export.toWord(markdown, removeSpecialCharactersForFileName(topic.name))
               }
             },
-            {
+            exportMenuOptions.notion !== false && {
               label: t('chat.topics.export.notion'),
               key: 'notion',
               onClick: async () => {
                 exportTopicToNotion(topic)
               }
             },
-            {
+            exportMenuOptions.yuque !== false && {
               label: t('chat.topics.export.yuque'),
               key: 'yuque',
               onClick: async () => {
@@ -277,7 +299,7 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
                 exportMarkdownToYuque(topic.name, markdown)
               }
             },
-            {
+            exportMenuOptions.obsidian !== false && {
               label: t('chat.topics.export.obsidian'),
               key: 'obsidian',
               onClick: async () => {
@@ -285,7 +307,7 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
                 await ObsidianExportPopup.show({ title: topic.name, markdown, processingMethod: '3' })
               }
             },
-            {
+            exportMenuOptions.joplin !== false && {
               label: t('chat.topics.export.joplin'),
               key: 'joplin',
               onClick: async () => {
@@ -293,7 +315,7 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
                 exportMarkdownToJoplin(topic.name, markdown)
               }
             },
-            {
+            exportMenuOptions.siyuan !== false && {
               label: t('chat.topics.export.siyuan'),
               key: 'siyuan',
               onClick: async () => {
@@ -301,7 +323,7 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
                 exportMarkdownToSiyuan(topic.name, markdown)
               }
             }
-          ]
+          ].filter(Boolean) as ItemType<MenuItemType>[]
         }
       ]
 
@@ -334,16 +356,25 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
       return menus
     },
     [
-      t,
-      assistants,
-      topics.length,
-      selectedAssistant,
       assistant,
-      updateTopic,
-      onPinTopic,
+      assistants,
+      exportMenuOptions.docx,
+      exportMenuOptions.image,
+      exportMenuOptions.joplin,
+      exportMenuOptions.markdown,
+      exportMenuOptions.markdown_reason,
+      exportMenuOptions.notion,
+      exportMenuOptions.obsidian,
+      exportMenuOptions.siyuan,
+      exportMenuOptions.yuque,
       onClearMessages,
+      onDeleteTopic,
+      onPinTopic,
       onSwitchAssistant,
-      onDeleteTopic
+      selectedAssistant,
+      t,
+      topics.length,
+      updateTopic
     ]
   )
 

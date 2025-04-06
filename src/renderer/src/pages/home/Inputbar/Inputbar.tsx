@@ -814,7 +814,12 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
   }
 
   const handleRemoveKnowledgeBase = (knowledgeBase: KnowledgeBase) => {
-    setSelectedKnowledgeBases(selectedKnowledgeBases.filter((kb) => kb.id !== knowledgeBase.id))
+    const newKnowledgeBases = assistant.knowledge_bases?.filter((kb) => kb.id !== knowledgeBase.id)
+    updateAssistant({
+      ...assistant,
+      knowledge_bases: newKnowledgeBases
+    })
+    setSelectedKnowledgeBases(newKnowledgeBases ?? [])
   }
 
   const toggelEnableMCP = (mcp: MCPServer) => {

@@ -44,8 +44,8 @@ export function useAssistant(id: string) {
       dispatch(removeAssistantTopics(assistant.id))
     },
     setModel: useCallback(
-      (model: Model) => dispatch(setModel({ assistantId: assistant.id, model })),
-      [dispatch, assistant.id]
+      (model: Model) => assistant && dispatch(setModel({ assistantId: assistant?.id, model })),
+      [assistant, dispatch]
     ),
     updateAssistant: (assistant: Assistant) => dispatch(updateAssistant(assistant)),
     updateAssistantSettings: (settings: Partial<AssistantSettings>) => {
