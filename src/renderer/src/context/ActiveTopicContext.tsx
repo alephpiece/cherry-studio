@@ -17,7 +17,7 @@ export const ActiveTopicProvider: React.FC<{ children: ReactNode }> = ({ childre
 }
 
 export const useActiveTopicContext = (): ActiveTopicContextType => {
-  const context = use(ActiveTopicContext)
+  const context = useContext(ActiveTopicContext)
   if (context === undefined) {
     throw new Error('useActiveTopicContext must be used within an ActiveTopicProvider')
   }
