@@ -2,8 +2,9 @@ import ShikiWorker from '../workers/shiki.worker?worker'
 import { CodeCacheService } from './CodeCacheService'
 
 interface PendingRequest {
-  resolve: (html: string) => void
+  resolvers: Array<(html: string) => void>
   code: string
+  timeoutId?: ReturnType<typeof setTimeout>
 }
 
 class ShikiWorkerService {
@@ -18,7 +19,10 @@ class ShikiWorkerService {
   }
 
   private initWorker() {
-    if (typeof Worker === 'undefined') return
+    if (typeof Worker === 'undefined') {
+      console.warn('[ShikiWorker] Web Worker is not supported in this environment')
+      return
+    }
 
     try {
       this.worker = new ShikiWorker()
@@ -32,13 +36,27 @@ class ShikiWorkerService {
         }
 
         if (type === 'highlight' && cacheKey && this.pendingRequests.has(cacheKey)) {
-          const { resolve } = this.pendingRequests.get(cacheKey)!
+          const pendingRequest = this.pendingRequests.get(cacheKey)!
+
+          // 清除请求超时计时器
+          if (pendingRequest.timeoutId) {
+            clearTimeout(pendingRequest.timeoutId)
+          }
 
           if (result.success && result.html) {
             CodeCacheService.setCachedResult(cacheKey, result.html, result.codeLength || 0)
+
+            // 调用所有等待的解析器
+            pendingRequest.resolvers.forEach((resolver) => resolver(result.html))
+          } else {
+            console.warn(`[ShikiWorker] Failed to highlight:`, result.error || 'Unknown error')
+
+            // 错误情况下也需要通知所有等待的解析器
+            const escapedCode = pendingRequest.code?.replace(/[<>]/g, (char) => ({ '<': '&lt;', '>': '&gt;' })[char]!)
+            const fallbackHtml = `<pre style="padding: 10px"><code>${escapedCode}</code></pre>`
+            pendingRequest.resolvers.forEach((resolver) => resolver(fallbackHtml))
           }
 
-          resolve(result.html)
           this.pendingRequests.delete(cacheKey)
         }
       }
@@ -56,7 +74,6 @@ class ShikiWorkerService {
         })
       })
     } catch (error) {
-      console.error('Failed to initialize syntax highlighter worker:', error)
       this.worker = null
     }
   }
@@ -91,18 +108,42 @@ class ShikiWorkerService {
     }
 
     return new Promise((resolve) => {
-      this.pendingRequests.set(cacheKey, { resolve, code })
+      // 检查是否已有相同请求，有则合并
+      if (this.pendingRequests.has(cacheKey)) {
+        const pendingRequest = this.pendingRequests.get(cacheKey)!
+        pendingRequest.resolvers.push(resolve)
+      } else {
+        // 设置整个请求的超时处理
+        const timeoutId = setTimeout(() => {
+          if (this.pendingRequests.has(cacheKey)) {
+            const pendingRequest = this.pendingRequests.get(cacheKey)!
+            const escapedCode = code?.replace(/[<>]/g, (char) => ({ '<': '&lt;', '>': '&gt;' })[char]!)
+            const fallbackHtml = `<pre style="padding: 10px"><code>${escapedCode}</code></pre>`
 
-      this.worker?.postMessage({
-        type: 'highlight',
-        payload: {
+            // 通知所有等待的解析器
+            pendingRequest.resolvers.forEach((r) => r(fallbackHtml))
+            this.pendingRequests.delete(cacheKey)
+          }
+        }, 10000) // 10秒超时
+
+        // 新请求，创建条目并发送到 Worker
+        this.pendingRequests.set(cacheKey, {
+          resolvers: [resolve],
           code,
-          language,
-          theme,
-          cacheKey,
-          codeLength: code.length
-        }
-      })
+          timeoutId
+        })
+
+        this.worker?.postMessage({
+          type: 'highlight',
+          payload: {
+            code,
+            language,
+            theme,
+            cacheKey,
+            codeLength: code.length
+          }
+        })
+      }
     })
   }
 
@@ -111,6 +152,14 @@ class ShikiWorkerService {
       this.worker.terminate()
       this.worker = null
     }
+
+    // 清理所有超时计时器
+    this.pendingRequests.forEach((request) => {
+      if (request.timeoutId) {
+        clearTimeout(request.timeoutId)
+      }
+    })
+
     this.pendingRequests.clear()
   }
 }
