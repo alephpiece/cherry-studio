@@ -50,7 +50,7 @@ async function highlightCode(code: string, language: string, theme: string) {
     await loadTheme(theme)
 
     // 生成高亮HTML
-    if (!highlighter) throw new Error('Highlighter is not initialized')
+    if (!highlighter) throw new Error('Shiki Highlighter is not initialized')
 
     const html = highlighter.codeToHtml(code, {
       lang: mappedLanguage,
