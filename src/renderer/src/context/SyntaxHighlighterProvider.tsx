@@ -1,7 +1,7 @@
 import { useTheme } from '@renderer/context/ThemeProvider'
 import { useMermaid } from '@renderer/hooks/useMermaid'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { shikiWorker } from '@renderer/services/ShikiWorkerService'
+import { shikiService } from '@renderer/services/ShikiService'
 import { type CodeStyleVarious, ThemeMode } from '@renderer/types'
 import type React from 'react'
 import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo } from 'react'
@@ -28,14 +28,14 @@ export const SyntaxHighlighterProvider: React.FC<PropsWithChildren> = ({ childre
   useEffect(() => {
     // 在组件卸载时清理 Worker
     return () => {
-      shikiWorker.dispose()
+      shikiService.dispose()
     }
   }, [])
 
   const codeToHtml = useCallback(
     async (code: string, language: string, enableCache: boolean) => {
       if (!code) return ''
-      return shikiWorker.highlightCode(code, language, highlighterTheme, enableCache)
+      return shikiService.highlightCode(code, language, highlighterTheme, enableCache)
     },
     [highlighterTheme]
   )
