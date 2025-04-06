@@ -51,13 +51,10 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children, className }) => {
     const codeElement = codeContentRef.current
 
     // 只在非流式输出状态才尝试启用cache
-    await codeToHtml(children, language, !isStreamingRef.current)
-      .then((html) => {
-        codeElement.innerHTML = html
-      })
-      .finally(() => {
-        codeElement.style.opacity = '1'
-      })
+    const highlightedHtml = await codeToHtml(children, language, !isStreamingRef.current)
+
+    codeElement.innerHTML = highlightedHtml
+    codeElement.style.opacity = '1'
 
     const isShowExpandButton = codeElement.scrollHeight > 350
     if (shouldShowExpandButtonRef.current === isShowExpandButton) return
