@@ -23,37 +23,49 @@ class ShikiService {
   private highlighter: any = null // 主线程highlighter 实例
   private pendingRequests = new Map<string, PendingRequest>()
   private isInitialized = false
+  private isInitializing = false
   private initPromise: Promise<void> | null = null
   private resolveInit?: () => void
 
-  constructor() {
-    this.init()
-  }
-
   private async init() {
-    // 尝试初始化 Worker
-    if (typeof Worker !== 'undefined') {
-      try {
-        await this.initWorker()
-      } catch (error) {
-        console.warn('[ShikiWorker] Worker initialization failed, falling back to main thread')
-        this.worker = null
-      }
+    if (this.isInitialized || this.isInitializing) {
+      return this.initPromise
     }
 
-    // 如果Worker不可用或初始化失败，初始化主线程highlighter
-    if (!this.worker) {
-      try {
-        await this.initMainThreadHighlighter()
-      } catch (error) {
-        console.error('[ShikiWorker] Failed to initialize shiki in main thread:', error)
-      }
-    }
+    this.isInitializing = true
+
+    this.initPromise = Promise.resolve()
+      // 尝试初始化Worker highlighter
+      .then(() => {
+        if (typeof Worker === 'undefined') {
+          return Promise.reject(new Error('Web Worker is not supported'))
+        }
+        return this.initWorker()
+      })
+      // 尝试初始化主线程 highlighter
+      .catch((error) => {
+        console.warn('[ShikiService] Worker initialization failed, falling back to main thread:', error)
+        this.worker = null
+        return this.initMainThreadHighlighter()
+      })
+      // Highlighter 不可用，实际运行中回退到没有高亮的代码
+      .catch((error) => {
+        console.error('[ShikiService] Failed to initialize shiki in main thread:', error)
+      })
+      .finally(() => {
+        // 只有在初始化失败时重置状态
+        // worker成功时onmessage会设置isInitialized和isInitializing
+        if (!this.isInitialized) {
+          this.isInitializing = false
+        }
+      })
+
+    return this.initPromise
   }
 
   private async initWorker() {
     if (typeof Worker === 'undefined') {
-      console.warn('[ShikiWorker] Web Worker is not supported in this environment')
+      console.warn('[ShikiService] Web Worker is not supported in this environment')
       return
     }
 
@@ -64,6 +76,7 @@ class ShikiService {
 
       if (type === 'init') {
         this.isInitialized = true
+        this.isInitializing = false
         this.resolveInit?.()
       }
 
@@ -80,9 +93,9 @@ class ShikiService {
           // 调用所有等待的解析器
           pendingRequest.resolvers.forEach((resolver) => resolver(result.html))
         } else {
-          console.warn(`[ShikiWorker] Failed to highlight:`, result.error || 'Unknown error')
+          console.warn(`[ShikiService] Failed to highlight:`, result.error || 'Unknown error')
 
-          // 错误情况下也需要通知所有等待的解析器
+          // 出错时也需要通知所有等待的解析器
           this.provideSimpleFallback(pendingRequest.code, cacheKey)
         }
 
@@ -106,14 +119,18 @@ class ShikiService {
   }
 
   private async initMainThreadHighlighter() {
-    const { createHighlighter } = await import('shiki')
+    try {
+      const { createHighlighter } = await import('shiki')
 
-    this.highlighter = await createHighlighter({
-      langs: ['javascript', 'typescript', 'python', 'java', 'markdown'],
-      themes: ['one-light', 'material-theme-darker']
-    })
+      this.highlighter = await createHighlighter({
+        langs: ['javascript', 'typescript', 'python', 'java', 'markdown'],
+        themes: ['one-light', 'material-theme-darker']
+      })
 
-    this.isInitialized = true
+      this.isInitialized = true
+    } finally {
+      this.isInitializing = false
+    }
   }
 
   /**
@@ -134,7 +151,7 @@ class ShikiService {
       if (cached) return cached
     }
 
-    // 确保初始化完成
+    // 首次使用时初始化
     if (!this.isInitialized) {
       await this.init()
     }
@@ -240,6 +257,9 @@ class ShikiService {
     }
 
     this.highlighter = null
+    this.isInitialized = false
+    this.isInitializing = false
+    this.initPromise = null
 
     this.pendingRequests.forEach((request) => {
       if (request.timeoutId) {
