@@ -72,7 +72,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     })
   }, [children, language, updateContext])
 
-  const onCopySource = useCallback(
+  const handleCopySource = useCallback(
     (ctx?: ToolContext) => {
       if (!ctx) return
       navigator.clipboard.writeText(ctx.code)
@@ -81,7 +81,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     [t]
   )
 
-  const onDownloadSource = useCallback((ctx?: ToolContext) => {
+  const handleDownloadSource = useCallback((ctx?: ToolContext) => {
     if (!ctx) return
 
     const { code, language } = ctx
@@ -103,7 +103,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     window.api.file.save(fileName, code)
   }, [])
 
-  const onRunScript = useCallback((ctx?: ToolContext) => {
+  const handleRunScript = useCallback((ctx?: ToolContext) => {
     if (!ctx) return
 
     setIsRunning(true)
@@ -151,7 +151,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
       type: 'core',
       icon: <i className="iconfont icon-copy" style={{ fontSize: 14 }}></i>,
       tooltip: t('code_block.copy.source'),
-      onClick: onCopySource,
+      onClick: handleCopySource,
       order: 0
     })
 
@@ -161,14 +161,14 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
       type: 'core',
       icon: <DownloadOutlined />,
       tooltip: t('code_block.download.source'),
-      onClick: onDownloadSource,
+      onClick: handleDownloadSource,
       order: 1
     })
     return () => {
       removeTool('copy')
       removeTool('download')
     }
-  }, [onCopySource, onDownloadSource, registerTool, removeTool, t])
+  }, [handleCopySource, handleDownloadSource, registerTool, removeTool, t])
 
   // 特殊视图的编辑按钮
   useEffect(() => {
@@ -214,12 +214,12 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
       type: 'quick',
       icon: isRunning ? <LoadingOutlined /> : <PlayCircleOutlined />,
       tooltip: t('code_block.run'),
-      onClick: onRunScript,
+      onClick: handleRunScript,
       order: 0
     })
 
     return () => isExecutable && removeTool('run')
-  }, [isExecutable, isRunning, onRunScript, registerTool, removeTool, t])
+  }, [isExecutable, isRunning, handleRunScript, registerTool, removeTool, t])
 
   // HTML 打开按钮
   useEffect(() => {
