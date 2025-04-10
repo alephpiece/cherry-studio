@@ -14,14 +14,12 @@ import styled from 'styled-components'
 interface Props {
   children: string
   language: string
-  id?: string
-  onSave?: (id: string, newContent: string) => void
+  onSave?: (newContent: string) => void
 }
 
 const SourceEditor = ({
   children,
   language,
-  id,
   onSave,
   ref
 }: Props & { ref?: React.RefObject<HTMLDivElement | null> }) => {
@@ -102,14 +100,14 @@ const SourceEditor = ({
       icon: <SaveOutlined />,
       tooltip: t('code_block.edit.save'),
       onClick: () => {
-        id !== undefined && onSave?.(id, code + '\n')
+        onSave?.(code + '\n')
         window.message.success({ content: t('code_block.edit.saved'), key: 'save-code' })
       },
       order: 3
     })
 
     return () => removeTool('save')
-  }, [code, id, onSave, registerTool, removeTool, t])
+  }, [code, onSave, registerTool, removeTool, t])
 
   // 检查编辑器高度并决定是否显示展开按钮
   useEffect(() => {

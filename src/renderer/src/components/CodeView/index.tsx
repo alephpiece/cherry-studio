@@ -29,8 +29,7 @@ import { useHtmlHandlers } from './useHtmlTools'
 interface Props {
   children: string
   language: string
-  id?: string
-  onSave?: (id: string, newContent: string) => void
+  onSave?: (newContent: string) => void
 }
 
 /**
@@ -46,7 +45,7 @@ interface Props {
  * 编辑视图：
  * - 代码编辑器
  */
-const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
+const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
   const { t } = useTranslation()
   const { codeEditor } = useSettings()
   const previewRef = useRef<HTMLDivElement>(null)
@@ -277,11 +276,11 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     }
 
     return (
-      <SourceViewer ref={previewRef} language={language} id={id} onSave={onSave}>
+      <SourceViewer ref={previewRef} language={language} onSave={onSave}>
         {children}
       </SourceViewer>
     )
-  }, [SourceViewer, children, id, isInSourceView, language, onSave])
+  }, [SourceViewer, children, isInSourceView, language, onSave])
 
   return (
     <CodeBlockWrapper className="code-block" isInSpecialView={isInSpecialView}>
@@ -293,10 +292,10 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
   )
 }
 
-const CodeView: React.FC<Props> = ({ children, language, id, onSave }) => {
+const CodeView: React.FC<Props> = ({ children, language, onSave }) => {
   return (
     <ToolbarProvider>
-      <CodeViewImpl children={children} language={language} id={id} onSave={onSave} />
+      <CodeViewImpl children={children} language={language} onSave={onSave} />
     </ToolbarProvider>
   )
 }

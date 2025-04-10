@@ -1,5 +1,5 @@
 import CodeView from '@renderer/components/CodeView'
-import React, { memo } from 'react'
+import React, { memo, useCallback } from 'react'
 
 interface Props {
   children: string
@@ -13,8 +13,17 @@ const CodeBlock: React.FC<Props> = ({ children, className, id, onSave }) => {
   const match = /language-([\w-]+)/.exec(className || '') || children?.includes('\n')
   const language = match?.[1] ?? 'text'
 
+  const handleSave = useCallback(
+    (newContent: string) => {
+      if (id !== undefined) {
+        onSave?.(id, newContent)
+      }
+    },
+    [id, onSave]
+  )
+
   return match ? (
-    <CodeView language={language} id={id} onSave={onSave}>
+    <CodeView language={language} onSave={handleSave}>
       {children}
     </CodeView>
   ) : (

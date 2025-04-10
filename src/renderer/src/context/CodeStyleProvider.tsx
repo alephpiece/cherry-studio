@@ -23,10 +23,12 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   useEffect(() => {
     if (codeEditor.enabled) {
       import('@uiw/codemirror-themes-all').then((themes) => {
+        console.log('themes', themes)
         setCmThemes(themes)
       })
     } else {
       import('shiki').then(({ bundledThemes }) => {
+        console.log('bundledThemes', bundledThemes)
         setShikiThemes(bundledThemes)
       })
     }
