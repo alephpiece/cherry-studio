@@ -213,7 +213,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
       type: 'quick',
       icon: isRunning ? <LoadingOutlined /> : <PlayCircleOutlined />,
       tooltip: t('code_block.run'),
-      onClick: handleRunScript,
+      onClick: (ctx) => !isRunning && handleRunScript(ctx),
       order: 0
     })
 
