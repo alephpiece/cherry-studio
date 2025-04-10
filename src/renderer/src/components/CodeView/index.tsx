@@ -1,6 +1,7 @@
-import { DownloadOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons'
+import { DownloadOutlined, EditOutlined, EyeOutlined, LoadingOutlined, PlayCircleOutlined } from '@ant-design/icons'
 import { ToolbarProvider, useToolbar } from '@renderer/components/CodeView/context'
 import { useSettings } from '@renderer/hooks/useSettings'
+import { formatPyodideResult, runPythonScript } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
 import dayjs from 'dayjs'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -13,6 +14,7 @@ import MermaidPreview from './MermaidPreview'
 import PlantUmlPreview, { isValidPlantUML } from './PlantUmlPreview'
 import SourceEditor from './SourceEditor'
 import SourcePreview from './SourcePreview'
+import StatusBar from './StatusBar'
 import SvgPreview from './SvgPreview'
 import Toolbar from './Toolbar'
 
@@ -37,11 +39,15 @@ interface Props {
  * - 代码编辑器
  */
 const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
-  const hasSpecialView = ['mermaid', 'plantuml', 'svg'].includes(language)
   const { codeEditor } = useSettings()
-  const [isInSourceView, setIsInSourceView] = useState(false)
-  const previewRef = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
+  const previewRef = useRef<HTMLDivElement>(null)
+  const [isInSourceView, setIsInSourceView] = useState(false)
+  const [isRunning, setIsRunning] = useState(false)
+  const [output, setOutput] = useState('')
+
+  const isExecutable = useMemo(() => language === 'python', [language])
+  const hasSpecialView = ['mermaid', 'plantuml', 'svg'].includes(language)
 
   const isInSpecialView = useMemo(() => {
     return hasSpecialView && !isInSourceView
@@ -82,6 +88,45 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
 
     window.api.file.save(fileName, children)
   }, [children, language])
+
+  const onRunScript = useCallback(() => {
+    setIsRunning(true)
+    setOutput('')
+
+    runPythonScript(children, {})
+      .then((output) => {
+        console.log('Python execution result:', output)
+
+        // 统一构建输出文本
+        let outputText = ''
+
+        // 1. 优先显示标准输出文本
+        if (output.text) {
+          outputText = output.text
+        }
+        // 2. 如果没有标准输出但有结果值，显示结果
+        else if (output.result !== null && output.result !== undefined) {
+          outputText = formatPyodideResult(output.result)
+        }
+
+        // 3. 如果有错误信息，附加显示（无论是否有其他输出）
+        if (output.error) {
+          if (outputText) outputText += '\n\n'
+          outputText += output.error
+        }
+
+        setOutput(outputText || '(no output)')
+      })
+      .catch((error) => {
+        // 这里只处理系统级错误（如网络问题、Worker崩溃等）
+        // Python执行错误已由Worker捕获并通过output.error字段返回
+        console.error('System error:', error)
+        setOutput(`System error:\n${error.message || 'Unknown error'}`)
+      })
+      .finally(() => {
+        setIsRunning(false)
+      })
+  }, [children])
 
   useEffect(() => {
     // 复制按钮
@@ -144,6 +189,25 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     }
   }, [codeEditor.enabled, hasSpecialView, isInSourceView, registerTool, removeTool, t])
 
+  useEffect(() => {
+    if (isExecutable) {
+      registerTool({
+        id: 'run',
+        type: 'quick',
+        icon: isRunning ? <LoadingOutlined /> : <PlayCircleOutlined />,
+        tooltip: t('code_block.run'),
+        onClick: onRunScript,
+        order: 0
+      })
+    }
+
+    return () => {
+      if (isExecutable) {
+        removeTool('run')
+      }
+    }
+  }, [children, isExecutable, isRunning, onRunScript, registerTool, removeTool, t])
+
   const SourceViewer = useMemo(() => {
     return codeEditor.enabled ? SourceEditor : SourcePreview
   }, [codeEditor.enabled])
@@ -181,8 +245,13 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     if (language === 'html') {
       return <HtmlStatusBar>{children}</HtmlStatusBar>
     }
+
+    if (isExecutable && output) {
+      return <StatusBar>{output}</StatusBar>
+    }
+
     return null
-  }, [children, language])
+  }, [children, isExecutable, language, output])
 
   return (
     <CodeBlockWrapper className="code-block" isInSpecialView={isInSpecialView}>
