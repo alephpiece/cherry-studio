@@ -2,10 +2,8 @@ import { useMermaid } from '@renderer/hooks/useMermaid'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { shikiService } from '@renderer/services/ShikiService'
 import { ThemeMode } from '@renderer/types'
-import * as cmThemes from '@uiw/codemirror-themes-all'
 import type React from 'react'
-import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo } from 'react'
-import { bundledThemes } from 'shiki'
+import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
 
 interface CodeStyleContextType {
   codeToHtml: (code: string, language: string, enableCache: boolean) => Promise<string>
@@ -18,7 +16,21 @@ const CodeStyleContext = createContext<CodeStyleContextType | undefined>(undefin
 
 export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const { codeEditor, codeStyle, theme } = useSettings()
+  const [cmThemes, setCmThemes] = useState({})
+  const [shikiThemes, setShikiThemes] = useState({})
   useMermaid()
+
+  useEffect(() => {
+    if (codeEditor.enabled) {
+      import('@uiw/codemirror-themes-all').then((themes) => {
+        setCmThemes(themes)
+      })
+    } else {
+      import('shiki').then(({ bundledThemes }) => {
+        setShikiThemes(bundledThemes)
+      })
+    }
+  }, [codeEditor.enabled])
 
   // 获取支持的主题名称列表
   const themeNames = useMemo(() => {
@@ -32,8 +44,8 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
     }
 
     // Shiki 主题
-    return ['auto', ...Object.keys(bundledThemes)]
-  }, [codeEditor.enabled])
+    return ['auto', ...Object.keys(shikiThemes)]
+  }, [cmThemes, codeEditor.enabled, shikiThemes])
 
   // 获取当前使用的主题名称
   const currentTheme = useMemo(() => {

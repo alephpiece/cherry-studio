@@ -71,7 +71,6 @@
     "@tryfabric/martian": "^1.2.4",
     "@types/react-infinite-scroll-component": "^5.0.0",
     "@uiw/codemirror-extensions-langs": "^4.23.10",
-    "@uiw/codemirror-theme-material": "^4.23.10",
     "@uiw/codemirror-themes-all": "^4.23.10",
     "@uiw/react-codemirror": "^4.23.10",
     "@xyflow/react": "^12.4.4",

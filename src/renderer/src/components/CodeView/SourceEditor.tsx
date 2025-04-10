@@ -4,7 +4,6 @@ import UnWrapIcon from '@renderer/components/Icons/UnWrapIcon'
 import WrapIcon from '@renderer/components/Icons/WrapIcon'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { langs } from '@uiw/codemirror-extensions-langs'
 import * as cmThemes from '@uiw/codemirror-themes-all'
 import CodeMirror, { EditorView, Extension, ReactCodeMirrorProps } from '@uiw/react-codemirror'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
@@ -43,16 +42,20 @@ const SourceEditor = ({
 
   const { registerTool, removeTool } = useToolbar()
 
-  // 动态加载语言支持
+  // 加载语言
   useEffect(() => {
     const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
 
-    if (normalizedLang in langs) {
-      setExtensions([langs[normalizedLang as keyof typeof langs]()])
-    } else {
-      console.log(`Failed to load language: ${language}`)
-      setExtensions([])
-    }
+    import('@uiw/codemirror-extensions-langs')
+      .then(({ loadLanguage }) => {
+        const extension = loadLanguage(normalizedLang as any)
+        if (extension) {
+          setExtensions([extension])
+        }
+      })
+      .catch((error) => {
+        console.error(`Failed to load language: ${normalizedLang}`, error)
+      })
   }, [language, languageMap])
 
   // 展开/折叠工具
