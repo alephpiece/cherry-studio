@@ -19,6 +19,8 @@ import Toolbar from './Toolbar'
 interface Props {
   children: string
   language: string
+  id?: number
+  onSave?: (id: number, newContent: string) => void
 }
 
 /**
@@ -34,7 +36,7 @@ interface Props {
  * 编辑视图：
  * - 代码编辑器
  */
-const CodeView: React.FC<Props> = ({ children, language }) => {
+const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
   const hasSpecialView = ['mermaid', 'plantuml', 'svg'].includes(language)
   const { codeEditor } = useSettings()
   const [isInSourceView, setIsInSourceView] = useState(false)
@@ -156,7 +158,7 @@ const CodeView: React.FC<Props> = ({ children, language }) => {
   const renderContent = useMemo(() => {
     if (isInSourceView) {
       return (
-        <SourceViewer language={language} ref={previewRef}>
+        <SourceViewer ref={previewRef} language={language} id={id} onSave={onSave}>
           {children}
         </SourceViewer>
       )
@@ -175,11 +177,11 @@ const CodeView: React.FC<Props> = ({ children, language }) => {
     }
 
     return (
-      <SourceViewer language={language} ref={previewRef}>
+      <SourceViewer ref={previewRef} language={language} id={id} onSave={onSave}>
         {children}
       </SourceViewer>
     )
-  }, [SourceViewer, children, isInSourceView, language])
+  }, [SourceViewer, children, id, isInSourceView, language, onSave])
 
   const renderBottomTools = useMemo(() => {
     if (language === 'html') {
@@ -189,13 +191,19 @@ const CodeView: React.FC<Props> = ({ children, language }) => {
   }, [children, language])
 
   return (
+    <CodeBlockWrapper className="code-block" isInSpecialView={isInSpecialView}>
+      {renderHeader}
+      <Toolbar />
+      {renderContent}
+      {renderBottomTools}
+    </CodeBlockWrapper>
+  )
+}
+
+const CodeView: React.FC<Props> = ({ children, language, id, onSave }) => {
+  return (
     <ToolbarProvider>
-      <CodeBlockWrapper className="code-block" isInSpecialView={isInSpecialView}>
-        {renderHeader}
-        <Toolbar />
-        {renderContent}
-        {renderBottomTools}
-      </CodeBlockWrapper>
+      <CodeViewImpl children={children} language={language} id={id} onSave={onSave} />
     </ToolbarProvider>
   )
 }

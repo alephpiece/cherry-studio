@@ -7,7 +7,7 @@ import { useSettings } from '@renderer/hooks/useSettings'
 import { langs } from '@uiw/codemirror-extensions-langs'
 import * as cmThemes from '@uiw/codemirror-themes-all'
 import CodeMirror, { EditorView, Extension, ReactCodeMirrorProps } from '@uiw/react-codemirror'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import React, { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -15,14 +15,23 @@ import styled from 'styled-components'
 interface Props {
   children: string
   language: string
+  id?: number
+  onSave?: (id: number, newContent: string) => void
 }
 
-const SourceEditor = ({ children, language, ref }: Props & { ref?: React.RefObject<HTMLDivElement | null> }) => {
+const SourceEditor = ({
+  children,
+  language,
+  id,
+  onSave,
+  ref
+}: Props & { ref?: React.RefObject<HTMLDivElement | null> }) => {
   const { fontSize, codeShowLineNumbers, codeCollapsible, codeWrappable, codeEditor } = useSettings()
   const { currentTheme, languageMap } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
-  const [code, setCode] = useState(children)
+  const [_code, setCode] = useState(children)
+  const code = useDeferredValue(_code)
   const [extensions, setExtensions] = useState<Extension[]>([])
   const editorRef = useRef<HTMLDivElement>(null)
   const [showExpandButton, setShowExpandButton] = useState(false)
@@ -90,14 +99,14 @@ const SourceEditor = ({ children, language, ref }: Props & { ref?: React.RefObje
       icon: <SaveOutlined />,
       tooltip: t('code_block.edit.save'),
       onClick: () => {
-        console.log('Save code:', code)
-        // TODO: 调用消息更新逻辑
+        id && onSave?.(id, code + '\n')
+        window.message.success({ content: t('code_block.edit.saved'), key: 'save-code' })
       },
       order: 3
     })
 
     return () => removeTool('save')
-  }, [code, children, registerTool, removeTool, t])
+  }, [code, children, id, onSave, registerTool, removeTool, t])
 
   // 检查编辑器高度并决定是否显示展开按钮
   useEffect(() => {

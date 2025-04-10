@@ -11,6 +11,7 @@ import styled from 'styled-components'
 interface Props {
   children: string
   language: string
+  [key: string]: any
 }
 
 const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObject<HTMLDivElement | null> }) => {
