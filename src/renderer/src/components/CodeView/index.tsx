@@ -156,14 +156,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
   }, [isInSpecialView, language])
 
   const renderContent = useMemo(() => {
-    if (isInSourceView) {
-      return (
-        <SourceViewer ref={previewRef} language={language} id={id} onSave={onSave}>
-          {children}
-        </SourceViewer>
-      )
-    }
-
+    if (!isInSourceView) {
     if (language === 'mermaid') {
       return <MermaidPreview>{children}</MermaidPreview>
     }
@@ -174,6 +167,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
 
     if (language === 'svg') {
       return <SvgPreview>{children}</SvgPreview>
+      }
     }
 
     return (
@@ -183,9 +177,9 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     )
   }, [SourceViewer, children, id, isInSourceView, language, onSave])
 
-  const renderBottomTools = useMemo(() => {
+  const renderStatusBar = useMemo(() => {
     if (language === 'html') {
-      return <HtmlStatusBar html={children} />
+      return <HtmlStatusBar>{children}</HtmlStatusBar>
     }
     return null
   }, [children, language])
@@ -195,7 +189,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
       {renderHeader}
       <Toolbar />
       {renderContent}
-      {renderBottomTools}
+      {renderStatusBar}
     </CodeBlockWrapper>
   )
 }

@@ -8,12 +8,12 @@ import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 interface Props {
-  html: string
+  children: string
 }
 
-const HtmlStatusBar: FC<Props> = ({ html }) => {
+const HtmlStatusBar: FC<Props> = ({ children }) => {
   const { t } = useTranslation()
-  const title = extractTitle(html) || 'Artifacts ' + t('chat.artifacts.button.preview')
+  const title = extractTitle(children) || 'Artifacts ' + t('chat.artifacts.button.preview')
   const { openMinapp } = useMinappPopup()
 
   /**
@@ -21,7 +21,7 @@ const HtmlStatusBar: FC<Props> = ({ html }) => {
    */
   const handleOpenInApp = async () => {
     const path = await window.api.file.create('artifacts-preview.html')
-    await window.api.file.write(path, html)
+    await window.api.file.write(path, children)
     const filePath = `file://${path}`
     openMinapp({
       id: 'artifacts-preview',
@@ -36,7 +36,7 @@ const HtmlStatusBar: FC<Props> = ({ html }) => {
    */
   const handleOpenExternal = async () => {
     const path = await window.api.file.create('artifacts-preview.html')
-    await window.api.file.write(path, html)
+    await window.api.file.write(path, children)
     const filePath = `file://${path}`
 
     if (window.api.shell && window.api.shell.openExternal) {
