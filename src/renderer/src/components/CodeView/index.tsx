@@ -219,6 +219,7 @@ const CodeBlockWrapper = styled.div<{ isInSpecialView: boolean }>`
         transition: opacity 0.2s ease;
         transform: translateZ(0);
         will-change: opacity;
+        margin-top: 20px;
         &.show {
           opacity: 1;
         }

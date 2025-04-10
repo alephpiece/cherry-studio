@@ -111,7 +111,7 @@ function getPlantUMLImageUrl(format: 'png' | 'svg', diagram: string, isDark?: bo
 
 const PlantUMLServerImage: React.FC<PlantUMLServerImageProps> = ({ format, diagram, onClick, className }) => {
   const [loading, setLoading] = useState(true)
-  // FIXME: 黑暗模式背景太黑了
+  // FIXME: 黑暗模式背景太黑了，目前让 PlantUML 和 SVG 一样保持白色背景
   const url = getPlantUMLImageUrl(format, diagram, false)
   return (
     <StyledPlantUML onClick={onClick} className={className}>
