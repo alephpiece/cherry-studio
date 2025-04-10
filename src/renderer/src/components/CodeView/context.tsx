@@ -1,4 +1,4 @@
-import React, { createContext, use, useCallback, useState } from 'react'
+import React, { createContext, use, useCallback, useMemo, useState } from 'react'
 
 /**
  * 代码块工具定义接口
@@ -24,25 +24,16 @@ export interface Tool {
  * 工具上下文接口
  * @param code 代码内容
  * @param language 语言类型
- * @param viewType 视图类型
- * @param viewState 视图组件状态
- * @param viewRef 视图组件引用
  */
 export interface ToolContext {
   code: string
   language: string
-  viewType: string
-  viewState: any
-  viewRef: React.RefObject<any>
 }
 
 // 定义上下文默认值
 const defaultContext: ToolContext = {
   code: '',
-  language: '',
-  viewType: '',
-  viewState: {},
-  viewRef: { current: null }
+  language: ''
 }
 
 interface ToolbarContextType {
@@ -87,13 +78,16 @@ export const ToolbarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setContext((prev) => ({ ...prev, ...newContext }))
   }, [])
 
-  const value: ToolbarContextType = {
-    tools,
-    context,
-    registerTool,
-    removeTool,
-    updateContext
-  }
+  const value: ToolbarContextType = useMemo(
+    () => ({
+      tools,
+      context,
+      registerTool,
+      removeTool,
+      updateContext
+    }),
+    [tools, context, registerTool, removeTool, updateContext]
+  )
 
   return <ToolbarContext value={value}>{children}</ToolbarContext>
 }

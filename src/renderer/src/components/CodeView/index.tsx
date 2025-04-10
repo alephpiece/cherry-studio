@@ -1,4 +1,12 @@
-import { DownloadOutlined, EditOutlined, EyeOutlined, LoadingOutlined, PlayCircleOutlined } from '@ant-design/icons'
+import {
+  DownloadOutlined,
+  EditOutlined,
+  ExpandOutlined,
+  EyeOutlined,
+  LinkOutlined,
+  LoadingOutlined,
+  PlayCircleOutlined
+} from '@ant-design/icons'
 import { ToolbarProvider, ToolContext, useToolbar } from '@renderer/components/CodeView/context'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { formatPyodideResult, runPythonScript } from '@renderer/services/PyodideService'
@@ -9,7 +17,6 @@ import { useTranslation } from 'react-i18next'
 import styled, { css } from 'styled-components'
 
 import { CodeXmlIcon } from '../Icons/CodeXmlIcon'
-import HtmlStatusBar from './HtmlStatusBar'
 import MermaidPreview from './MermaidPreview'
 import PlantUmlPreview, { isValidPlantUML } from './PlantUmlPreview'
 import SourceEditor from './SourceEditor'
@@ -17,6 +24,7 @@ import SourcePreview from './SourcePreview'
 import StatusBar from './StatusBar'
 import SvgPreview from './SvgPreview'
 import Toolbar from './Toolbar'
+import { useHtmlHandlers } from './useHtmlTools'
 
 interface Props {
   children: string
@@ -27,9 +35,9 @@ interface Props {
 
 /**
  * 代码块视图
- * 工具栏：
- * - 顶部 sticky tool bar
- * - 底部 status bar
+ * 顶部 sticky 工具栏：
+ * - quick 工具
+ * - core 工具
  * 预览视图：
  * - Mermaid
  * - PlantUML
@@ -39,8 +47,8 @@ interface Props {
  * - 代码编辑器
  */
 const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
-  const { codeEditor } = useSettings()
   const { t } = useTranslation()
+  const { codeEditor } = useSettings()
   const previewRef = useRef<HTMLDivElement>(null)
   const [isInSourceView, setIsInSourceView] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
@@ -53,16 +61,16 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     return hasSpecialView && !isInSourceView
   }, [hasSpecialView, isInSourceView])
 
+  const { handleOpenInApp, handleOpenExternal } = useHtmlHandlers()
+
   const { updateContext, registerTool, removeTool } = useToolbar()
 
   useEffect(() => {
     updateContext({
       code: children,
-      language,
-      viewType: isInSourceView ? 'source' : language,
-      viewRef: previewRef
+      language
     })
-  }, [children, language, isInSourceView, updateContext])
+  }, [children, language, updateContext])
 
   const onCopySource = useCallback(
     (ctx?: ToolContext) => {
@@ -197,6 +205,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     }
   }, [codeEditor.enabled, hasSpecialView, isInSourceView, registerTool, removeTool, t])
 
+  // 运行按钮
   useEffect(() => {
     if (!isExecutable) return
 
@@ -210,7 +219,36 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     })
 
     return () => isExecutable && removeTool('run')
-  }, [children, isExecutable, isRunning, onRunScript, registerTool, removeTool, t])
+  }, [isExecutable, isRunning, onRunScript, registerTool, removeTool, t])
+
+  // HTML 打开按钮
+  useEffect(() => {
+    if (language !== 'html') return
+
+    registerTool({
+      id: 'html-open-in-app',
+      type: 'quick',
+      icon: <ExpandOutlined />,
+      tooltip: t('chat.artifacts.button.preview'),
+      onClick: handleOpenInApp,
+      order: 10
+    })
+
+    registerTool({
+      id: 'html-open-external',
+      type: 'quick',
+      icon: <LinkOutlined />,
+      tooltip: t('chat.artifacts.button.openExternal'),
+      onClick: handleOpenExternal,
+      order: 9
+    })
+
+    return () => {
+      if (language !== 'html') return
+      removeTool('html-open-in-app')
+      removeTool('html-open-external')
+    }
+  }, [handleOpenExternal, handleOpenInApp, language, registerTool, removeTool, t])
 
   const SourceViewer = useMemo(() => {
     return codeEditor.enabled ? SourceEditor : SourcePreview
@@ -245,24 +283,12 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     )
   }, [SourceViewer, children, id, isInSourceView, language, onSave])
 
-  const renderStatusBar = useMemo(() => {
-    if (language === 'html') {
-      return <HtmlStatusBar>{children}</HtmlStatusBar>
-    }
-
-    if (isExecutable && output) {
-      return <StatusBar>{output}</StatusBar>
-    }
-
-    return null
-  }, [children, isExecutable, language, output])
-
   return (
     <CodeBlockWrapper className="code-block" isInSpecialView={isInSpecialView}>
       {renderHeader}
       <Toolbar />
       {renderContent}
-      {renderStatusBar}
+      {isExecutable && output && <StatusBar>{output}</StatusBar>}
     </CodeBlockWrapper>
   )
 }
