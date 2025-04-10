@@ -29,16 +29,16 @@ export function getCodeBlockId(start: any): string | null {
 
 /**
  * 更新Markdown字符串中的代码块内容
- * @param content 原始Markdown字符串
- * @param index 代码块索引，从0开始
+ * @param raw 原始Markdown字符串
+ * @param id 代码块ID，按位置生成
  * @param newContent 修改后的代码内容
  * @returns 替换后的Markdown字符串
  */
-export function updateCodeBlock(content: string, index: string, newContent: string): string {
-  const tree = unified().use(remarkParse).parse(content)
+export function updateCodeBlock(raw: string, id: string, newContent: string): string {
+  const tree = unified().use(remarkParse).parse(raw)
   visit(tree, 'code', (node) => {
     const startIndex = getCodeBlockId(node.position?.start)
-    if (startIndex && index && startIndex === index) {
+    if (startIndex && id && startIndex === id) {
       node.value = newContent
     }
   })
