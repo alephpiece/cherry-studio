@@ -157,16 +157,16 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
 
   const renderContent = useMemo(() => {
     if (!isInSourceView) {
-    if (language === 'mermaid') {
-      return <MermaidPreview>{children}</MermaidPreview>
-    }
+      if (language === 'mermaid') {
+        return <MermaidPreview>{children}</MermaidPreview>
+      }
 
-    if (language === 'plantuml' && isValidPlantUML(children)) {
-      return <PlantUmlPreview>{children}</PlantUmlPreview>
-    }
+      if (language === 'plantuml' && isValidPlantUML(children)) {
+        return <PlantUmlPreview>{children}</PlantUmlPreview>
+      }
 
-    if (language === 'svg') {
-      return <SvgPreview>{children}</SvgPreview>
+      if (language === 'svg') {
+        return <SvgPreview>{children}</SvgPreview>
       }
     }
 
