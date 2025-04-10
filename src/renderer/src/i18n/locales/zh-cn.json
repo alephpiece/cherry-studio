@@ -271,6 +271,7 @@
       "edit.saved": "已保存",
       "expand": "展开",
       "more": "更多",
+      "run": "运行代码",
       "preview": "预览",
       "preview.copy.image": "复制为图片",
       "preview.source": "查看源代码",
@@ -1379,5 +1380,3 @@
     }
   }
 }
-
-
