@@ -34,7 +34,7 @@ interface Props {
  * 编辑视图：
  * - 代码编辑器
  */
-const CodeViewImpl: React.FC<Props> = ({ children, language }) => {
+const CodeView: React.FC<Props> = ({ children, language }) => {
   const hasSpecialView = ['mermaid', 'plantuml', 'svg'].includes(language)
   const { codeEditor } = useSettings()
   const [isInSourceView, setIsInSourceView] = useState(false)
@@ -189,19 +189,13 @@ const CodeViewImpl: React.FC<Props> = ({ children, language }) => {
   }, [children, language])
 
   return (
-    <CodeBlockWrapper className="code-block" isInSpecialView={isInSpecialView}>
-      {renderHeader}
-      <Toolbar />
-      {renderContent}
-      {renderBottomTools}
-    </CodeBlockWrapper>
-  )
-}
-
-const CodeView: React.FC<Props> = ({ children, language }) => {
-  return (
     <ToolbarProvider>
-      <CodeViewImpl children={children} language={language} />
+      <CodeBlockWrapper className="code-block" isInSpecialView={isInSpecialView}>
+        {renderHeader}
+        <Toolbar />
+        {renderContent}
+        {renderBottomTools}
+      </CodeBlockWrapper>
     </ToolbarProvider>
   )
 }
