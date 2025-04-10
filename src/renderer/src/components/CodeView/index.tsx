@@ -1,5 +1,5 @@
 import { DownloadOutlined, EditOutlined, EyeOutlined, LoadingOutlined, PlayCircleOutlined } from '@ant-design/icons'
-import { ToolbarProvider, useToolbar } from '@renderer/components/CodeView/context'
+import { ToolbarProvider, ToolContext, useToolbar } from '@renderer/components/CodeView/context'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { formatPyodideResult, runPythonScript } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
@@ -64,18 +64,24 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
     })
   }, [children, language, isInSourceView, updateContext])
 
-  const onCopySource = useCallback(() => {
-    if (!children) return
-    navigator.clipboard.writeText(children)
-    window.message.success({ content: t('code_block.copy.success'), key: 'copy-code' })
-  }, [children, t])
+  const onCopySource = useCallback(
+    (ctx?: ToolContext) => {
+      if (!ctx) return
+      navigator.clipboard.writeText(ctx.code)
+      window.message.success({ content: t('code_block.copy.success'), key: 'copy-code' })
+    },
+    [t]
+  )
 
-  const onDownloadSource = useCallback(() => {
+  const onDownloadSource = useCallback((ctx?: ToolContext) => {
+    if (!ctx) return
+
+    const { code, language } = ctx
     let fileName = ''
 
     // 尝试提取标题
-    if (language === 'html' && children.includes('</html>')) {
-      const title = extractTitle(children)
+    if (language === 'html' && code.includes('</html>')) {
+      const title = extractTitle(code)
       if (title) {
         fileName = `${title}.html`
       }
@@ -86,14 +92,16 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
       fileName = `${dayjs().format('YYYYMMDDHHmm')}.${language}`
     }
 
-    window.api.file.save(fileName, children)
-  }, [children, language])
+    window.api.file.save(fileName, code)
+  }, [])
 
-  const onRunScript = useCallback(() => {
+  const onRunScript = useCallback((ctx?: ToolContext) => {
+    if (!ctx) return
+
     setIsRunning(true)
     setOutput('')
 
-    runPythonScript(children, {})
+    runPythonScript(ctx.code, {})
       .then((output) => {
         console.log('Python execution result:', output)
 
@@ -126,7 +134,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
       .finally(() => {
         setIsRunning(false)
       })
-  }, [children])
+  }, [])
 
   useEffect(() => {
     // 复制按钮

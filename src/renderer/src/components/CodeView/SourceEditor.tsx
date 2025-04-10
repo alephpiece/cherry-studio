@@ -109,7 +109,7 @@ const SourceEditor = ({
     })
 
     return () => removeTool('save')
-  }, [code, children, id, onSave, registerTool, removeTool, t])
+  }, [code, id, onSave, registerTool, removeTool, t])
 
   // 检查编辑器高度并决定是否显示展开按钮
   useEffect(() => {
