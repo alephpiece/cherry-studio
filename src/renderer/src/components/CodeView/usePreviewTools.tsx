@@ -207,7 +207,7 @@ export const usePreviewTools = ({ handleZoom, handleCopyImage, handleDownload }:
         icon: <ZoomInOutlined />,
         tooltip: t('code_block.preview.zoom_in'),
         onClick: () => handleZoom(0.1),
-        order: 20
+        order: 34
       })
 
       // 缩小工具
@@ -217,7 +217,7 @@ export const usePreviewTools = ({ handleZoom, handleCopyImage, handleDownload }:
         icon: <ZoomOutOutlined />,
         tooltip: t('code_block.preview.zoom_out'),
         onClick: () => handleZoom(-0.1),
-        order: 19
+        order: 33
       })
     }
 
@@ -229,7 +229,7 @@ export const usePreviewTools = ({ handleZoom, handleCopyImage, handleDownload }:
         icon: <FileImageOutlined />,
         tooltip: t('code_block.preview.copy.image'),
         onClick: handleCopyImage,
-        order: 18
+        order: 32
       })
     }
 
@@ -241,7 +241,7 @@ export const usePreviewTools = ({ handleZoom, handleCopyImage, handleDownload }:
         icon: <DownloadSvgIcon />,
         tooltip: t('code_block.download.svg'),
         onClick: () => handleDownload('svg'),
-        order: 17
+        order: 31
       })
 
       // 下载 PNG 工具
@@ -251,7 +251,7 @@ export const usePreviewTools = ({ handleZoom, handleCopyImage, handleDownload }:
         icon: <DownloadPngIcon />,
         tooltip: t('code_block.download.png'),
         onClick: () => handleDownload('png'),
-        order: 16
+        order: 30
       })
     }
 

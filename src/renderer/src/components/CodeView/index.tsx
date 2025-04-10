@@ -1,4 +1,5 @@
 import {
+  BorderOutlined,
   DownloadOutlined,
   EditOutlined,
   ExpandOutlined,
@@ -17,6 +18,7 @@ import { useTranslation } from 'react-i18next'
 import styled, { css } from 'styled-components'
 
 import { CodeXmlIcon } from '../Icons/CodeXmlIcon'
+import { SplitHorizontalIcon } from '../Icons/SplitIcons'
 import MermaidPreview from './MermaidPreview'
 import PlantUmlPreview, { isValidPlantUML } from './PlantUmlPreview'
 import SourceEditor from './SourceEditor'
@@ -25,6 +27,8 @@ import StatusBar from './StatusBar'
 import SvgPreview from './SvgPreview'
 import Toolbar from './Toolbar'
 import { useHtmlHandlers } from './useHtmlTools'
+
+type ViewMode = 'source' | 'special' | 'split'
 
 interface Props {
   children: string
@@ -49,7 +53,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
   const { t } = useTranslation()
   const { codeEditor } = useSettings()
   const previewRef = useRef<HTMLDivElement>(null)
-  const [isInSourceView, setIsInSourceView] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>('special')
   const [isRunning, setIsRunning] = useState(false)
   const [output, setOutput] = useState('')
 
@@ -57,8 +61,8 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
   const hasSpecialView = ['mermaid', 'plantuml', 'svg'].includes(language)
 
   const isInSpecialView = useMemo(() => {
-    return hasSpecialView && !isInSourceView
-  }, [hasSpecialView, isInSourceView])
+    return hasSpecialView && viewMode === 'special'
+  }, [hasSpecialView, viewMode])
 
   const { handleOpenInApp, handleOpenExternal } = useHtmlHandlers()
 
@@ -169,40 +173,50 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
     }
   }, [handleCopySource, handleDownloadSource, registerTool, removeTool, t])
 
-  // 特殊视图的编辑按钮
+  // 特殊视图的编辑按钮，在分屏模式下不可用
   useEffect(() => {
-    if (!hasSpecialView) return
+    if (!hasSpecialView || viewMode === 'split') return
 
     if (codeEditor.enabled) {
       registerTool({
         id: 'edit',
         type: 'core',
-        icon: isInSourceView ? <EyeOutlined /> : <EditOutlined />,
-        tooltip: isInSourceView ? t('code_block.preview') : t('code_block.edit'),
-        onClick: () => setIsInSourceView(!isInSourceView),
+        icon: viewMode === 'source' ? <EyeOutlined /> : <EditOutlined />,
+        tooltip: viewMode === 'source' ? t('code_block.preview') : t('code_block.edit'),
+        onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source'),
         order: 2
       })
     } else {
       registerTool({
         id: 'view-source',
         type: 'core',
-        icon: isInSourceView ? <EyeOutlined /> : <CodeXmlIcon />,
-        tooltip: isInSourceView ? t('code_block.preview') : t('code_block.preview.source'),
-        onClick: () => setIsInSourceView(!isInSourceView),
+        icon: viewMode === 'source' ? <EyeOutlined /> : <CodeXmlIcon />,
+        tooltip: viewMode === 'source' ? t('code_block.preview') : t('code_block.preview.source'),
+        onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source'),
         order: 2
       })
     }
 
     return () => {
-      if (!hasSpecialView) return
-
-      if (codeEditor.enabled) {
-        removeTool('edit')
-      } else {
-        removeTool('view-source')
-      }
+      removeTool(codeEditor.enabled ? 'edit' : 'view-source')
     }
-  }, [codeEditor.enabled, hasSpecialView, isInSourceView, registerTool, removeTool, t])
+  }, [codeEditor.enabled, hasSpecialView, viewMode, registerTool, removeTool, t])
+
+  // 特殊视图的分屏按钮
+  useEffect(() => {
+    if (!hasSpecialView) return
+
+    registerTool({
+      id: 'split-view-horizontal',
+      type: 'quick',
+      icon: viewMode === 'split' ? <BorderOutlined /> : <SplitHorizontalIcon />,
+      tooltip: viewMode === 'split' ? t('code_block.split.restore') : t('code_block.split.horizontal'),
+      onClick: () => setViewMode(viewMode === 'split' ? 'special' : 'split'),
+      order: 1
+    })
+
+    return () => removeTool('split-view-horizontal')
+  }, [hasSpecialView, viewMode, registerTool, removeTool, t])
 
   // 运行按钮
   useEffect(() => {
@@ -214,7 +228,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
       icon: isRunning ? <LoadingOutlined /> : <PlayCircleOutlined />,
       tooltip: t('code_block.run'),
       onClick: (ctx) => !isRunning && handleRunScript(ctx),
-      order: 0
+      order: 10
     })
 
     return () => isExecutable && removeTool('run')
@@ -230,7 +244,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
       icon: <ExpandOutlined />,
       tooltip: t('chat.artifacts.button.preview'),
       onClick: handleOpenInApp,
-      order: 10
+      order: 21
     })
 
     registerTool({
@@ -239,19 +253,33 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
       icon: <LinkOutlined />,
       tooltip: t('chat.artifacts.button.openExternal'),
       onClick: handleOpenExternal,
-      order: 9
+      order: 20
     })
 
     return () => {
-      if (language !== 'html') return
       removeTool('html-open-in-app')
       removeTool('html-open-external')
     }
   }, [handleOpenExternal, handleOpenInApp, language, registerTool, removeTool, t])
 
-  const SourceViewer = useMemo(() => {
-    return codeEditor.enabled ? SourceEditor : SourcePreview
-  }, [codeEditor.enabled])
+  // 源代码视图组件
+  const sourceView = useMemo(() => {
+    const SourceView = codeEditor.enabled ? SourceEditor : SourcePreview
+    return (
+      <SourceView ref={previewRef} language={language} onSave={onSave}>
+        {children}
+      </SourceView>
+    )
+  }, [children, codeEditor.enabled, language, onSave])
+
+  // 特殊视图组件映射
+  const specialViewMap: Record<string, React.ReactNode> = useMemo(() => {
+    return {
+      mermaid: <MermaidPreview>{children}</MermaidPreview>,
+      plantuml: isValidPlantUML(children) ? <PlantUmlPreview>{children}</PlantUmlPreview> : null,
+      svg: <SvgPreview>{children}</SvgPreview>
+    }
+  }, [children])
 
   const renderHeader = useMemo(() => {
     if (isInSpecialView) {
@@ -260,27 +288,25 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
     return <CodeHeader>{'<' + language.toUpperCase() + '>'}</CodeHeader>
   }, [isInSpecialView, language])
 
+  // 根据视图模式和语言选择组件，默认返回源代码视图
   const renderContent = useMemo(() => {
-    if (!isInSourceView) {
-      if (language === 'mermaid') {
-        return <MermaidPreview>{children}</MermaidPreview>
-      }
+    const specialView = specialViewMap[language]
 
-      if (language === 'plantuml' && isValidPlantUML(children)) {
-        return <PlantUmlPreview>{children}</PlantUmlPreview>
-      }
-
-      if (language === 'svg') {
-        return <SvgPreview>{children}</SvgPreview>
-      }
+    if (viewMode === 'special' && specialView) {
+      return specialView
     }
 
-    return (
-      <SourceViewer ref={previewRef} language={language} onSave={onSave}>
-        {children}
-      </SourceViewer>
-    )
-  }, [SourceViewer, children, isInSourceView, language, onSave])
+    if (viewMode === 'split' && specialView) {
+      return (
+        <SplitViewWrapper className="split-view-wrapper">
+          {specialView}
+          {sourceView}
+        </SplitViewWrapper>
+      )
+    }
+
+    return sourceView
+  }, [language, sourceView, specialViewMap, viewMode])
 
   return (
     <CodeBlockWrapper className="code-block" isInSpecialView={isInSpecialView}>
@@ -335,6 +361,12 @@ const CodeHeader = styled.div`
   padding: 0 10px;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
+`
+
+const SplitViewWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  height: 100%;
 `
 
 export default memo(CodeView)
