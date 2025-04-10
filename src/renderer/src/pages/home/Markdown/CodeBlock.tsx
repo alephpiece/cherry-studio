@@ -10,7 +10,7 @@ interface Props {
 }
 
 const CodeBlock: React.FC<Props> = ({ children, className, id, onSave }) => {
-  const match = /language-(\w+)/.exec(className || '') || children?.includes('\n')
+  const match = /language-([\w-]+)/.exec(className || '') || children?.includes('\n')
   const language = match?.[1] ?? 'text'
 
   return match ? (
