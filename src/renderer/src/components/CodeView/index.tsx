@@ -156,56 +156,52 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, id, onSave }) => {
 
   // 特殊视图的编辑按钮
   useEffect(() => {
-    if (hasSpecialView) {
-      if (codeEditor.enabled) {
-        registerTool({
-          id: 'edit',
-          type: 'core',
-          icon: isInSourceView ? <EyeOutlined /> : <EditOutlined />,
-          tooltip: isInSourceView ? t('code_block.preview') : t('code_block.edit'),
-          onClick: () => setIsInSourceView(!isInSourceView),
-          order: 2
-        })
-      } else {
-        registerTool({
-          id: 'view-source',
-          type: 'core',
-          icon: isInSourceView ? <EyeOutlined /> : <CodeXmlIcon />,
-          tooltip: isInSourceView ? t('code_block.preview') : t('code_block.preview.source'),
-          onClick: () => setIsInSourceView(!isInSourceView),
-          order: 2
-        })
-      }
+    if (!hasSpecialView) return
+
+    if (codeEditor.enabled) {
+      registerTool({
+        id: 'edit',
+        type: 'core',
+        icon: isInSourceView ? <EyeOutlined /> : <EditOutlined />,
+        tooltip: isInSourceView ? t('code_block.preview') : t('code_block.edit'),
+        onClick: () => setIsInSourceView(!isInSourceView),
+        order: 2
+      })
+    } else {
+      registerTool({
+        id: 'view-source',
+        type: 'core',
+        icon: isInSourceView ? <EyeOutlined /> : <CodeXmlIcon />,
+        tooltip: isInSourceView ? t('code_block.preview') : t('code_block.preview.source'),
+        onClick: () => setIsInSourceView(!isInSourceView),
+        order: 2
+      })
     }
 
     return () => {
-      if (hasSpecialView) {
-        if (codeEditor.enabled) {
-          removeTool('edit')
-        } else {
-          removeTool('view-source')
-        }
+      if (!hasSpecialView) return
+
+      if (codeEditor.enabled) {
+        removeTool('edit')
+      } else {
+        removeTool('view-source')
       }
     }
   }, [codeEditor.enabled, hasSpecialView, isInSourceView, registerTool, removeTool, t])
 
   useEffect(() => {
-    if (isExecutable) {
-      registerTool({
-        id: 'run',
-        type: 'quick',
-        icon: isRunning ? <LoadingOutlined /> : <PlayCircleOutlined />,
-        tooltip: t('code_block.run'),
-        onClick: onRunScript,
-        order: 0
-      })
-    }
+    if (!isExecutable) return
 
-    return () => {
-      if (isExecutable) {
-        removeTool('run')
-      }
-    }
+    registerTool({
+      id: 'run',
+      type: 'quick',
+      icon: isRunning ? <LoadingOutlined /> : <PlayCircleOutlined />,
+      tooltip: t('code_block.run'),
+      onClick: onRunScript,
+      order: 0
+    })
+
+    return () => isExecutable && removeTool('run')
   }, [children, isExecutable, isRunning, onRunScript, registerTool, removeTool, t])
 
   const SourceViewer = useMemo(() => {
