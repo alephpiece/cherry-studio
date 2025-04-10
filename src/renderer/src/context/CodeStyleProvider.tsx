@@ -89,6 +89,16 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
 export const useCodeStyle = () => {
   const context = use(CodeStyleContext)
   if (!context) {
+    // FIXME: 在开发模式暂时避免 SourceEditor 热重载时报错
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('useCodeStyle must be used within a CodeStyleProvider (dev fallback)')
+      return {
+        codeToHtml: async () => '',
+        themeNames: [],
+        currentTheme: 'auto',
+        languageMap: {}
+      }
+    }
     throw new Error('useCodeStyle must be used within a CodeStyleProvider')
   }
   return context

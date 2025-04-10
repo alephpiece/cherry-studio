@@ -105,7 +105,7 @@ const SourceEditor = ({ children, language, ref }: Props & { ref?: React.RefObje
 
     // 等待 DOM 更新完成后检查高度
     setTimeout(() => {
-      const editorElement = editorRef.current?.querySelector('.cm-editor')
+      const editorElement = editorRef.current?.querySelector('.cm-scroller')
       if (!editorElement) return
 
       const isShowExpandButton = editorElement.scrollHeight > 350
@@ -132,7 +132,7 @@ const SourceEditor = ({ children, language, ref }: Props & { ref?: React.RefObje
   return (
     <CodemirrorWarpper ref={editorRef}>
       <CodeMirror
-        value={children}
+        value={children?.trimEnd() ?? ''}
         width="100%"
         maxHeight={codeCollapsible && !isExpanded ? '350px' : 'none'}
         editable={true}
