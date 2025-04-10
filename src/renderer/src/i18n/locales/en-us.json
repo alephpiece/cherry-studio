@@ -1299,8 +1299,7 @@
           "title": "Tavily"
         },
         "title": "Web Search",
-        "subscribe": "Subscribe",
-        "subscribe_tooltip": "Subscribe to the blacklist.",
+        "subscribe": "Blacklist Subscription",
         "subscribe_update": "Update now",
         "subscribe_add": "Add Subscription",
         "subscribe_url": "Subscription feed address",
