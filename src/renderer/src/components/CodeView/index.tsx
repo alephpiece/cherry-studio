@@ -19,8 +19,8 @@ import Toolbar from './Toolbar'
 interface Props {
   children: string
   language: string
-  id?: number
-  onSave?: (id: number, newContent: string) => void
+  id?: string
+  onSave?: (id: string, newContent: string) => void
 }
 
 /**

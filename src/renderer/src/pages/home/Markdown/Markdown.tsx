@@ -9,9 +9,9 @@ import { EventEmitter } from '@renderer/services/EventService'
 import type { Message } from '@renderer/types'
 import { parseJSON } from '@renderer/utils'
 import { escapeBrackets, removeSvgEmptyLines, withGeminiGrounding } from '@renderer/utils/formats'
-import { findCitationInChildren } from '@renderer/utils/markdown'
+import { findCitationInChildren, getCodeBlockId } from '@renderer/utils/markdown'
 import { isEmpty } from 'lodash'
-import { type FC, useCallback, useMemo, useRef } from 'react'
+import { type FC, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
@@ -38,10 +38,9 @@ const disallowedElements = ['iframe']
 const Markdown: FC<Props> = ({ message }) => {
   const { t } = useTranslation()
   const { renderInputMessageAsMarkdown, mathEngine } = useSettings()
-  const codeBlockIdRef = useRef(0)
 
   const onSaveCodeBlock = useCallback(
-    (id: number, newContent: string) => {
+    (id: string, newContent: string) => {
       EventEmitter.emit(EVENT_NAMES.EDIT_CODE_BLOCK, {
         messageId: message.id,
         codeBlockId: id,
@@ -68,7 +67,9 @@ const Markdown: FC<Props> = ({ message }) => {
   const components = useMemo(() => {
     const baseComponents = {
       a: (props: any) => <Link {...props} citationData={parseJSON(findCitationInChildren(props.children))} />,
-      code: (props: any) => <CodeBlock {...props} id={codeBlockIdRef.current++} onSave={onSaveCodeBlock} />,
+      code: (props: any) => (
+        <CodeBlock {...props} id={getCodeBlockId(props?.node?.position?.start)} onSave={onSaveCodeBlock} />
+      ),
       img: ImagePreview,
       pre: (props: any) => <pre style={{ overflow: 'visible' }} {...props} />
     } as Partial<Components>

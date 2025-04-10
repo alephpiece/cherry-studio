@@ -207,7 +207,7 @@ const Messages: React.FC<MessagesProps> = ({ assistant, topic, setActiveTopic })
       }),
       EventEmitter.on(
         EVENT_NAMES.EDIT_CODE_BLOCK,
-        (data: { messageId: string; codeBlockId: number; newContent: string }) => {
+        (data: { messageId: string; codeBlockId: string; newContent: string }) => {
           const { messageId, codeBlockId, newContent } = data
 
           const message = messagesRef.current.find((m) => m.id === messageId)

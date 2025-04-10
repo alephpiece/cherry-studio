@@ -4,8 +4,8 @@ import React, { memo } from 'react'
 interface Props {
   children: string
   className?: string
-  id?: number
-  onSave?: (id: number, newContent: string) => void
+  id?: string
+  onSave?: (id: string, newContent: string) => void
   [key: string]: any
 }
 

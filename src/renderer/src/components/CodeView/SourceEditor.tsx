@@ -14,8 +14,8 @@ import styled from 'styled-components'
 interface Props {
   children: string
   language: string
-  id?: number
-  onSave?: (id: number, newContent: string) => void
+  id?: string
+  onSave?: (id: string, newContent: string) => void
 }
 
 const SourceEditor = ({
@@ -102,7 +102,7 @@ const SourceEditor = ({
       icon: <SaveOutlined />,
       tooltip: t('code_block.edit.save'),
       onClick: () => {
-        id && onSave?.(id, code + '\n')
+        id !== undefined && onSave?.(id, code + '\n')
         window.message.success({ content: t('code_block.edit.saved'), key: 'save-code' })
       },
       order: 3

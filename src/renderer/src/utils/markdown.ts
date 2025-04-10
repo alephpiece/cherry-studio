@@ -23,6 +23,10 @@ export const findCitationInChildren = (children) => {
   return null
 }
 
+export function getCodeBlockId(start: any): string | null {
+  return start ? `${start.line}:${start.column}:${start.offset}` : null
+}
+
 /**
  * 更新Markdown字符串中的代码块内容
  * @param content 原始Markdown字符串
@@ -30,15 +34,13 @@ export const findCitationInChildren = (children) => {
  * @param newContent 修改后的代码内容
  * @returns 替换后的Markdown字符串
  */
-export function updateCodeBlock(content: string, index: number, newContent: string): string {
+export function updateCodeBlock(content: string, index: string, newContent: string): string {
   const tree = unified().use(remarkParse).parse(content)
-
-  let count = 0
   visit(tree, 'code', (node) => {
-    if (count === index) {
+    const startIndex = getCodeBlockId(node.position?.start)
+    if (startIndex && index && startIndex === index) {
       node.value = newContent
     }
-    count++
   })
 
   return unified().use(remarkStringify).stringify(tree)
