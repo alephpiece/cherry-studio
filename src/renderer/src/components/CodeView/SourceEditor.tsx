@@ -65,7 +65,7 @@ const SourceEditor = ({
       type: 'quick',
       icon: isExpanded ? <ShrinkOutlined /> : <ExpandAltOutlined />,
       tooltip: isExpanded ? t('code_block.collapse') : t('code_block.expand'),
-      condition: () => codeCollapsible && showExpandButton,
+      visible: () => codeCollapsible && showExpandButton,
       onClick: () => {
         const newExpanded = !isExpanded
         setIsExpanded(newExpanded)
@@ -83,7 +83,7 @@ const SourceEditor = ({
       type: 'quick',
       icon: isUnwrapped ? <WrapIcon /> : <UnWrapIcon />,
       tooltip: isUnwrapped ? t('code_block.wrap.on') : t('code_block.wrap.off'),
-      condition: () => codeWrappable,
+      visible: () => codeWrappable,
       onClick: () => {
         const newUnwrapped = !isUnwrapped
         setIsUnwrapped(newUnwrapped)

@@ -39,7 +39,7 @@ const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObj
       type: 'quick',
       icon: isExpanded ? <ShrinkOutlined /> : <ExpandAltOutlined />,
       tooltip: isExpanded ? t('code_block.collapse') : t('code_block.expand'),
-      condition: () => codeCollapsible && showExpandButton,
+      visible: () => codeCollapsible && showExpandButton,
       onClick: () => setIsExpanded(!isExpanded),
       order: 1
     })
@@ -54,7 +54,7 @@ const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObj
       type: 'quick',
       icon: isUnwrapped ? <WrapIcon /> : <UnWrapIcon />,
       tooltip: isUnwrapped ? t('code_block.wrap.on') : t('code_block.wrap.off'),
-      condition: () => codeWrappable,
+      visible: () => codeWrappable,
       onClick: () => setIsUnwrapped(!isUnwrapped),
       order: 0
     })

@@ -26,7 +26,7 @@ const Toolbar: React.FC = () => {
   const { t } = useTranslation()
 
   // 根据条件显示工具
-  const visibleTools = tools.filter((tool) => !tool.condition || tool.condition(context))
+  const visibleTools = tools.filter((tool) => !tool.visible || tool.visible(context))
 
   // 按类型分组
   const coreTools = visibleTools.filter((tool) => tool.type === 'core')

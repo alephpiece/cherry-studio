@@ -15,7 +15,7 @@ export interface Tool {
   type: 'core' | 'quick'
   icon: React.ReactNode
   tooltip: string
-  condition?: (ctx?: ToolContext) => boolean
+  visible?: (ctx?: ToolContext) => boolean
   onClick: (ctx?: ToolContext) => void
   order?: number
 }
