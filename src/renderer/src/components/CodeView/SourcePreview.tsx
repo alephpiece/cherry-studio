@@ -22,6 +22,7 @@ const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObj
   const codeContentRef = useRef<HTMLDivElement>(null)
   const prevCodeLengthRef = useRef(0)
   const isStreamingRef = useRef(false)
+  const shouldAutoScrollRef = useRef<boolean>(true)
 
   const [showExpandButton, setShowExpandButton] = useState(false)
   const showExpandButtonRef = useRef(false)
@@ -62,24 +63,43 @@ const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObj
     return () => removeTool('wrap')
   }, [codeWrappable, isUnwrapped, registerTool, removeTool, t])
 
+  const scrollToBottom = useCallback(() => {
+    if (!codeContentRef.current || isExpanded) return
+    codeContentRef.current.scrollTop = codeContentRef.current.scrollHeight
+  }, [isExpanded])
+
+  const handleScroll = useCallback(() => {
+    if (!codeContentRef.current) {
+      shouldAutoScrollRef.current = false
+      return
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } = codeContentRef.current
+    shouldAutoScrollRef.current = scrollHeight - (scrollTop + clientHeight) < 30
+  }, [])
+
   const highlightCode = useCallback(async () => {
     if (!codeContentRef.current) return
     const codeElement = codeContentRef.current
 
     // 只在非流式输出状态才尝试启用cache
-    const highlightedHtml = await codeToHtml(children, language, !isStreamingRef.current)
+    await codeToHtml(children, language, !isStreamingRef.current).then((html) => {
+      codeElement.innerHTML = html
+      codeElement.style.opacity = '1'
 
-    codeElement.innerHTML = highlightedHtml
-    codeElement.style.opacity = '1'
+      // 自动滚动到底部
+      if (isStreamingRef.current && shouldAutoScrollRef.current) {
+        requestAnimationFrame(scrollToBottom)
+      }
+    })
 
     const isShowExpandButton = codeElement.scrollHeight > 350
     if (showExpandButtonRef.current === isShowExpandButton) return
     showExpandButtonRef.current = isShowExpandButton
     setShowExpandButton(showExpandButtonRef.current)
-  }, [language, codeToHtml, children])
+  }, [codeToHtml, children, language, scrollToBottom])
 
   useEffect(() => {
-    // 跳过非文本代码块
     if (!codeContentRef.current) return
 
     let isMounted = true
@@ -87,6 +107,7 @@ const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObj
 
     if (prevCodeLengthRef.current > 0 && prevCodeLengthRef.current !== children?.length) {
       isStreamingRef.current = true
+      codeElement.addEventListener('scroll', handleScroll)
     } else {
       isStreamingRef.current = false
       codeElement.style.opacity = '0.1'
@@ -107,11 +128,12 @@ const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObj
     observer.observe(codeElement)
 
     return () => {
-      prevCodeLengthRef.current = children?.length
+      prevCodeLengthRef.current = children?.length || 0
       isMounted = false
+      codeElement.removeEventListener('scroll', handleScroll)
       observer.disconnect()
     }
-  }, [children, highlightCode, language])
+  }, [children, handleScroll, highlightCode])
 
   useEffect(() => {
     setIsExpanded(!codeCollapsible)
