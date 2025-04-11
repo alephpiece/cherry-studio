@@ -58,7 +58,7 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   const currentTheme = useMemo(() => {
     if (!codeStyle || codeStyle === 'auto' || !themeNames.includes(codeStyle)) {
       if (codeEditor.enabled) {
-        return theme === ThemeMode.light ? 'materialLight' : 'materialDark'
+        return theme === ThemeMode.light ? 'materialLight' : 'dark'
       } else {
         return theme === ThemeMode.light ? 'one-light' : 'material-theme-darker'
       }

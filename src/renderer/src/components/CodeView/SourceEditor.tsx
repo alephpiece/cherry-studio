@@ -133,7 +133,7 @@ const SourceEditor = ({
 
   const cmTheme = useMemo(() => {
     const _cmTheme = currentTheme as ReactCodeMirrorProps['theme']
-    return cmThemes[_cmTheme as keyof typeof cmThemes]
+    return cmThemes[_cmTheme as keyof typeof cmThemes] || _cmTheme
   }, [currentTheme])
 
   return (
