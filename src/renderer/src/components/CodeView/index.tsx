@@ -38,16 +38,19 @@ interface Props {
 
 /**
  * 代码块视图
+ *
+ * 视图类型：
+ * - preview: 预览视图，其中非源代码的是特殊视图
+ * - edit: 编辑视图
+ *
+ * 视图模式：
+ * - source: 源代码视图模式
+ * - special: 特殊视图模式（Mermaid、PlantUML、SVG）
+ * - split: 分屏模式（源代码和特殊视图并排显示）
+ *
  * 顶部 sticky 工具栏：
  * - quick 工具
  * - core 工具
- * 预览视图：
- * - Mermaid
- * - PlantUML
- * - SVG
- * - Source (原来的 shiki 高亮视图)
- * 编辑视图：
- * - 代码编辑器
  */
 const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
   const { t } = useTranslation()
