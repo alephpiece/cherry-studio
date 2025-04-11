@@ -143,7 +143,7 @@ const SourceEditor = ({
         width="100%"
         maxHeight={codeCollapsible && !isExpanded ? '350px' : 'none'}
         editable={true}
-        // @ts-ignore 强制使用，见 https://github.com/uiwjs/react-codemirror/blob/master/www/src/pages/home/Example.tsx
+        // @ts-ignore 强制使用，见 react-codemirror 的 Example.tsx
         theme={cmTheme}
         extensions={[...extensions, ...(isUnwrapped ? [] : [EditorView.lineWrapping])]}
         onChange={(value) => setCode(value)}
