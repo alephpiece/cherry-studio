@@ -322,5 +322,10 @@ mjx-container {
       line-height: 1.6;
       padding-left: 0.25em;
     }
+
+    .cm-lineWrapping * {
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
   }
 }
