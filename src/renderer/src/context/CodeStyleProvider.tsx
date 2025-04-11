@@ -15,7 +15,7 @@ interface CodeStyleContextType {
 const defaultCodeStyleContext: CodeStyleContextType = {
   codeToHtml: async () => '',
   themeNames: ['auto'],
-  currentTheme: 'auto',
+  currentTheme: 'none',
   languageMap: {}
 }
 
