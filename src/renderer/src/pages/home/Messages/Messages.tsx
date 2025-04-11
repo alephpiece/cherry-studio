@@ -207,13 +207,28 @@ const Messages: React.FC<MessagesProps> = ({ assistant, topic, setActiveTopic })
       }),
       EventEmitter.on(
         EVENT_NAMES.EDIT_CODE_BLOCK,
-        (data: { messageId: string; codeBlockId: string; newContent: string }) => {
+        async (data: { messageId: string; codeBlockId: string; newContent: string }) => {
           const { messageId, codeBlockId, newContent } = data
 
           const message = messagesRef.current.find((m) => m.id === messageId)
+
           if (message) {
-            const updatedRaw = updateCodeBlock(message.content, codeBlockId, newContent)
-            editMessage(messageId, { content: updatedRaw })
+            try {
+              const updatedRaw = updateCodeBlock(message.content, codeBlockId, newContent)
+              await editMessage(messageId, { content: updatedRaw })
+              window.message.success({ content: t('code_block.edit.save.success'), key: 'save-code' })
+            } catch (error) {
+              console.error(`Failed to save code block ${codeBlockId} content to message ${messageId}:`, error)
+              window.message.error({ content: t('code_block.edit.save.failed'), key: 'save-code-failed' })
+            }
+          } else {
+            console.error(
+              `Trying to edit a code block ${codeBlockId} but the message ID ${messageId} is not found. CodeBlock content: ${newContent}`
+            )
+            window.message.error({
+              content: t('code_block.edit.save.failed.message_not_found'),
+              key: 'save-code-message-not-found'
+            })
           }
         }
       )

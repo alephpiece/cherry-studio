@@ -99,10 +99,7 @@ const SourceEditor = ({
       type: 'core',
       icon: <SaveOutlined />,
       tooltip: t('code_block.edit.save'),
-      onClick: () => {
-        onSave?.(code + '\n')
-        window.message.success({ content: t('code_block.edit.saved'), key: 'save-code' })
-      },
+      onClick: () => onSave?.(code + '\n'),
       order: 3
     })
 

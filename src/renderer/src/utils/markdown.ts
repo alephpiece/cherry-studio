@@ -23,6 +23,11 @@ export const findCitationInChildren = (children) => {
   return null
 }
 
+/**
+ * 根据代码块节点的起始位置生成 ID
+ * @param start 代码块节点的起始位置
+ * @returns 代码块在 Markdown 字符串中的 ID
+ */
 export function getCodeBlockId(start: any): string | null {
   return start ? `${start.line}:${start.column}:${start.offset}` : null
 }
