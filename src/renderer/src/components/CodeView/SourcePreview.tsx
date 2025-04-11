@@ -20,7 +20,7 @@ const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObj
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
   const codeContentRef = useRef<HTMLDivElement>(null)
-  const childrenLengthRef = useRef(0)
+  const prevCodeLengthRef = useRef(0)
   const isStreamingRef = useRef(false)
 
   const [showExpandButton, setShowExpandButton] = useState(false)
@@ -85,14 +85,14 @@ const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObj
     let isMounted = true
     const codeElement = codeContentRef.current
 
-    if (childrenLengthRef.current > 0 && childrenLengthRef.current !== children?.length) {
+    if (prevCodeLengthRef.current > 0 && prevCodeLengthRef.current !== children?.length) {
       isStreamingRef.current = true
     } else {
       isStreamingRef.current = false
       codeElement.style.opacity = '0.1'
     }
 
-    if (childrenLengthRef.current === 0) {
+    if (prevCodeLengthRef.current === 0) {
       // 挂载时显示原始代码
       codeElement.textContent = children
     }
@@ -107,7 +107,7 @@ const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObj
     observer.observe(codeElement)
 
     return () => {
-      childrenLengthRef.current = children?.length
+      prevCodeLengthRef.current = children?.length
       isMounted = false
       observer.disconnect()
     }
