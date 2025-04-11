@@ -38,6 +38,7 @@ class ShikiService {
     this.initPromise = Promise.resolve()
       // 尝试初始化Worker highlighter
       .then(() => {
+        return Promise.reject(new Error('Web Worker is disabled'))
         if (typeof Worker === 'undefined') {
           return Promise.reject(new Error('Web Worker is not supported'))
         }
