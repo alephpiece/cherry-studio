@@ -277,6 +277,8 @@
       "preview.source": "View Source Code",
       "preview.zoom_in": "Zoom In",
       "preview.zoom_out": "Zoom Out",
+      "split": "Split View",
+      "split.restore": "Restore Split View",
       "wrap.off": "Unwrap",
       "wrap.on": "Wrap"
     },

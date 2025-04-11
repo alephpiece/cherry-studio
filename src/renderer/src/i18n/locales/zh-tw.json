@@ -277,6 +277,8 @@
       "preview.source": "查看源碼",
       "preview.zoom_in": "放大",
       "preview.zoom_out": "縮小",
+      "split": "分割視圖",
+      "split.restore": "取消分割視圖",
       "wrap.off": "停用自動換行",
       "wrap.on": "自動換行"
     },

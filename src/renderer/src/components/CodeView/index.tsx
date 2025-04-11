@@ -210,7 +210,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
       id: 'split-view-horizontal',
       type: 'quick',
       icon: viewMode === 'split' ? <BorderOutlined /> : <SplitHorizontalIcon />,
-      tooltip: viewMode === 'split' ? t('code_block.split.restore') : t('code_block.split.horizontal'),
+      tooltip: viewMode === 'split' ? t('code_block.split.restore') : t('code_block.split'),
       onClick: () => setViewMode(viewMode === 'split' ? 'special' : 'split'),
       order: 1
     })
@@ -288,7 +288,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
     return <CodeHeader>{'<' + language.toUpperCase() + '>'}</CodeHeader>
   }, [isInSpecialView, language])
 
-  // 根据视图模式和语言选择组件，默认返回源代码视图
+  // 根据视图模式和语言选择组件，优先展示特殊视图，fallback是源代码视图
   const renderContent = useMemo(() => {
     const specialView = specialViewMap[language]
 
@@ -364,9 +364,15 @@ const CodeHeader = styled.div`
 `
 
 const SplitViewWrapper = styled.div`
-  display: flex;
-  flex-direction: row;
-  height: 100%;
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+
+  > * {
+    display: table-cell;
+    vertical-align: top;
+    width: 50%;
+  }
 `
 
 export default memo(CodeView)
