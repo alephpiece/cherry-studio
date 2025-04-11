@@ -227,7 +227,7 @@ class ShikiService {
     // 设置整个请求的超时处理
     const timeoutId = setTimeout(() => {
       this.rejectRequest(cacheKey)
-    }, 10000) // 10秒应该足够了
+    }, 600000)
 
     // 为新请求创建条目
     this.pendingRequests.set(cacheKey, {
