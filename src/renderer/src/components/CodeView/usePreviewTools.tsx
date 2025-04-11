@@ -1,10 +1,13 @@
 import { FileImageOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons'
 import { download } from '@renderer/utils/download'
-import { RefObject, useCallback, useEffect, useState } from 'react'
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { DownloadPngIcon, DownloadSvgIcon } from '../Icons/DownloadIcons'
 import { useToolbar } from './context'
+
+// 预编译正则表达式用于查询位置
+const TRANSFORM_REGEX = /translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/
 
 /**
  * 使用图像处理工具的自定义Hook
@@ -19,7 +22,8 @@ export const usePreviewToolHandlers = (
     customDownloader?: (format: 'svg' | 'png') => void
   }
 ) => {
-  const [scale, setScale] = useState(1)
+  const transformRef = useRef({ scale: 1, x: 0, y: 0 }) // 管理变换状态
+  const [renderTrigger, setRenderTrigger] = useState(0) // 仅用于触发组件重渲染的状态
   const { imgSelector, prefix, customDownloader, enableWheelZoom } = options
   const { t } = useTranslation()
 
@@ -29,22 +33,116 @@ export const usePreviewToolHandlers = (
     return containerRef.current.querySelector(imgSelector) as SVGElement | null
   }, [containerRef, imgSelector])
 
+  // 查询当前位置
+  const getCurrentPosition = useCallback(() => {
+    const imgElement = getImgElement()
+    if (!imgElement) return { x: transformRef.current.x, y: transformRef.current.y }
+
+    const transform = imgElement.style.transform
+    if (!transform || transform === 'none') return { x: transformRef.current.x, y: transformRef.current.y }
+
+    const match = transform.match(TRANSFORM_REGEX)
+    if (match && match.length >= 3) {
+      return {
+        x: parseFloat(match[1]),
+        y: parseFloat(match[2])
+      }
+    }
+
+    return { x: transformRef.current.x, y: transformRef.current.y }
+  }, [getImgElement])
+
+  // 平移缩放变换
+  const applyTransform = useCallback((element: SVGElement | null, x: number, y: number, scale: number) => {
+    if (!element) return
+    element.style.transformOrigin = 'top left'
+    element.style.transform = `translate(${x}px, ${y}px) scale(${scale})`
+  }, [])
+
+  // 拖拽平移支持
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    let isDragging = false
+    const startPos = { x: 0, y: 0 }
+    const startOffset = { x: 0, y: 0 }
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return // 只响应左键
+
+      // 更新当前实际位置
+      const position = getCurrentPosition()
+      transformRef.current.x = position.x
+      transformRef.current.y = position.y
+
+      isDragging = true
+      startPos.x = e.clientX
+      startPos.y = e.clientY
+      startOffset.x = position.x
+      startOffset.y = position.y
+
+      container.style.cursor = 'grabbing'
+      e.preventDefault()
+    }
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return
+
+      const dx = e.clientX - startPos.x
+      const dy = e.clientY - startPos.y
+      const newX = startOffset.x + dx
+      const newY = startOffset.y + dy
+
+      const imgElement = getImgElement()
+      applyTransform(imgElement, newX, newY, transformRef.current.scale)
+
+      e.preventDefault()
+    }
+
+    const stopDrag = () => {
+      if (!isDragging) return
+
+      // 更新位置但不立即触发状态变更
+      const position = getCurrentPosition()
+      transformRef.current.x = position.x
+      transformRef.current.y = position.y
+
+      // 只触发一次渲染以保持组件状态同步
+      setRenderTrigger((prev) => prev + 1)
+
+      isDragging = false
+      container.style.cursor = 'default'
+    }
+
+    // 绑定到document以确保拖拽可以在鼠标离开容器后继续
+    container.addEventListener('mousedown', onMouseDown)
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', stopDrag)
+
+    return () => {
+      container.removeEventListener('mousedown', onMouseDown)
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', stopDrag)
+    }
+  }, [containerRef, getCurrentPosition, getImgElement, applyTransform])
+
   // 缩放处理函数
   const handleZoom = useCallback(
     (delta: number) => {
-      const newScale = Math.max(0.1, Math.min(3, scale + delta))
-      setScale(newScale)
+      const newScale = Math.max(0.1, Math.min(3, transformRef.current.scale + delta))
+      transformRef.current.scale = newScale
 
       const imgElement = getImgElement()
-      if (!imgElement) return
+      applyTransform(imgElement, transformRef.current.x, transformRef.current.y, newScale)
 
-      imgElement.style.transformOrigin = 'top left'
-      imgElement.style.transform = `scale(${newScale})`
+      // 触发重渲染以保持组件状态同步
+      setRenderTrigger((prev) => prev + 1)
     },
-    [scale, getImgElement]
+    [getImgElement, applyTransform]
   )
 
-  // 添加滚轮缩放支持
+  // 滚轮缩放支持
   useEffect(() => {
     if (!enableWheelZoom || !containerRef.current) return
 
@@ -164,11 +262,11 @@ export const usePreviewToolHandlers = (
   )
 
   return {
-    scale,
-    setScale,
+    scale: transformRef.current.scale,
     handleZoom,
     handleCopyImage,
-    handleDownload
+    handleDownload,
+    renderTrigger // 导出渲染触发器，万一要用
   }
 }
 
