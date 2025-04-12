@@ -25,6 +25,7 @@ import {
   setCodeCacheTTL,
   setCodeCollapsible,
   setCodeEditor,
+  setCodeExecution,
   setCodeShowLineNumbers,
   setCodeStyle,
   setCodeWrappable,
@@ -87,6 +88,7 @@ const SettingsTab: FC<Props> = (props) => {
     codeCacheTTL,
     codeCacheThreshold,
     codeEditor,
+    codeExecution,
     mathEngine,
     autoTranslateWithSpace,
     pasteLongTextThreshold,
@@ -346,6 +348,42 @@ const SettingsTab: FC<Props> = (props) => {
             onChange={(checked) => dispatch(setMessageFont(checked ? 'serif' : 'system'))}
           />
         </SettingRow>
+        <SettingDivider />
+        <SettingRow>
+          <SettingRowTitleSmall>
+            {t('chat.settings.code_execution.title')}
+            <Tooltip title={t('chat.settings.code_execution.tip')}>
+              <QuestionIcon style={{ marginLeft: 4 }} />
+            </Tooltip>
+          </SettingRowTitleSmall>
+          <Switch
+            size="small"
+            checked={codeExecution.enabled}
+            onChange={(checked) => dispatch(setCodeExecution({ enabled: checked }))}
+          />
+        </SettingRow>
+        {codeExecution.enabled && (
+          <>
+            <SettingDivider />
+            <SettingRow style={{ paddingLeft: 8 }}>
+              <SettingRowTitleSmall>
+                {t('chat.settings.code_execution.timeout_minutes')}
+                <Tooltip title={t('chat.settings.code_execution.timeout_minutes.tip')}>
+                  <QuestionIcon style={{ marginLeft: 4 }} />
+                </Tooltip>
+              </SettingRowTitleSmall>
+              <InputNumber
+                size="small"
+                min={1}
+                max={60}
+                step={1}
+                value={codeExecution.timeoutMinutes}
+                onChange={(value) => dispatch(setCodeExecution({ timeoutMinutes: value ?? 1 }))}
+                style={{ width: 80 }}
+              />
+            </SettingRow>
+          </>
+        )}
         <SettingDivider />
         <SettingRow>
           <SettingRowTitleSmall>{t('chat.settings.code_editor.title')}</SettingRowTitleSmall>

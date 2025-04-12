@@ -48,6 +48,11 @@ export interface SettingsState {
   clickAssistantToShowTopic: boolean
   autoCheckUpdate: boolean
   renderInputMessageAsMarkdown: boolean
+  // 代码执行
+  codeExecution: {
+    enabled: boolean
+    timeoutMinutes: number
+  }
   codeEditor: {
     enabled: boolean
     highlightActiveLine: boolean
@@ -160,6 +165,10 @@ export const initialState: SettingsState = {
   clickAssistantToShowTopic: true,
   autoCheckUpdate: true,
   renderInputMessageAsMarkdown: false,
+  codeExecution: {
+    enabled: false,
+    timeoutMinutes: 1
+  },
   codeEditor: {
     enabled: false,
     highlightActiveLine: false,
@@ -340,6 +349,14 @@ const settingsSlice = createSlice({
     },
     setWebdavSyncInterval: (state, action: PayloadAction<number>) => {
       state.webdavSyncInterval = action.payload
+    },
+    setCodeExecution: (state, action: PayloadAction<{ enabled?: boolean; timeoutMinutes?: number }>) => {
+      if (action.payload.enabled !== undefined) {
+        state.codeExecution.enabled = action.payload.enabled
+      }
+      if (action.payload.timeoutMinutes !== undefined) {
+        state.codeExecution.timeoutMinutes = action.payload.timeoutMinutes
+      }
     },
     setCodeEditor: (
       state,
@@ -559,6 +576,7 @@ export const {
   setWebdavPath,
   setWebdavAutoSync,
   setWebdavSyncInterval,
+  setCodeExecution,
   setCodeEditor,
   setCodeShowLineNumbers,
   setCodeCollapsible,

@@ -54,13 +54,16 @@ interface Props {
  */
 const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
   const { t } = useTranslation()
-  const { codeEditor } = useSettings()
+  const { codeEditor, codeExecution } = useSettings()
   const previewRef = useRef<HTMLDivElement>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('special')
   const [isRunning, setIsRunning] = useState(false)
   const [output, setOutput] = useState('')
 
-  const isExecutable = useMemo(() => language === 'python', [language])
+  const isExecutable = useMemo(() => {
+    return codeExecution.enabled && language === 'python'
+  }, [codeExecution.enabled, language])
+
   const hasSpecialView = ['mermaid', 'plantuml', 'svg'].includes(language)
 
   const isInSpecialView = useMemo(() => {
@@ -109,46 +112,49 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
     window.api.file.save(fileName, code)
   }, [])
 
-  const handleRunScript = useCallback((ctx?: ToolContext) => {
-    if (!ctx) return
+  const handleRunScript = useCallback(
+    (ctx?: ToolContext) => {
+      if (!ctx) return
 
-    setIsRunning(true)
-    setOutput('')
+      setIsRunning(true)
+      setOutput('')
 
-    runPythonScript(ctx.code, {})
-      .then((output) => {
-        console.log('Python execution result:', output)
+      runPythonScript(ctx.code, {}, codeExecution.timeoutMinutes * 60000)
+        .then((output) => {
+          console.log('Python execution result:', output)
 
-        // 统一构建输出文本
-        let outputText = ''
+          // 统一构建输出文本
+          let outputText = ''
 
-        // 1. 优先显示标准输出文本
-        if (output.text) {
-          outputText = output.text
-        }
-        // 2. 如果没有标准输出但有结果值，显示结果
-        else if (output.result !== null && output.result !== undefined) {
-          outputText = formatPyodideResult(output.result)
-        }
+          // 1. 优先显示标准输出文本
+          if (output.text) {
+            outputText = output.text
+          }
+          // 2. 如果没有标准输出但有结果值，显示结果
+          else if (output.result !== null && output.result !== undefined) {
+            outputText = formatPyodideResult(output.result)
+          }
 
-        // 3. 如果有错误信息，附加显示（无论是否有其他输出）
-        if (output.error) {
-          if (outputText) outputText += '\n\n'
-          outputText += output.error
-        }
+          // 3. 如果有错误信息，附加显示（无论是否有其他输出）
+          if (output.error) {
+            if (outputText) outputText += '\n\n'
+            outputText += output.error
+          }
 
-        setOutput(outputText || '(no output)')
-      })
-      .catch((error) => {
-        // 这里只处理系统级错误（如网络问题、Worker崩溃等）
-        // Python执行错误已由Worker捕获并通过output.error字段返回
-        console.error('System error:', error)
-        setOutput(`System error:\n${error.message || 'Unknown error'}`)
-      })
-      .finally(() => {
-        setIsRunning(false)
-      })
-  }, [])
+          setOutput(outputText || '(no output)')
+        })
+        .catch((error) => {
+          // 这里只处理系统级错误（如网络问题、Worker崩溃等）
+          // Python执行错误已由Worker捕获并通过output.error字段返回
+          console.error('System error:', error)
+          setOutput(`System error:\n${error.message || 'Unknown error'}`)
+        })
+        .finally(() => {
+          setIsRunning(false)
+        })
+    },
+    [codeExecution.timeoutMinutes]
+  )
 
   useEffect(() => {
     // 复制按钮

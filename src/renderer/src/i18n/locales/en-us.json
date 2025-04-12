@@ -164,6 +164,12 @@
         "autocompletion": "Autocompletion",
         "keymap": "Keymap"
       },
+      "settings.code_execution": {
+        "title": "Code Execution",
+        "tip": "The run button will be displayed in the toolbar of executable code blocks, please do not execute dangerous code!",
+        "timeout_minutes": "Timeout",
+        "timeout_minutes.tip": "The timeout time (minutes) of code execution"
+      },
       "settings.code_collapsible": "Code block collapsible",
       "settings.code_wrappable": "Code block wrappable",
       "settings.code_cacheable": "Code block cache",

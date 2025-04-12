@@ -164,6 +164,12 @@
         "autocompletion": "自動補全",
         "keymap": "快捷鍵"
       },
+      "settings.code_execution": {
+        "title": "程式碼執行",
+        "tip": "可執行的程式碼塊工具欄中會顯示運行按鈕，注意不要執行危險程式碼！",
+        "timeout_minutes": "超時時間",
+        "timeout_minutes.tip": "程式碼執行超時時間（分鐘）"
+      },
       "settings.code_collapsible": "程式碼區塊可折疊",
       "settings.code_wrappable": "程式碼區塊可自動換行",
       "settings.code_cacheable": "程式碼區塊快取",

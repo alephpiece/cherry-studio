@@ -164,6 +164,12 @@
         "autocompletion": "自動補完",
         "keymap": "キーマップ"
       },
+      "settings.code_execution": {
+        "title": "コード実行",
+        "tip": "実行可能なコードブロックのツールバーには実行ボタンが表示されます。危険なコードを実行しないでください！",
+        "timeout_minutes": "タイムアウト時間",
+        "timeout_minutes.tip": "コード実行のタイムアウト時間（分）"
+      },
       "settings.code_collapsible": "コードブロック折り畳み",
       "settings.code_wrappable": "コードブロック折り返し",
       "settings.code_cacheable": "コードブロックキャッシュ",

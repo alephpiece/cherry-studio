@@ -10,7 +10,7 @@ let isInitialized = false
 const initPromise = new Promise<void>((resolve, reject) => {
   const timeout = setTimeout(() => {
     reject(new Error('Pyodide initialization timeout'))
-  }, 30000) // 30秒超时
+  }, 60000) // 60秒初始化超时
 
   const initHandler = (event: MessageEvent) => {
     if (event.data?.type === 'initialized') {
@@ -56,7 +56,11 @@ pyodideWorker.onmessage = (event) => {
   }
 }
 
-export async function runPythonScript(script: string, context: Record<string, any> = {}): Promise<PyodideOutput> {
+export async function runPythonScript(
+  script: string,
+  context: Record<string, any> = {},
+  timeout: number = 60000
+): Promise<PyodideOutput> {
   // 确保Pyodide已初始化
   if (!isInitialized) {
     try {
@@ -79,7 +83,7 @@ export async function runPythonScript(script: string, context: Record<string, an
     const timeoutId = setTimeout(() => {
       resolvers.delete(id)
       reject(new Error('Python execution timed out'))
-    }, 60000) // 60秒超时
+    }, timeout)
 
     resolvers.set(id, {
       resolve: (output) => {

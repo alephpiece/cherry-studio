@@ -164,6 +164,12 @@
         "autocompletion": "Автодополнение",
         "keymap": "Клавиатурные сокращения"
       },
+      "settings.code_execution": {
+        "title": "Выполнение кода",
+        "tip": "Выполнение кода в блоке кода возможно, но не рекомендуется выполнять опасный код!",
+        "timeout_minutes": "Время выполнения",
+        "timeout_minutes.tip": "Время выполнения кода (минуты)"
+      },
       "settings.code_collapsible": "Блок кода свернут",
       "settings.code_wrappable": "Блок кода можно переносить",
       "settings.code_cacheable": "Кэш блока кода",

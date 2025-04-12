@@ -1209,7 +1209,18 @@ const migrateConfig = {
       if (qiniuProvider && isEmpty(qiniuProvider.models)) {
         qiniuProvider.models = SYSTEM_MODELS.qiniu
       }
-      if (!state?.settings?.codeEditor) {
+      return state
+    } catch (error) {
+      return state
+    }
+  },
+  '96': (state: RootState) => {
+    try {
+      if (!state.settings.codeExecution) {
+        state.settings.codeExecution = settingsInitialState.codeExecution
+      }
+
+      if (!state.settings.codeEditor) {
         state.settings.codeEditor = settingsInitialState.codeEditor
       }
       return state

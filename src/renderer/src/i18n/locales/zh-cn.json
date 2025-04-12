@@ -166,6 +166,12 @@
         "autocompletion": "自动补全",
         "keymap": "快捷键"
       },
+      "settings.code_execution": {
+        "title": "代码执行",
+        "tip": "可执行的代码块工具栏中会显示运行按钮，注意不要执行危险代码！",
+        "timeout_minutes": "超时时间",
+        "timeout_minutes.tip": "代码执行超时时间（分钟）"
+      },
       "settings.code_collapsible": "代码块可折叠",
       "settings.code_wrappable": "代码块可换行",
       "settings.code_cacheable": "代码块缓存",
