@@ -19,10 +19,10 @@ import styled, { css } from 'styled-components'
 
 import { CodeXmlIcon } from '../Icons/CodeXmlIcon'
 import { SplitHorizontalIcon } from '../Icons/SplitIcons'
+import CodePreview from './CodePreview'
 import MermaidPreview from './MermaidPreview'
 import PlantUmlPreview, { isValidPlantUML } from './PlantUmlPreview'
 import SourceEditor from './SourceEditor'
-import SourcePreview from './SourcePreview'
 import StatusBar from './StatusBar'
 import SvgPreview from './SvgPreview'
 import Toolbar from './Toolbar'
@@ -251,7 +251,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
 
   // 源代码视图组件
   const sourceView = useMemo(() => {
-    const SourceView = codeEditor.enabled ? SourceEditor : SourcePreview
+    const SourceView = codeEditor.enabled ? SourceEditor : CodePreview
     return (
       <SourceView ref={previewRef} language={language} onSave={onSave}>
         {children}

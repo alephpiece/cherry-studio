@@ -1,12 +1,14 @@
 import { useMermaid } from '@renderer/hooks/useMermaid'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { shikiService } from '@renderer/services/ShikiService'
+import { shikiStreamService } from '@renderer/services/ShikiStreamService'
 import { ThemeMode } from '@renderer/types'
 import type React from 'react'
 import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
+import { CodeToTokenTransformStream } from 'shiki-stream'
 
 interface CodeStyleContextType {
   codeToHtml: (code: string, language: string, enableCache: boolean, enableWorker?: boolean) => Promise<string>
+  createTransformStream: (language: string) => Promise<CodeToTokenTransformStream>
   themeNames: string[]
   currentTheme: string
   languageMap: Record<string, string>
@@ -14,6 +16,9 @@ interface CodeStyleContextType {
 
 const defaultCodeStyleContext: CodeStyleContextType = {
   codeToHtml: async () => '',
+  createTransformStream: async () => {
+    throw new Error('Not implemented')
+  },
   themeNames: ['auto'],
   currentTheme: 'none',
   languageMap: {}
@@ -78,16 +83,26 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   useEffect(() => {
     // 在组件卸载时清理 Worker
     return () => {
-      shikiService.dispose()
+      shikiStreamService.dispose()
     }
   }, [])
 
+  // 非流式代码高亮
   const codeToHtml = useCallback(
-    async (code: string, language: string, enableCache: boolean, enableWorker: boolean = false) => {
+    async (code: string, language: string, enableCache: boolean) => {
       if (!code) return ''
       const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
       const trimmedCode = code?.trimEnd() ?? ''
-      return shikiService.highlightCode(trimmedCode, normalizedLang, currentTheme, enableCache, enableWorker)
+      return shikiStreamService.highlightCode(trimmedCode, normalizedLang, currentTheme, enableCache)
+    },
+    [currentTheme, languageMap]
+  )
+
+  // 流式代码高亮器
+  const createTransformStream = useCallback(
+    async (language: string) => {
+      const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
+      return shikiStreamService.createTransformStream(normalizedLang, currentTheme)
     },
     [currentTheme, languageMap]
   )
@@ -95,11 +110,12 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   const contextValue = useMemo(
     () => ({
       codeToHtml,
+      createTransformStream,
       themeNames,
       currentTheme,
       languageMap
     }),
-    [codeToHtml, themeNames, currentTheme, languageMap]
+    [codeToHtml, createTransformStream, themeNames, currentTheme, languageMap]
   )
 
   return <CodeStyleContext value={contextValue}>{children}</CodeStyleContext>
