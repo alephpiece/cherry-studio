@@ -236,6 +236,7 @@ export type AppInfo = {
   resourcesPath: string
   filesPath: string
   logsPath: string
+  arch: string
 }
 
 export interface Shortcut {
@@ -399,6 +400,34 @@ export interface MCPTool {
   name: string
   description?: string
   inputSchema: MCPToolInputSchema
+}
+
+export interface MCPPromptArguments {
+  name: string
+  description?: string
+  required?: boolean
+}
+
+export interface MCPPrompt {
+  id: string
+  name: string
+  description?: string
+  arguments?: MCPPromptArguments[]
+  serverId: string
+  serverName: string
+}
+
+export interface GetMCPPromptResponse {
+  description?: string
+  messages: {
+    role: string
+    content: {
+      type: 'text' | 'image' | 'audio' | 'resource'
+      text?: string
+      data?: string
+      mimeType?: string
+    }
+  }[]
 }
 
 export interface MCPConfig {
