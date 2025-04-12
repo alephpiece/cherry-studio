@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons'
 import { ToolbarProvider, ToolContext, useToolbar } from '@renderer/components/CodeView/context'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { formatPyodideResult, runPythonScript } from '@renderer/services/PyodideService'
+import { runPythonScript } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
 import dayjs from 'dayjs'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -120,34 +120,12 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
       setOutput('')
 
       runPythonScript(ctx.code, {}, codeExecution.timeoutMinutes * 60000)
-        .then((output) => {
-          console.log('Python execution result:', output)
-
-          // 统一构建输出文本
-          let outputText = ''
-
-          // 1. 优先显示标准输出文本
-          if (output.text) {
-            outputText = output.text
-          }
-          // 2. 如果没有标准输出但有结果值，显示结果
-          else if (output.result !== null && output.result !== undefined) {
-            outputText = formatPyodideResult(output.result)
-          }
-
-          // 3. 如果有错误信息，附加显示（无论是否有其他输出）
-          if (output.error) {
-            if (outputText) outputText += '\n\n'
-            outputText += output.error
-          }
-
-          setOutput(outputText || '(no output)')
+        .then((formattedOutput) => {
+          setOutput(formattedOutput)
         })
         .catch((error) => {
-          // 这里只处理系统级错误（如网络问题、Worker崩溃等）
-          // Python执行错误已由Worker捕获并通过output.error字段返回
-          console.error('System error:', error)
-          setOutput(`System error:\n${error.message || 'Unknown error'}`)
+          console.error('Unexpected error:', error)
+          setOutput(`Unexpected error: ${error.message || 'Unknown error'}`)
         })
         .finally(() => {
           setIsRunning(false)

@@ -70,11 +70,15 @@ function processResult(result: any): any {
       return result.map((item) => processResult(item))
     }
 
+    if (typeof result === 'object' && result !== null) {
+      return Object.fromEntries(Object.entries(result).map(([key, value]) => [key, processResult(value)]))
+    }
+
     return result
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('Result processing error:', errorMessage)
-    return null // 处理失败时返回 null
+    return { __error__: 'Result processing failed', details: errorMessage }
   }
 }
 

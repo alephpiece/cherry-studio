@@ -56,62 +56,94 @@ pyodideWorker.onmessage = (event) => {
   }
 }
 
+// Pyodide 输出格式化
+export function formatPyodideOutput(output: PyodideOutput): string {
+  let displayText = ''
+
+  // 优先显示标准输出
+  if (output.text) {
+    displayText = output.text.trim()
+  }
+
+  // 如果有执行结果且无标准输出，显示结果
+  if (!displayText && output.result !== null && output.result !== undefined) {
+    if (typeof output.result === 'object' && output.result.__error__) {
+      displayText = `Result Error: ${output.result.details}`
+    } else {
+      try {
+        displayText = typeof output.result === 'object' ? JSON.stringify(output.result, null, 2) : String(output.result)
+      } catch (e) {
+        displayText = `Result formatting failed: ${String(e)}`
+      }
+    }
+  }
+
+  // 如果有错误信息，附加显示
+  if (output.error) {
+    if (displayText) displayText += '\n\n'
+    displayText += `Error: ${output.error.trim()}`
+  }
+
+  // 如果没有任何输出，提供清晰提示
+  if (!displayText) {
+    displayText = 'Execution completed with no output.'
+  }
+
+  return displayText
+}
+
+/**
+ * 执行Python脚本
+ * @param script 要执行的Python脚本
+ * @param context 可选的执行上下文
+ * @param timeout 超时时间（毫秒）
+ * @returns 格式化后的执行结果
+ */
 export async function runPythonScript(
   script: string,
   context: Record<string, any> = {},
   timeout: number = 60000
-): Promise<PyodideOutput> {
+): Promise<string> {
   // 确保Pyodide已初始化
   if (!isInitialized) {
     try {
       await initPromise
     } catch (error: unknown) {
-      // 转换初始化错误为统一格式的输出
       console.error('Pyodide initialization failed, cannot execute Python code', error)
-      return {
-        result: null,
-        text: null,
-        error: `Initialization failed: ${error instanceof Error ? error.message : String(error)}`
-      }
+      return `Initialization failed: ${error instanceof Error ? error.message : String(error)}`
     }
   }
 
-  return new Promise((resolve, reject) => {
-    const id = uuid()
+  try {
+    const output = await new Promise<PyodideOutput>((resolve, reject) => {
+      const id = uuid()
 
-    // 设置消息超时
-    const timeoutId = setTimeout(() => {
-      resolvers.delete(id)
-      reject(new Error('Python execution timed out'))
-    }, timeout)
+      // 设置消息超时
+      const timeoutId = setTimeout(() => {
+        resolvers.delete(id)
+        reject(new Error('Python execution timed out'))
+      }, timeout)
 
-    resolvers.set(id, {
-      resolve: (output) => {
-        clearTimeout(timeoutId)
-        resolve(output)
-      },
-      reject: (error) => {
-        clearTimeout(timeoutId)
-        reject(error)
-      }
+      resolvers.set(id, {
+        resolve: (output) => {
+          clearTimeout(timeoutId)
+          resolve(output)
+        },
+        reject: (error) => {
+          clearTimeout(timeoutId)
+          reject(error)
+        }
+      })
+
+      pyodideWorker.postMessage({
+        id,
+        python: script,
+        context
+      })
     })
 
-    pyodideWorker.postMessage({
-      id,
-      python: script,
-      context
-    })
-  })
-}
-
-// 辅助函数：格式化结果值
-export const formatPyodideResult = (result: any) => {
-  if (typeof result === 'object') {
-    try {
-      return JSON.stringify(result, null, 2)
-    } catch (e) {
-      return String(result)
-    }
+    return formatPyodideOutput(output)
+  } catch (error: unknown) {
+    return `System error: ${error instanceof Error ? error.message : String(error)}`
   }
-  return String(result)
 }
