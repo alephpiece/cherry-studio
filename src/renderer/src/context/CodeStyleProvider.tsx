@@ -6,7 +6,7 @@ import type React from 'react'
 import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
 
 interface CodeStyleContextType {
-  codeToHtml: (code: string, language: string, enableCache: boolean) => Promise<string>
+  codeToHtml: (code: string, language: string, enableCache: boolean, enableWorker?: boolean) => Promise<string>
   themeNames: string[]
   currentTheme: string
   languageMap: Record<string, string>
@@ -83,11 +83,11 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   }, [])
 
   const codeToHtml = useCallback(
-    async (code: string, language: string, enableCache: boolean) => {
+    async (code: string, language: string, enableCache: boolean, enableWorker: boolean = false) => {
       if (!code) return ''
       const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
       const trimmedCode = code?.trimEnd() ?? ''
-      return shikiService.highlightCode(trimmedCode, normalizedLang, currentTheme, enableCache)
+      return shikiService.highlightCode(trimmedCode, normalizedLang, currentTheme, enableCache, enableWorker)
     },
     [currentTheme, languageMap]
   )

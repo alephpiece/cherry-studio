@@ -8,67 +8,96 @@ interface PendingRequest {
   timeoutId?: ReturnType<typeof setTimeout>
 }
 
+// 初始化状态枚举
+enum InitState {
+  NotStarted,
+  Initializing,
+  Initialized,
+  Failed
+}
+
 /**
  * Shiki 代码高亮服务
  *
+ * 可以选择使用 worker highlighter 或者主线程 highlighter。
+ * - Worker highlighter 适用于历史消息，避免主线程阻塞；
+ * - 主线程 highlighter 适用于当前消息，性能更高。
+ *
  * 回退路径:
- * - 优先使用 Web Worker 处理代码高亮，避免主线程阻塞
- * - 否则，使用主线程 highlighter 处理
- * - 否则，返回没有高亮的代码
+ * - Web Worker highlighter（如果启用）
+ * - 主线程 highlighter
+ * - 没有高亮的代码
  *
  * 支持重复请求合并
  * 支持高亮代码缓存
  * */
 class ShikiService {
-  private worker: Worker | null = null // Worker highlighter 实例
-  private highlighter: any = null // 主线程highlighter 实例
-  private pendingRequests = new Map<string, PendingRequest>()
-  private isInitialized = false
-  private isInitializing = false
-  private initPromise: Promise<void> | null = null
-  private resolveInit?: () => void
+  // 默认配置
+  private static readonly DEFAULT_LANGUAGES = ['javascript', 'typescript', 'python', 'java', 'markdown']
+  private static readonly DEFAULT_THEMES = ['one-light', 'material-theme-darker']
+  private static readonly REQUEST_TIMEOUT_MS = 60000 // 1分钟超时
 
-  private async init() {
-    if (this.isInitialized || this.isInitializing) {
-      return this.initPromise
+  private worker: Worker | null = null // Worker highlighter
+  private highlighter: any = null // 主线程 highlighter
+  private pendingRequests = new Map<string, PendingRequest>()
+
+  // 使用枚举跟踪初始化状态
+  private workerState: InitState = InitState.NotStarted
+  private highlighterState: InitState = InitState.NotStarted
+
+  // 初始化 Promise
+  private workerInitPromise: Promise<void> | null = null
+  private highlighterInitPromise: Promise<void> | null = null
+
+  private resolveWorkerInit?: () => void
+
+  /**
+   * 根据需要初始化服务
+   * @param enableWorker 是否启用 Worker
+   */
+  private async ensureInitialized(enableWorker: boolean): Promise<void> {
+    const promises: Promise<void>[] = []
+
+    // 如果需要 worker 且未初始化
+    if (enableWorker && this.workerState === InitState.NotStarted) {
+      promises.push(
+        this.initWorker().catch((error) => {
+          console.warn('[ShikiService] Worker initialization failed:', error)
+        })
+      )
     }
 
-    this.isInitializing = true
+    // 如果需要主线程 highlighter (worker不可用或不启用worker)
+    if (
+      (!enableWorker || this.workerState === InitState.Failed || this.workerState === InitState.NotStarted) &&
+      this.highlighterState === InitState.NotStarted
+    ) {
+      promises.push(
+        this.initMainThreadHighlighter().catch((error) => {
+          console.error('[ShikiService] Failed to initialize shiki in main thread:', error)
+        })
+      )
+    }
 
-    this.initPromise = Promise.resolve()
-      // 尝试初始化Worker highlighter
-      .then(() => {
-        return Promise.reject(new Error('Web Worker is disabled'))
-        if (typeof Worker === 'undefined') {
-          return Promise.reject(new Error('Web Worker is not supported'))
-        }
-        return this.initWorker()
-      })
-      // 尝试初始化主线程 highlighter
-      .catch((error) => {
-        console.warn('[ShikiService] Worker initialization failed, falling back to main thread:', error)
-        this.worker = null
-        return this.initMainThreadHighlighter()
-      })
-      // Highlighter 不可用，实际运行中回退到没有高亮的代码
-      .catch((error) => {
-        console.error('[ShikiService] Failed to initialize shiki in main thread:', error)
-      })
-      .finally(() => {
-        // 只有在初始化失败时重置状态
-        // worker成功时onmessage会设置isInitialized和isInitializing
-        if (!this.isInitialized) {
-          this.isInitializing = false
-        }
-      })
-
-    return this.initPromise
+    // 等待所有需要的初始化完成
+    if (promises.length > 0) {
+      await Promise.all(promises)
+    }
   }
 
-  private async initWorker() {
+  /**
+   * 初始化Web Worker
+   */
+  private async initWorker(): Promise<void> {
+    if (this.workerState === InitState.Initialized || this.workerState === InitState.Initializing) {
+      return this.workerInitPromise || Promise.resolve()
+    }
+
+    this.workerState = InitState.Initializing
+
     if (typeof Worker === 'undefined') {
-      console.warn('[ShikiService] Web Worker is not supported in this environment')
-      return
+      this.workerState = InitState.Failed
+      return Promise.reject(new Error('Web Worker is not supported'))
     }
 
     this.worker = new ShikiWorker()
@@ -77,9 +106,8 @@ class ShikiService {
       const { type, result, cacheKey } = e.data
 
       if (type === 'init') {
-        this.isInitialized = true
-        this.isInitializing = false
-        this.resolveInit?.()
+        this.workerState = InitState.Initialized
+        this.resolveWorkerInit?.()
       }
 
       if (type === 'highlight' && cacheKey && this.pendingRequests.has(cacheKey)) {
@@ -92,34 +120,52 @@ class ShikiService {
       }
     }
 
-    this.initPromise = new Promise((resolve) => {
-      this.resolveInit = resolve
+    this.workerInitPromise = new Promise((resolve) => {
+      this.resolveWorkerInit = resolve
 
       this.worker?.postMessage({
         type: 'init',
         payload: {
-          languages: ['javascript', 'typescript', 'python', 'java', 'markdown'],
-          themes: ['one-light', 'material-theme-darker']
+          languages: ShikiService.DEFAULT_LANGUAGES,
+          themes: ShikiService.DEFAULT_THEMES
         }
       })
     })
 
-    await this.initPromise
+    return this.workerInitPromise
   }
 
-  private async initMainThreadHighlighter() {
-    try {
-      const { createHighlighter } = await import('shiki')
-
-      this.highlighter = await createHighlighter({
-        langs: ['javascript', 'typescript', 'python', 'java', 'markdown'],
-        themes: ['one-light', 'material-theme-darker']
-      })
-
-      this.isInitialized = true
-    } finally {
-      this.isInitializing = false
+  /**
+   * 初始化主线程 highlighter
+   */
+  private async initMainThreadHighlighter(): Promise<void> {
+    if (this.highlighterState === InitState.Initialized || this.highlighterState === InitState.Initializing) {
+      return this.highlighterInitPromise || Promise.resolve()
     }
+
+    this.highlighterState = InitState.Initializing
+
+    this.highlighterInitPromise = (async () => {
+      try {
+        const { createHighlighter } = await import('shiki')
+
+        this.highlighter = await createHighlighter({
+          langs: ShikiService.DEFAULT_LANGUAGES,
+          themes: ShikiService.DEFAULT_THEMES
+        })
+
+        this.highlighterState = InitState.Initialized
+      } catch (error) {
+        this.highlighterState = InitState.Failed
+        throw error
+      } finally {
+        if (this.highlighterState !== InitState.Initialized) {
+          this.highlighterState = InitState.Failed
+        }
+      }
+    })()
+
+    return this.highlighterInitPromise
   }
 
   /**
@@ -128,9 +174,16 @@ class ShikiService {
    * @param language 语言
    * @param theme 主题
    * @param enableCache 是否启用缓存
+   * @param enableWorker 是否启用 worker
    * @returns 高亮后的代码
    */
-  async highlightCode(code: string, language: string, theme: string, enableCache: boolean): Promise<string> {
+  async highlightCode(
+    code: string,
+    language: string,
+    theme: string,
+    enableCache: boolean,
+    enableWorker: boolean = true
+  ): Promise<string> {
     if (!code) return ''
 
     // 检查缓存
@@ -140,24 +193,19 @@ class ShikiService {
       if (cached) return cached
     }
 
-    // 首次使用时初始化
-    if (!this.isInitialized) {
-      await this.init()
-    }
-
-    // Fallback
-    if (!this.worker && !this.highlighter) {
-      const escapedCode = code?.replace(/[<>]/g, (char) => ({ '<': '&lt;', '>': '&gt;' })[char]!)
-      return `<pre style="padding: 10px"><code>${escapedCode}</code></pre>`
-    }
+    // 确保需要的组件已初始化
+    await this.ensureInitialized(enableWorker)
 
     return new Promise((resolve) => {
       // 注册代码高亮请求
       this.registerRequest(cacheKey, code, enableCache, resolve)
 
-      // Worker => Main Thread => No highlight
-      if (this.worker) {
-        this.worker.postMessage({
+      // 根据可用组件和参数选择高亮方式
+      const canUseWorker = enableWorker && this.workerState === InitState.Initialized && this.worker
+      const canUseHighlighter = this.highlighterState === InitState.Initialized && this.highlighter
+
+      if (canUseWorker) {
+        this.worker!.postMessage({
           type: 'highlight',
           payload: {
             code,
@@ -167,9 +215,10 @@ class ShikiService {
             codeLength: code.length
           }
         })
-      } else if (this.highlighter) {
+      } else if (canUseHighlighter) {
         this.processInMainThread(code, language, theme, cacheKey)
       } else {
+        // 两种高亮器都不可用，使用 fallback
         this.rejectRequest(cacheKey)
       }
     })
@@ -228,7 +277,7 @@ class ShikiService {
     // 设置整个请求的超时处理
     const timeoutId = setTimeout(() => {
       this.rejectRequest(cacheKey)
-    }, 600000)
+    }, ShikiService.REQUEST_TIMEOUT_MS)
 
     // 为新请求创建条目
     this.pendingRequests.set(cacheKey, {
@@ -260,7 +309,7 @@ class ShikiService {
   }
 
   /**
-   * 处理高亮失败的情况，提供简单的回退方式
+   * 处理高亮失败的情况
    */
   private rejectRequest(cacheKey: string): void {
     if (!this.pendingRequests.has(cacheKey)) return
@@ -286,9 +335,10 @@ class ShikiService {
     }
 
     this.highlighter = null
-    this.isInitialized = false
-    this.isInitializing = false
-    this.initPromise = null
+    this.workerState = InitState.NotStarted
+    this.highlighterState = InitState.NotStarted
+    this.workerInitPromise = null
+    this.highlighterInitPromise = null
 
     this.pendingRequests.forEach((request) => {
       if (request.timeoutId) {
