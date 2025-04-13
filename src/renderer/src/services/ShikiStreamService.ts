@@ -1,5 +1,6 @@
 import type { HighlighterCore, ThemedToken } from 'shiki'
 
+import ShikiStreamWorker from '../workers/shiki-stream.worker?worker'
 import { CodeCacheService } from './CodeCacheService'
 import { ShikiStreamTokenizer, ShikiStreamTokenizerOptions } from './ShikiStreamTokenizer'
 
@@ -62,7 +63,7 @@ class ShikiStreamService {
     }
 
     try {
-      this.worker = new Worker(new URL('../workers/shiki-stream.worker.ts', import.meta.url))
+      this.worker = new ShikiStreamWorker()
 
       // 设置消息处理器
       this.worker.onmessage = (event) => {

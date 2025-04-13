@@ -1,6 +1,8 @@
 /// <reference lib="webworker" />
 
-import type { GrammarState, HighlighterCore, ThemedToken } from 'shiki'
+import type { HighlighterCore, ThemedToken } from 'shiki'
+
+import { ShikiStreamTokenizer, ShikiStreamTokenizerOptions } from '../services/ShikiStreamTokenizer'
 
 // Worker 消息类型
 type WorkerMessageType = 'init' | 'highlight' | 'cleanup' | 'dispose'
@@ -23,94 +25,9 @@ interface WorkerResponse {
   error?: string
 }
 
-// ShikiStreamTokenizer 相关类型和实现
-interface ShikiStreamTokenizerOptions {
-  highlighter: HighlighterCore
-  lang: string
-  theme: string
-}
-
-interface ShikiStreamTokenizerEnqueueResult {
-  recall: number
-  stable: ThemedToken[][]
-  unstable: ThemedToken[][]
-}
-
 interface HighlightChunkResult {
   lines: ThemedToken[][]
   recall: number
-}
-
-/**
- * Worker 版本的 ShikiStreamTokenizer
- */
-class ShikiStreamTokenizer {
-  public readonly options: ShikiStreamTokenizerOptions
-
-  public linesStable: ThemedToken[][] = []
-  public linesUnstable: ThemedToken[][] = []
-
-  public lastUnstableCodeChunk: string = ''
-  public lastStableGrammarState: GrammarState | undefined
-
-  constructor(options: ShikiStreamTokenizerOptions) {
-    this.options = options
-  }
-
-  /**
-   * 使用 tokenizer 处理一个代码片段。
-   */
-  enqueue(chunk: string): ShikiStreamTokenizerEnqueueResult {
-    const subTrunks = splitToSubTrunks(this.lastUnstableCodeChunk + chunk)
-
-    const stable: ThemedToken[][] = []
-    const unstable: ThemedToken[][] = []
-    const recall = this.linesUnstable.length
-
-    subTrunks.forEach((subTrunck, i) => {
-      const isLastChunk = i === subTrunks.length - 1
-
-      const result = this.options.highlighter.codeToTokens(subTrunck, {
-        ...this.options,
-        grammarState: this.lastStableGrammarState
-      })
-
-      if (!isLastChunk) {
-        this.lastStableGrammarState = result.grammarState
-
-        result.tokens.forEach((tokenLine) => {
-          stable.push(tokenLine)
-        })
-      } else {
-        unstable.push(result.tokens[0])
-        this.lastUnstableCodeChunk = subTrunck
-      }
-
-      this.linesStable.push(...stable)
-      this.linesUnstable = unstable
-    })
-
-    return {
-      recall,
-      stable,
-      unstable
-    }
-  }
-
-  clear(): void {
-    this.linesStable = []
-    this.linesUnstable = []
-    this.lastUnstableCodeChunk = ''
-    this.lastStableGrammarState = undefined
-  }
-}
-
-function splitToSubTrunks(str: string) {
-  const lastNewlineIndex = str.lastIndexOf('\n')
-  if (lastNewlineIndex === -1) {
-    return [str]
-  }
-  return [str.substring(0, lastNewlineIndex), str.substring(lastNewlineIndex + 1)]
 }
 
 // Worker 全局变量
@@ -204,7 +121,7 @@ async function highlightCodeChunk(
     const tokenizer = await getOrCreateTokenizer(callerId, language, theme)
 
     // 处理代码 chunk
-    const result = tokenizer.enqueue(chunk)
+    const result = await tokenizer.enqueue(chunk)
 
     // 返回结果
     return {
