@@ -3766,18 +3766,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@shikijs/core@npm:^2.4.0 || ^3.0.0":
-  version: 3.2.2
-  resolution: "@shikijs/core@npm:3.2.2"
-  dependencies:
-    "@shikijs/types": "npm:3.2.2"
-    "@shikijs/vscode-textmate": "npm:^10.0.2"
-    "@types/hast": "npm:^3.0.4"
-    hast-util-to-html: "npm:^9.0.5"
-  checksum: 10c0/69afe788994653b69f1bafd4fd3c2143609b4b0c05e970c8dc8d82ec660d617850ad9eeb2b6aa5be2dd534cefa0213d577129cb9ae1070eb4890cbbf1ac0f63e
-  languageName: node
-  linkType: hard
-
 "@shikijs/engine-javascript@npm:3.2.1":
   version: 3.2.1
   resolution: "@shikijs/engine-javascript@npm:3.2.1"
@@ -3824,16 +3812,6 @@ __metadata:
     "@shikijs/vscode-textmate": "npm:^10.0.2"
     "@types/hast": "npm:^3.0.4"
   checksum: 10c0/3380fde198d466a8771137b7ca3d4756a54d7d24c6e65f852737472a280c12c07f2123b9ad3d7eb2edec86d8d2c53bc207abe0fc0c7f78d337e52e742dc34edf
-  languageName: node
-  linkType: hard
-
-"@shikijs/types@npm:3.2.2":
-  version: 3.2.2
-  resolution: "@shikijs/types@npm:3.2.2"
-  dependencies:
-    "@shikijs/vscode-textmate": "npm:^10.0.2"
-    "@types/hast": "npm:^3.0.4"
-  checksum: 10c0/aec3327d0cfc89af138ce195ac070ba62d8229864c079a3f06dff5a180036fdd963282068d67bd4c89a04ae688005c2b7c214c274ad0bb265f6f7ab6907a67a6
   languageName: node
   linkType: hard
 
@@ -5183,7 +5161,6 @@ __metadata:
     rollup-plugin-visualizer: "npm:^5.12.0"
     sass: "npm:^1.77.2"
     shiki: "npm:^3.2.1"
-    shiki-stream: "npm:^0.1.2"
     string-width: "npm:^7.2.0"
     styled-components: "npm:^6.1.11"
     tar: "npm:^7.4.3"
@@ -15979,23 +15956,6 @@ __metadata:
   version: 3.0.0
   resolution: "shebang-regex@npm:3.0.0"
   checksum: 10c0/1dbed0726dd0e1152a92696c76c7f06084eb32a90f0528d11acd764043aacf76994b2fb30aa1291a21bd019d6699164d048286309a278855ee7bec06cf6fb690
-  languageName: node
-  linkType: hard
-
-"shiki-stream@npm:^0.1.2":
-  version: 0.1.2
-  resolution: "shiki-stream@npm:0.1.2"
-  dependencies:
-    "@shikijs/core": "npm:^2.4.0 || ^3.0.0"
-  peerDependencies:
-    react: ^19.0.0
-    vue: ^3.2.0
-  peerDependenciesMeta:
-    react:
-      optional: true
-    vue:
-      optional: true
-  checksum: 10c0/f0690f6519467a8550a213c823d816cdacc44ab2c39e4bd8e340b5ef97244a6d756e0702ac579d9be27ac943de1da1618ef8f25f3367b979414cbdbedcfd3d46
   languageName: node
   linkType: hard
 

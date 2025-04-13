@@ -1,6 +1,7 @@
 import { useToolbar } from '@renderer/components/CodeView/context'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
+import { uuid } from '@renderer/utils'
 import { getTokenStyleObject } from '@shikijs/core'
 import { ChevronsDownUp, ChevronsUpDown, Text as UnWrapIcon, WrapText as WrapIcon } from 'lucide-react'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -24,18 +25,17 @@ const CodePreview = ({
   language
 }: CodePreviewProps & { ref?: React.RefObject<HTMLDivElement | null> }) => {
   const { codeShowLineNumbers, fontSize, codeCollapsible, codeWrappable } = useSettings()
-  const { createHighlighterStream, closeHighlighterStream } = useCodeStyle()
+  const { highlightCodeChunk, cleanupTokenizer } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
   const [showExpandButton, setShowExpandButton] = useState(false)
-  const [tokens, setTokens] = useState<ThemedToken[]>([])
+  const [tokenLines, setTokenLines] = useState<ThemedToken[][]>([])
   const showExpandButtonRef = useRef(false)
   const codeContentRef = useRef<HTMLDivElement>(null)
   const prevCodeLengthRef = useRef(0)
   const isStreamingRef = useRef(false)
   const shouldAutoScrollRef = useRef<boolean>(true)
-  const callerId = useRef(crypto.randomUUID()).current
-  const subscriberIdRef = useRef<string | null>(null)
+  const callerId = useRef(`${Date.now()}-${uuid()}`).current
 
   const { t } = useTranslation()
 
@@ -43,11 +43,6 @@ const CodePreview = ({
   React.useImperativeHandle(ref, () => codeContentRef.current!, [])
 
   const { registerTool, removeTool } = useToolbar()
-
-  // 处理尾部空白字符
-  const safeCodeString = useMemo(() => {
-    return typeof children === 'string' ? children.trimEnd() : ''
-  }, [children])
 
   // 展开/折叠工具
   useEffect(() => {
@@ -117,49 +112,52 @@ const CodePreview = ({
     shouldAutoScrollRef.current = scrollHeight - (scrollTop + clientHeight) < 50
   }, [])
 
-  // 初始化高亮流并处理 tokens 更新
-  useEffect(() => {
-    let isMounted = true
-    let streamHandler: {
-      subscribe: (callback: (tokens: ThemedToken[]) => void) => string
-      unsubscribe: (subscriberId: string) => void
-    } | null = null
+  // 处理尾部空白字符
+  const safeCodeString = useMemo(() => {
+    return typeof children === 'string' ? children.trimEnd() : ''
+  }, [children])
 
-    const setupStream = async () => {
-      // 创建高亮流
-      streamHandler = await createHighlighterStream(safeCodeString, language, callerId)
+  const highlightCode = useCallback(async () => {
+    if (!safeCodeString) return
 
-      // 注册 tokens 回调
-      subscriberIdRef.current = streamHandler.subscribe((updatedTokens) => {
-        if (isMounted) {
-          setTokens(updatedTokens)
+    // 获取高亮的 token lines，只传递增量部分
+    if (prevCodeLengthRef.current < safeCodeString.length) {
+      const incrementalCode = safeCodeString.slice(prevCodeLengthRef.current)
+      const result = await highlightCodeChunk(incrementalCode, language, callerId)
 
-          // 如果需要，自动滚动到底部
-          if (shouldAutoScrollRef.current) {
-            requestAnimationFrame(scrollToBottom)
-          }
-        }
-      })
+      setTokenLines((lines) => [...lines.slice(0, lines.length - result.recall), ...result.lines])
+      prevCodeLengthRef.current = safeCodeString.length
+    } else {
+      const result = await highlightCodeChunk(safeCodeString, language, callerId)
+
+      setTokenLines(result.lines)
+      prevCodeLengthRef.current = safeCodeString.length
     }
 
-    setupStream()
+    if (shouldAutoScrollRef.current) {
+      requestAnimationFrame(scrollToBottom)
+    }
+  }, [callerId, highlightCodeChunk, language, safeCodeString, scrollToBottom])
+
+  // 处理代码高亮
+  useEffect(() => {
+    let isMounted = true
+
+    if (isMounted) {
+      highlightCode()
+    }
 
     return () => {
       isMounted = false
-      // 取消订阅
-      if (subscriberIdRef.current) {
-        streamHandler?.unsubscribe(subscriberIdRef.current)
-        subscriberIdRef.current = null
-      }
     }
-  }, [safeCodeString, language, callerId, createHighlighterStream, scrollToBottom])
+  }, [highlightCode])
 
   // 组件卸载时清理资源
   useEffect(() => {
     return () => {
-      closeHighlighterStream(callerId)
+      cleanupTokenizer(callerId)
     }
-  }, [callerId, closeHighlighterStream])
+  }, [callerId, cleanupTokenizer])
 
   // 监听滚动事件
   useEffect(() => {
@@ -194,7 +192,7 @@ const CodePreview = ({
     observer.observe(codeElement)
 
     return () => {
-      prevCodeLengthRef.current = children?.length || 0
+      // 不在这里更新 prevCodeLengthRef，在处理代码高亮时更新
       isMounted = false
       observer.disconnect()
     }
@@ -211,8 +209,8 @@ const CodePreview = ({
         maxHeight: codeCollapsible && !isExpanded ? '350px' : 'none',
         overflow: codeCollapsible && !isExpanded ? 'auto' : 'visible'
       }}>
-      {tokens.length > 0 ? (
-        <ShikiTokensRenderer language={language} tokens={tokens} />
+      {tokenLines.length > 0 ? (
+        <ShikiTokensRenderer language={language} tokenLines={tokenLines} />
       ) : (
         <div style={{ opacity: 0.1 }}>{children}</div>
       )}
@@ -223,85 +221,42 @@ const CodePreview = ({
 /**
  * 渲染 Shiki 高亮后的 tokens
  */
-const ShikiTokensRenderer: React.FC<{ language: string; tokens: ThemedToken[] }> = memo(({ language, tokens }) => {
-  const { getShikiPreProperties } = useCodeStyle()
-  const rendererRef = useRef<HTMLPreElement>(null)
+const ShikiTokensRenderer: React.FC<{ language: string; tokenLines: ThemedToken[][] }> = memo(
+  ({ language, tokenLines }) => {
+    const { getShikiPreProperties } = useCodeStyle()
+    const rendererRef = useRef<HTMLPreElement>(null)
 
-  useEffect(() => {
-    getShikiPreProperties(language).then((properties) => {
-      const pre = rendererRef.current
-      if (pre) {
-        pre.className = properties.class
-        pre.style.cssText = properties.style
-        pre.tabIndex = properties.tabindex
-      }
-    })
-  }, [language, getShikiPreProperties])
-
-  // 将 tokens 转换为行
-  const lines = useMemo(() => {
-    if (tokens.length === 0) return []
-
-    const result: ThemedToken[][] = [[]]
-    let currentLine = 0
-
-    for (const token of tokens) {
-      const content = token.content
-      const newLines = content.split('\n')
-
-      if (newLines.length === 1) {
-        // 没有换行，直接添加到当前行
-        result[currentLine].push(token)
-      } else {
-        // 处理第一部分（当前行的结尾）
-        if (newLines[0]) {
-          const firstToken = { ...token, content: newLines[0] }
-          result[currentLine].push(firstToken)
+    // 设置 pre 标签属性
+    useEffect(() => {
+      getShikiPreProperties(language).then((properties) => {
+        const pre = rendererRef.current
+        if (pre) {
+          pre.className = properties.class
+          pre.style.cssText = properties.style
+          pre.tabIndex = properties.tabindex
         }
+      })
+    }, [language, getShikiPreProperties])
 
-        // 处理中间行
-        for (let i = 1; i < newLines.length - 1; i++) {
-          currentLine++
-          result[currentLine] = []
-          if (newLines[i]) {
-            const midToken = { ...token, content: newLines[i] }
-            result[currentLine].push(midToken)
-          }
-        }
-
-        // 处理最后一部分（新行的开始）
-        if (newLines.length > 1) {
-          currentLine++
-          result[currentLine] = []
-          if (newLines[newLines.length - 1]) {
-            const lastToken = { ...token, content: newLines[newLines.length - 1] }
-            result[currentLine].push(lastToken)
-          }
-        }
-      }
-    }
-
-    return result
-  }, [tokens])
-
-  return (
-    <pre ref={rendererRef}>
-      <code>
-        {lines.map((lineTokens, lineIndex) => (
-          <span key={`line-${lineIndex}`} className="line">
-            {lineTokens.map((token, tokenIndex) => (
-              <span
-                key={`${lineIndex}-${tokenIndex}-${token.content}`}
-                style={token.htmlStyle || getTokenStyleObject(token)}>
-                {token.content}
-              </span>
-            ))}
-          </span>
-        ))}
-      </code>
-    </pre>
-  )
-})
+    return (
+      <pre ref={rendererRef}>
+        <code>
+          {tokenLines.map((lineTokens, lineIndex) => (
+            <span key={`line-${lineIndex}`} className="line">
+              {lineTokens.map((token, tokenIndex) => (
+                <span
+                  key={`${lineIndex}-${tokenIndex}-${token.content}`}
+                  style={token.htmlStyle || getTokenStyleObject(token)}>
+                  {token.content}
+                </span>
+              ))}
+            </span>
+          ))}
+        </code>
+      </pre>
+    )
+  }
+)
 
 const CodeViewContainer = styled.div<{
   isShowLineNumbers: boolean

@@ -1,26 +1,14 @@
 import { useMermaid } from '@renderer/hooks/useMermaid'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { ShikiPreProperties, shikiStreamService } from '@renderer/services/ShikiStreamService'
+import { HighlightChunkResult, ShikiPreProperties, shikiStreamService } from '@renderer/services/ShikiStreamService'
 import { ThemeMode } from '@renderer/types'
 import type React from 'react'
 import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
-import type { ThemedToken } from 'shiki'
-import { CodeToTokenTransformStream } from 'shiki-stream'
-
-type TokenCallback = (tokens: ThemedToken[]) => void
 
 interface CodeStyleContextType {
   codeToHtml: (code: string, language: string, enableCache: boolean) => Promise<string>
-  createTransformStream: (language: string) => Promise<CodeToTokenTransformStream>
-  createHighlighterStream: (
-    code: string,
-    language: string,
-    callerId: string
-  ) => Promise<{
-    subscribe: (callback: TokenCallback) => string
-    unsubscribe: (subscriberId: string) => void
-  }>
-  closeHighlighterStream: (callerId: string) => void
+  highlightCodeChunk: (code: string, language: string, callerId: string) => Promise<HighlightChunkResult>
+  cleanupTokenizer: (callerId: string) => void
   getShikiPreProperties: (language: string) => Promise<ShikiPreProperties>
   themeNames: string[]
   currentTheme: string
@@ -29,19 +17,9 @@ interface CodeStyleContextType {
 
 const defaultCodeStyleContext: CodeStyleContextType = {
   codeToHtml: async () => '',
-  createTransformStream: async () => {
-    throw new Error('Not implemented')
-  },
-  createHighlighterStream: async () => ({
-    subscribe: () => '',
-    unsubscribe: () => {}
-  }),
-  closeHighlighterStream: () => {},
-  getShikiPreProperties: async () => ({
-    class: 'shiki',
-    style: '',
-    tabindex: 0
-  }),
+  highlightCodeChunk: async () => ({ lines: [], recall: 0 }),
+  cleanupTokenizer: () => {},
+  getShikiPreProperties: async () => ({ class: '', style: '', tabindex: 0 }),
   themeNames: ['auto'],
   currentTheme: 'none',
   languageMap: {}
@@ -121,31 +99,23 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
     [currentTheme, languageMap]
   )
 
-  // 流式代码高亮器
-  const createTransformStream = useCallback(
-    async (language: string) => {
-      const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
-      return shikiStreamService.createTransformStream(normalizedLang, currentTheme)
-    },
-    [currentTheme, languageMap]
-  )
-
-  // 创建代码高亮流
-  const createHighlighterStream = useCallback(
+  // 流式代码高亮，返回已高亮的 token lines
+  const highlightCodeChunk = useCallback(
     async (code: string, language: string, callerId: string) => {
       const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
-      return shikiStreamService.createHighlighterStream(code, normalizedLang, currentTheme, callerId)
+      return shikiStreamService.highlightCodeChunk(code, normalizedLang, currentTheme, callerId)
     },
     [currentTheme, languageMap]
   )
 
-  // 关闭代码高亮流
-  const closeHighlighterStream = useCallback((callerId: string) => {
-    shikiStreamService.closeHighlighterStream(callerId)
+  // 清理代码高亮资源
+  const cleanupTokenizer = useCallback((callerId: string) => {
+    shikiStreamService.cleanupTokenizer(callerId)
   }, [])
 
+  // 获取 Shiki pre 标签属性
   const getShikiPreProperties = useCallback(
-    (language: string) => {
+    async (language: string) => {
       const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
       return shikiStreamService.getShikiPreProperties(normalizedLang, currentTheme)
     },
@@ -155,24 +125,14 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   const contextValue = useMemo(
     () => ({
       codeToHtml,
-      createTransformStream,
-      createHighlighterStream,
-      closeHighlighterStream,
+      highlightCodeChunk,
+      cleanupTokenizer,
       getShikiPreProperties,
       themeNames,
       currentTheme,
       languageMap
     }),
-    [
-      codeToHtml,
-      createTransformStream,
-      createHighlighterStream,
-      closeHighlighterStream,
-      getShikiPreProperties,
-      themeNames,
-      currentTheme,
-      languageMap
-    ]
+    [codeToHtml, highlightCodeChunk, cleanupTokenizer, getShikiPreProperties, themeNames, currentTheme, languageMap]
   )
 
   return <CodeStyleContext value={contextValue}>{children}</CodeStyleContext>
