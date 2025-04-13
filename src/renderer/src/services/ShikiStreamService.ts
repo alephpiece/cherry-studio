@@ -23,19 +23,107 @@ export interface HighlightChunkResult {
 /**
  * Shiki 代码高亮服务
  *
- * 支持高亮代码缓存和流式高亮。
+ * - 支持流式代码高亮。
+ * - 优先使用 Worker 处理高亮请求。
  */
 class ShikiStreamService {
   // 默认配置
   private static readonly DEFAULT_LANGUAGES = ['javascript', 'typescript', 'python', 'java', 'markdown']
   private static readonly DEFAULT_THEMES = ['one-light', 'material-theme-darker']
 
+  // 主线程 highlighter 和 tokenizers
   private highlighter: HighlighterCore | null = null
   private highlighterInitPromise: Promise<void> | null = null
   private isInitialized: boolean = false
-
-  // 每个调用者都有自己的 tokenizer 实例
   private tokenizerMap = new Map<string, ShikiStreamTokenizer>()
+
+  // Worker 相关资源
+  private worker: Worker | null = null
+  private workerInitialized = false
+  private pendingRequests = new Map<
+    number,
+    {
+      resolve: (value: any) => void
+      reject: (reason?: any) => void
+    }
+  >()
+  private requestId = 0
+
+  constructor() {
+    this.initWorker()
+  }
+
+  /**
+   * 初始化 Worker
+   */
+  private initWorker() {
+    if (typeof Worker === 'undefined') {
+      return
+    }
+
+    try {
+      this.worker = new Worker(new URL('../workers/shiki-stream.worker.ts', import.meta.url))
+
+      // 设置消息处理器
+      this.worker.onmessage = (event) => {
+        const { id, type, result, error } = event.data
+
+        // 查找对应的请求
+        const pendingRequest = this.pendingRequests.get(id)
+        if (!pendingRequest) return
+
+        this.pendingRequests.delete(id)
+
+        if (type === 'error') {
+          pendingRequest.reject(new Error(error))
+        } else if (type === 'init-result') {
+          this.workerInitialized = true
+          pendingRequest.resolve({ success: true })
+        } else {
+          pendingRequest.resolve(result)
+        }
+      }
+
+      // 初始化 worker
+      this.sendWorkerMessage({
+        type: 'init',
+        languages: ShikiStreamService.DEFAULT_LANGUAGES,
+        themes: ShikiStreamService.DEFAULT_THEMES
+      }).catch((error) => {
+        console.error('Failed to initialize worker:', error)
+        this.worker = null
+        this.workerInitialized = false
+      })
+    } catch (error) {
+      console.error('Failed to create worker:', error)
+      this.worker = null
+    }
+  }
+
+  /**
+   * 向 Worker 发送消息并等待回复
+   */
+  private sendWorkerMessage(message: any): Promise<any> {
+    if (!this.worker) {
+      return Promise.reject(new Error('Worker not available'))
+    }
+
+    const id = this.requestId++
+    const promise = new Promise((resolve, reject) => {
+      this.pendingRequests.set(id, { resolve, reject })
+
+      // 设置超时处理
+      setTimeout(() => {
+        if (this.pendingRequests.has(id)) {
+          this.pendingRequests.delete(id)
+          reject(new Error('Worker request timeout'))
+        }
+      }, 60000) // 60秒超时
+    })
+
+    this.worker.postMessage({ id, ...message })
+    return promise
+  }
 
   /**
    * 初始化 highlighter
@@ -184,6 +272,7 @@ class ShikiStreamService {
   /**
    * 高亮代码 chunk，返回本次高亮的所有 ThemedToken 行
    *
+   * 优先使用 Worker 处理，失败时回退到主线程处理。
    * 调用者需要自行处理撤回。
    * @param chunk 代码内容
    * @param language 语言
@@ -197,6 +286,24 @@ class ShikiStreamService {
     theme: string,
     callerId: string
   ): Promise<HighlightChunkResult> {
+    // 如果 Worker 可用，优先使用 Worker 处理
+    if (this.worker && this.workerInitialized) {
+      try {
+        const result = await this.sendWorkerMessage({
+          type: 'highlight',
+          callerId,
+          chunk,
+          language,
+          theme
+        })
+        return result
+      } catch (error) {
+        // Worker 处理失败，回退到主线程处理
+        console.error('Worker highlight failed, falling back to main thread:', error)
+      }
+    }
+
+    // 主线程处理逻辑（保持不变）
     try {
       const tokenizer = await this.getOrCreateTokenizer(callerId, language, theme)
 
@@ -224,6 +331,17 @@ class ShikiStreamService {
    * @param callerId 调用者ID
    */
   cleanupTokenizer(callerId: string): void {
+    // 先尝试清理 Worker 中的 tokenizer
+    if (this.worker && this.workerInitialized) {
+      this.sendWorkerMessage({
+        type: 'cleanup',
+        callerId
+      }).catch((error) => {
+        console.error('Failed to cleanup worker tokenizer:', error)
+      })
+    }
+
+    // 同时清理主线程中的 tokenizer
     if (this.tokenizerMap.has(callerId)) {
       const tokenizer = this.tokenizerMap.get(callerId)!
       tokenizer.clear()
@@ -264,8 +382,26 @@ class ShikiStreamService {
     return tokenizer
   }
 
+  /**
+   * 销毁所有资源
+   */
   dispose() {
-    // 清理所有 tokenizer
+    // 清理 Worker 资源
+    if (this.worker) {
+      try {
+        this.sendWorkerMessage({ type: 'dispose' }).catch((error) => {
+          console.error('Failed to dispose worker:', error)
+        })
+        this.worker.terminate()
+      } catch (error) {
+        console.error('Failed to terminate worker:', error)
+      }
+      this.worker = null
+      this.workerInitialized = false
+      this.pendingRequests.clear()
+    }
+
+    // 清理主线程的所有 tokenizers
     for (const callerId of this.tokenizerMap.keys()) {
       this.cleanupTokenizer(callerId)
     }
