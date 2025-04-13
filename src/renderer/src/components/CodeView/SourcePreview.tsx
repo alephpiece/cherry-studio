@@ -234,15 +234,38 @@ const ShikiTokensRenderer: React.FC<{ language: string; tokenLines: ThemedToken[
       })
     }, [language, getShikiPreProperties])
 
+    // Shiki token 样式转换为 React 样式对象
+    function getReactStyleFromToken(token: ThemedToken): Record<string, string> {
+      const style = token.htmlStyle || getTokenStyleObject(token)
+      const reactStyle: Record<string, string> = {}
+      for (const [key, value] of Object.entries(style)) {
+        switch (key) {
+          case 'font-style':
+            reactStyle.fontStyle = value
+            break
+          case 'font-weight':
+            reactStyle.fontWeight = value
+            break
+          case 'background-color':
+            reactStyle.backgroundColor = value
+            break
+          case 'text-decoration':
+            reactStyle.textDecoration = value
+            break
+          default:
+            reactStyle[key] = value
+        }
+      }
+      return reactStyle
+    }
+
     return (
       <pre className="shiki" ref={rendererRef}>
         <code>
           {tokenLines.map((lineTokens, lineIndex) => (
             <span key={`line-${lineIndex}`} className="line">
               {lineTokens.map((token, tokenIndex) => (
-                <span
-                  key={`${lineIndex}-${tokenIndex}-${token.content}`}
-                  style={token.htmlStyle || getTokenStyleObject(token)}>
+                <span key={`${lineIndex}-${tokenIndex}-${token.content}`} style={getReactStyleFromToken(token)}>
                   {token.content}
                 </span>
               ))}
