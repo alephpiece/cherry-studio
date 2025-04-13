@@ -1216,6 +1216,25 @@ const migrateConfig = {
   },
   '96': (state: RootState) => {
     try {
+      // @ts-ignore eslint-disable-next-line
+      state.settings.assistantIconType = state.settings?.showAssistantIcon ? 'model' : 'emoji'
+      // @ts-ignore eslint-disable-next-line
+      delete state.settings.showAssistantIcon
+      return state
+    } catch (error) {
+      return state
+    }
+  },
+  '97': (state: RootState) => {
+    try {
+      state.settings.enableBackspaceDeleteModel = true
+      return state
+    } catch (error) {
+      return state
+    }
+  },
+  '98': (state: RootState) => {
+    try {
       if (!state.settings.codeExecution) {
         state.settings.codeExecution = settingsInitialState.codeExecution
       }

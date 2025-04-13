@@ -44,7 +44,9 @@ export type AssistantSettings = {
   reasoning_effort?: 'low' | 'medium' | 'high'
 }
 
-export type Agent = Omit<Assistant, 'model'>
+export type Agent = Omit<Assistant, 'model'> & {
+  group?: string[]
+}
 
 export type Message = {
   id: string
@@ -439,6 +441,22 @@ export interface MCPToolResponse {
   tool: MCPTool // tool info
   status: string // 'invoking' | 'done'
   response?: any
+}
+
+export interface MCPResource {
+  serverId: string
+  serverName: string
+  uri: string
+  name: string
+  description?: string
+  mimeType?: string
+  size?: number
+  text?: string
+  blob?: string
+}
+
+export interface GetResourceResponse {
+  contents: MCPResource[]
 }
 
 export interface QuickPhrase {
