@@ -140,6 +140,7 @@ class ShikiStreamService {
    * 执行一次性全量代码高亮。
    *
    * enableCache 为 true 并且用户启用了缓存功能时，缓存才会真正生效。
+   * @deprecated 请使用 highlightCodeChunk。
    * @param code 代码
    * @param language 语言
    * @param theme 主题
@@ -184,14 +185,14 @@ class ShikiStreamService {
    * 高亮代码 chunk，返回本次高亮的所有 ThemedToken 行
    *
    * 调用者需要自行处理撤回。
-   * @param code 代码内容
+   * @param chunk 代码内容
    * @param language 语言
    * @param theme 主题
    * @param callerId 调用者ID，用于标识不同的组件实例
    * @returns ThemedToken 行
    */
   async highlightCodeChunk(
-    code: string,
+    chunk: string,
     language: string,
     theme: string,
     callerId: string
@@ -199,7 +200,7 @@ class ShikiStreamService {
     try {
       const tokenizer = await this.getOrCreateTokenizer(callerId, language, theme)
 
-      const result = await tokenizer.enqueue(code)
+      const result = await tokenizer.enqueue(chunk)
 
       // 合并稳定和不稳定的行作为本次高亮的所有行
       return {
@@ -210,7 +211,7 @@ class ShikiStreamService {
       console.error('Failed to highlight code chunk:', error)
 
       // 提供简单的 fallback
-      const fallbackToken: ThemedToken = { content: code || '', color: '#000000', offset: 0 }
+      const fallbackToken: ThemedToken = { content: chunk || '', color: '#000000', offset: 0 }
       return {
         lines: [[fallbackToken]],
         recall: 0

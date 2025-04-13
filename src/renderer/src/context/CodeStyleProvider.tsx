@@ -7,7 +7,7 @@ import { createContext, type PropsWithChildren, use, useCallback, useEffect, use
 
 interface CodeStyleContextType {
   codeToHtml: (code: string, language: string, enableCache: boolean) => Promise<string>
-  highlightCodeChunk: (code: string, language: string, callerId: string) => Promise<HighlightChunkResult>
+  highlightCodeChunk: (trunk: string, language: string, callerId: string) => Promise<HighlightChunkResult>
   cleanupTokenizer: (callerId: string) => void
   getShikiPreProperties: (language: string) => Promise<ShikiPreProperties>
   themeNames: string[]
@@ -101,9 +101,9 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
 
   // 流式代码高亮，返回已高亮的 token lines
   const highlightCodeChunk = useCallback(
-    async (code: string, language: string, callerId: string) => {
+    async (trunk: string, language: string, callerId: string) => {
       const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
-      return shikiStreamService.highlightCodeChunk(code, normalizedLang, currentTheme, callerId)
+      return shikiStreamService.highlightCodeChunk(trunk, normalizedLang, currentTheme, callerId)
     },
     [currentTheme, languageMap]
   )
