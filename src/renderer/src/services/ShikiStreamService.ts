@@ -50,54 +50,64 @@ class ShikiStreamService {
   private requestId = 0
 
   constructor() {
-    this.initWorker()
+    // 延迟初始化
   }
 
   /**
    * 初始化 Worker
    */
-  private initWorker() {
+  private initWorker(): Promise<void> {
     if (typeof Worker === 'undefined') {
-      return
+      return Promise.resolve()
     }
 
-    try {
-      this.worker = new ShikiStreamWorker()
+    // 如果已经初始化，直接返回
+    if (this.worker && this.workerInitialized) {
+      return Promise.resolve()
+    }
 
-      // 设置消息处理器
-      this.worker.onmessage = (event) => {
-        const { id, type, result, error } = event.data
+    return new Promise((resolve, reject) => {
+      try {
+        this.worker = new ShikiStreamWorker()
 
-        // 查找对应的请求
-        const pendingRequest = this.pendingRequests.get(id)
-        if (!pendingRequest) return
+        // 设置消息处理器
+        this.worker.onmessage = (event) => {
+          const { id, type, result, error } = event.data
 
-        this.pendingRequests.delete(id)
+          // 查找对应的请求
+          const pendingRequest = this.pendingRequests.get(id)
+          if (!pendingRequest) return
 
-        if (type === 'error') {
-          pendingRequest.reject(new Error(error))
-        } else if (type === 'init-result') {
-          this.workerInitialized = true
-          pendingRequest.resolve({ success: true })
-        } else {
-          pendingRequest.resolve(result)
+          this.pendingRequests.delete(id)
+
+          if (type === 'error') {
+            pendingRequest.reject(new Error(error))
+          } else if (type === 'init-result') {
+            this.workerInitialized = true
+            pendingRequest.resolve({ success: true })
+            resolve()
+          } else {
+            pendingRequest.resolve(result)
+          }
         }
-      }
 
-      // 初始化 worker
-      this.sendWorkerMessage({
-        type: 'init',
-        languages: ShikiStreamService.DEFAULT_LANGUAGES,
-        themes: ShikiStreamService.DEFAULT_THEMES
-      }).catch((error) => {
-        console.error('Failed to initialize worker:', error)
+        // 初始化 worker
+        this.sendWorkerMessage({
+          type: 'init',
+          languages: ShikiStreamService.DEFAULT_LANGUAGES,
+          themes: ShikiStreamService.DEFAULT_THEMES
+        }).catch((error) => {
+          console.error('Failed to initialize worker:', error)
+          this.worker = null
+          this.workerInitialized = false
+          reject(error)
+        })
+      } catch (error) {
+        console.error('Failed to create worker:', error)
         this.worker = null
-        this.workerInitialized = false
-      })
-    } catch (error) {
-      console.error('Failed to create worker:', error)
-      this.worker = null
-    }
+        reject(error)
+      }
+    })
   }
 
   /**
@@ -241,6 +251,13 @@ class ShikiStreamService {
     theme: string,
     callerId: string
   ): Promise<HighlightChunkResult> {
+    // 初始化 worker
+    if (!this.worker) {
+      await this.initWorker().catch((error) => {
+        console.warn('Failed to initialize worker, falling back to main thread:', error)
+      })
+    }
+
     // 如果 Worker 可用，优先使用 Worker 处理
     if (this.worker && this.workerInitialized) {
       try {
@@ -254,13 +271,14 @@ class ShikiStreamService {
         return result
       } catch (error) {
         // Worker 处理失败，回退到主线程处理
+        // FIXME: 这种情况如果出现，流式高亮语法状态就会丢失
         console.error('Worker highlight failed, falling back to main thread:', error)
       }
     }
 
     // 主线程处理逻辑（保持不变）
     try {
-      const tokenizer = await this.getOrCreateTokenizer(callerId, language, theme)
+      const tokenizer = await this.getStreamTokenizer(callerId, language, theme)
 
       const result = await tokenizer.enqueue(chunk)
 
@@ -311,7 +329,7 @@ class ShikiStreamService {
    * @param theme 主题
    * @returns tokenizer 实例
    */
-  private async getOrCreateTokenizer(callerId: string, language: string, theme: string): Promise<ShikiStreamTokenizer> {
+  private async getStreamTokenizer(callerId: string, language: string, theme: string): Promise<ShikiStreamTokenizer> {
     // 如果已存在，直接返回
     if (this.tokenizerMap.has(callerId)) {
       return this.tokenizerMap.get(callerId)!
