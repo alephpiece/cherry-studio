@@ -33,7 +33,6 @@ const CodePreview = ({
   const showExpandButtonRef = useRef(false)
   const codeContentRef = useRef<HTMLDivElement>(null)
   const prevCodeLengthRef = useRef(0)
-  const isStreamingRef = useRef(false)
   const shouldAutoScrollRef = useRef<boolean>(true)
   const callerId = useRef(`${Date.now()}-${uuid()}`).current
 
@@ -120,44 +119,66 @@ const CodePreview = ({
   const highlightCode = useCallback(async () => {
     if (!safeCodeString) return
 
-    // 获取高亮的 token lines，只传递增量部分
     if (prevCodeLengthRef.current < safeCodeString.length) {
+      // 传递增量部分，获取高亮的 token lines
       const incrementalCode = safeCodeString.slice(prevCodeLengthRef.current)
       const result = await highlightCodeChunk(incrementalCode, language, callerId)
 
       setTokenLines((lines) => [...lines.slice(0, lines.length - result.recall), ...result.lines])
       prevCodeLengthRef.current = safeCodeString.length
     } else {
+      // FIXME: 长度有问题，清理 tokenizer
+      if (prevCodeLengthRef.current > safeCodeString.length) {
+        cleanupTokenizer(callerId)
+      }
+
+      // 不管是第一次高亮还是长度有问题，都传整个代码过去
       const result = await highlightCodeChunk(safeCodeString, language, callerId)
 
       setTokenLines(result.lines)
       prevCodeLengthRef.current = safeCodeString.length
     }
 
+    updateShowExpandButton()
+
     if (shouldAutoScrollRef.current) {
       requestAnimationFrame(scrollToBottom)
     }
-  }, [callerId, highlightCodeChunk, language, safeCodeString, scrollToBottom])
-
-  // 处理代码高亮
-  useEffect(() => {
-    let isMounted = true
-
-    if (isMounted) {
-      highlightCode()
-    }
-
-    return () => {
-      isMounted = false
-    }
-  }, [highlightCode])
+  }, [callerId, cleanupTokenizer, highlightCodeChunk, language, safeCodeString, scrollToBottom, updateShowExpandButton])
 
   // 组件卸载时清理资源
   useEffect(() => {
-    return () => {
-      cleanupTokenizer(callerId)
-    }
+    return () => cleanupTokenizer(callerId)
   }, [callerId, cleanupTokenizer])
+
+  // 处理第二次开始的代码高亮
+  useEffect(() => {
+    if (prevCodeLengthRef.current > 0) {
+      setTimeout(highlightCode, 0)
+    }
+  }, [highlightCode])
+
+  // 视口检测逻辑，只处理第一次代码高亮
+  useEffect(() => {
+    const codeElement = codeContentRef.current
+    if (!codeElement || prevCodeLengthRef.current > 0) return
+
+    let isMounted = true
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && isMounted) {
+        setTimeout(highlightCode, 0)
+        observer.disconnect()
+      }
+    })
+
+    observer.observe(codeElement)
+
+    return () => {
+      isMounted = false
+      observer.disconnect()
+    }
+  }, [highlightCode])
 
   // 监听滚动事件
   useEffect(() => {
@@ -168,35 +189,6 @@ const CodePreview = ({
 
     return () => codeElement.removeEventListener('scroll', handleScroll)
   }, [handleScroll])
-
-  // 视口检测逻辑
-  useEffect(() => {
-    const codeElement = codeContentRef.current
-    if (!codeElement) return
-
-    let isMounted = true
-
-    if (prevCodeLengthRef.current > 0 && prevCodeLengthRef.current !== children?.length) {
-      isStreamingRef.current = true
-    } else {
-      isStreamingRef.current = false
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && isMounted) {
-        updateShowExpandButton()
-        observer.disconnect()
-      }
-    })
-
-    observer.observe(codeElement)
-
-    return () => {
-      // 不在这里更新 prevCodeLengthRef，在处理代码高亮时更新
-      isMounted = false
-      observer.disconnect()
-    }
-  }, [children, updateShowExpandButton])
 
   return (
     <CodeViewContainer
