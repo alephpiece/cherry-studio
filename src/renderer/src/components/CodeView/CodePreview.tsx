@@ -141,6 +141,7 @@ const CodePreview = ({
 
     updateShowExpandButton()
 
+    // 如果需要自动滚动，则滚动到页面底部
     if (shouldAutoScrollRef.current) {
       requestAnimationFrame(scrollToBottom)
     }
@@ -191,7 +192,7 @@ const CodePreview = ({
   }, [handleScroll])
 
   return (
-    <CodeViewContainer
+    <ContentContainer
       ref={codeContentRef}
       isShowLineNumbers={codeShowLineNumbers}
       isUnwrapped={isUnwrapped}
@@ -206,12 +207,14 @@ const CodePreview = ({
       ) : (
         <div style={{ opacity: 0.1 }}>{children}</div>
       )}
-    </CodeViewContainer>
+    </ContentContainer>
   )
 }
 
 /**
  * 渲染 Shiki 高亮后的 tokens
+ *
+ * 独立出来，方便将来做 virtual list
  */
 const ShikiTokensRenderer: React.FC<{ language: string; tokenLines: ThemedToken[][] }> = memo(
   ({ language, tokenLines }) => {
@@ -231,7 +234,7 @@ const ShikiTokensRenderer: React.FC<{ language: string; tokenLines: ThemedToken[
     }, [language, getShikiPreProperties])
 
     return (
-      <pre ref={rendererRef}>
+      <pre className="shiki" ref={rendererRef}>
         <code>
           {tokenLines.map((lineTokens, lineIndex) => (
             <span key={`line-${lineIndex}`} className="line">
@@ -250,7 +253,7 @@ const ShikiTokensRenderer: React.FC<{ language: string; tokenLines: ThemedToken[
   }
 )
 
-const CodeViewContainer = styled.div<{
+const ContentContainer = styled.div<{
   isShowLineNumbers: boolean
   isUnwrapped: boolean
   isCodeWrappable: boolean
