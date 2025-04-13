@@ -6,7 +6,6 @@ import type React from 'react'
 import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
 
 interface CodeStyleContextType {
-  codeToHtml: (code: string, language: string, enableCache: boolean) => Promise<string>
   highlightCodeChunk: (trunk: string, language: string, callerId: string) => Promise<HighlightChunkResult>
   cleanupTokenizer: (callerId: string) => void
   getShikiPreProperties: (language: string) => Promise<ShikiPreProperties>
@@ -16,7 +15,6 @@ interface CodeStyleContextType {
 }
 
 const defaultCodeStyleContext: CodeStyleContextType = {
-  codeToHtml: async () => '',
   highlightCodeChunk: async () => ({ lines: [], recall: 0 }),
   cleanupTokenizer: () => {},
   getShikiPreProperties: async () => ({ class: '', style: '', tabindex: 0 }),
@@ -88,17 +86,6 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
     }
   }, [])
 
-  // 非流式代码高亮
-  const codeToHtml = useCallback(
-    async (code: string, language: string, enableCache: boolean) => {
-      if (!code) return ''
-      const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
-      const trimmedCode = code?.trimEnd() ?? ''
-      return shikiStreamService.highlightCode(trimmedCode, normalizedLang, currentTheme, enableCache)
-    },
-    [currentTheme, languageMap]
-  )
-
   // 流式代码高亮，返回已高亮的 token lines
   const highlightCodeChunk = useCallback(
     async (trunk: string, language: string, callerId: string) => {
@@ -124,7 +111,6 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
 
   const contextValue = useMemo(
     () => ({
-      codeToHtml,
       highlightCodeChunk,
       cleanupTokenizer,
       getShikiPreProperties,
@@ -132,7 +118,7 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
       currentTheme,
       languageMap
     }),
-    [codeToHtml, highlightCodeChunk, cleanupTokenizer, getShikiPreProperties, themeNames, currentTheme, languageMap]
+    [highlightCodeChunk, cleanupTokenizer, getShikiPreProperties, themeNames, currentTheme, languageMap]
   )
 
   return <CodeStyleContext value={contextValue}>{children}</CodeStyleContext>

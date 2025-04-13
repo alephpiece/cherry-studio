@@ -1,7 +1,6 @@
 import type { HighlighterCore, ThemedToken } from 'shiki'
 
 import ShikiStreamWorker from '../workers/shiki-stream.worker?worker'
-import { CodeCacheService } from './CodeCacheService'
 import { ShikiStreamTokenizer, ShikiStreamTokenizerOptions } from './ShikiStreamTokenizer'
 
 export type ShikiPreProperties = {
@@ -223,51 +222,6 @@ class ShikiStreamService {
 
     // @ts-ignore hack
     return hast.children[0].properties as ShikiPreProperties
-  }
-
-  /**
-   * 执行一次性全量代码高亮。
-   *
-   * enableCache 为 true 并且用户启用了缓存功能时，缓存才会真正生效。
-   * @deprecated 请使用 highlightCodeChunk。
-   * @param code 代码
-   * @param language 语言
-   * @param theme 主题
-   * @param enableCache 是否启用缓存
-   * @returns 高亮后的代码
-   */
-  async highlightCode(code: string, language: string, theme: string, enableCache: boolean): Promise<string> {
-    if (!code) return ''
-
-    // 检查缓存
-    const cacheKey = CodeCacheService.generateCacheKey(code, language, theme)
-    if (enableCache) {
-      const cached = CodeCacheService.getCachedResult(cacheKey)
-      if (cached) return cached
-    }
-
-    try {
-      const { actualLanguage, actualTheme } = await this.ensureHighlighterConfigured(language, theme)
-
-      if (!this.highlighter) {
-        throw new Error('Highlighter not initialized')
-      }
-
-      const html = this.highlighter.codeToHtml(code, {
-        lang: actualLanguage,
-        theme: actualTheme
-      })
-
-      if (enableCache) {
-        CodeCacheService.setCachedResult(cacheKey, html, code.length)
-      }
-
-      return html
-    } catch (error) {
-      // 提供简单的 fallback 保证万无一失
-      const escapedCode = code.replace(/[<>]/g, (char) => ({ '<': '&lt;', '>': '&gt;' })[char]!)
-      return `<pre style="padding: 10px"><code>${escapedCode}</code></pre>`
-    }
   }
 
   /**

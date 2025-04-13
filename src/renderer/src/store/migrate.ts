@@ -1155,9 +1155,13 @@ const migrateConfig = {
   },
   '91': (state: RootState) => {
     try {
+      // @ts-ignore eslint-disable-next-line
       state.settings.codeCacheable = false
+      // @ts-ignore eslint-disable-next-line
       state.settings.codeCacheMaxSize = 1000
+      // @ts-ignore eslint-disable-next-line
       state.settings.codeCacheTTL = 15
+      // @ts-ignore eslint-disable-next-line
       state.settings.codeCacheThreshold = 2
       addProvider(state, 'qiniu')
       return state
@@ -1242,6 +1246,15 @@ const migrateConfig = {
       if (!state.settings.codeEditor) {
         state.settings.codeEditor = settingsInitialState.codeEditor
       }
+
+      // @ts-ignore eslint-disable-next-line
+      delete state.settings.codeCacheable
+      // @ts-ignore eslint-disable-next-line
+      delete state.settings.codeCacheMaxSize
+      // @ts-ignore eslint-disable-next-line
+      delete state.settings.codeCacheTTL
+      // @ts-ignore eslint-disable-next-line
+      delete state.settings.codeCacheThreshold
       return state
     } catch (error) {
       return state
