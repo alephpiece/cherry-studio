@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { ThemedToken } from 'shiki'
 import styled from 'styled-components'
 
-interface CodePreviewProps {
+interface SourcePreviewProps {
   children: string
   language: string
 }
@@ -20,11 +20,11 @@ interface CodePreviewProps {
  * - 通过 shiki tokenizer 处理流式响应
  * - 为了正确执行语法高亮，必须保证流式响应都依次到达 tokenizer，不能跳过
  */
-const CodePreview = ({
+const SourcePreview = ({
   ref,
   children,
   language
-}: CodePreviewProps & { ref?: React.RefObject<HTMLDivElement | null> }) => {
+}: SourcePreviewProps & { ref?: React.RefObject<HTMLDivElement | null> }) => {
   const { codeShowLineNumbers, fontSize, codeCollapsible, codeWrappable } = useSettings()
   const { highlightCodeChunk, cleanupTokenizer } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
@@ -313,6 +313,6 @@ const ContentContainer = styled.div<{
     `}
 `
 
-CodePreview.displayName = 'CodePreview'
+SourcePreview.displayName = 'SourcePreview'
 
-export default memo(CodePreview)
+export default memo(SourcePreview)

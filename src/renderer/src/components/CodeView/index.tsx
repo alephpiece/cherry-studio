@@ -20,10 +20,10 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import { useTranslation } from 'react-i18next'
 import styled, { css } from 'styled-components'
 
-import CodePreview from './CodePreview'
 import MermaidPreview from './MermaidPreview'
 import PlantUmlPreview, { isValidPlantUML } from './PlantUmlPreview'
 import SourceEditor from './SourceEditor'
+import SourcePreview from './SourcePreview'
 import StatusBar from './StatusBar'
 import SvgPreview from './SvgPreview'
 import Toolbar from './Toolbar'
@@ -252,7 +252,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
 
   // 源代码视图组件
   const sourceView = useMemo(() => {
-    const SourceView = codeEditor.enabled ? SourceEditor : CodePreview
+    const SourceView = codeEditor.enabled ? SourceEditor : SourcePreview
     return (
       <SourceView ref={previewRef} language={language} onSave={onSave}>
         {children}
