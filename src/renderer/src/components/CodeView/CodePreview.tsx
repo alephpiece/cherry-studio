@@ -15,9 +15,10 @@ interface CodePreviewProps {
 }
 
 /**
- * Shiki 代码高亮组件的入口
+ * Shiki 流式代码高亮组件
  *
- * 集成了流式代码高亮的渲染逻辑
+ * - 通过 shiki tokenizer 处理流式响应
+ * - 为了正确执行语法高亮，必须保证流式响应都依次到达 tokenizer，不能跳过
  */
 const CodePreview = ({
   ref,
