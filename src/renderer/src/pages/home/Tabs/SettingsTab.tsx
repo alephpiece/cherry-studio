@@ -356,7 +356,7 @@ const SettingsTab: FC<Props> = (props) => {
           <SettingRowTitleSmall>
             {t('chat.settings.code_execution.title')}
             <Tooltip title={t('chat.settings.code_execution.tip')}>
-              <QuestionIcon style={{ marginLeft: 4 }} />
+              <CircleHelp size={14} style={{ marginLeft: 4 }} color="var(--color-text-2)" />
             </Tooltip>
           </SettingRowTitleSmall>
           <Switch
@@ -372,7 +372,7 @@ const SettingsTab: FC<Props> = (props) => {
               <SettingRowTitleSmall>
                 {t('chat.settings.code_execution.timeout_minutes')}
                 <Tooltip title={t('chat.settings.code_execution.timeout_minutes.tip')}>
-                  <QuestionIcon style={{ marginLeft: 4 }} />
+                  <CircleHelp size={14} style={{ marginLeft: 4 }} color="var(--color-text-2)" />
                 </Tooltip>
               </SettingRowTitleSmall>
               <InputNumber
