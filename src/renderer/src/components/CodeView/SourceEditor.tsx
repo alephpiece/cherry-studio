@@ -1,11 +1,15 @@
-import { ExpandAltOutlined, SaveOutlined, ShrinkOutlined } from '@ant-design/icons'
 import { useToolbar } from '@renderer/components/CodeView/context'
-import UnWrapIcon from '@renderer/components/Icons/UnWrapIcon'
-import WrapIcon from '@renderer/components/Icons/WrapIcon'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
 import * as cmThemes from '@uiw/codemirror-themes-all'
 import CodeMirror, { EditorView, Extension, ReactCodeMirrorProps } from '@uiw/react-codemirror'
+import {
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Save as SaveIcon,
+  Text as UnWrapIcon,
+  WrapText as WrapIcon
+} from 'lucide-react'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import React, { memo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -61,7 +65,7 @@ const SourceEditor = ({
     registerTool({
       id: 'expand',
       type: 'quick',
-      icon: isExpanded ? <ShrinkOutlined /> : <ExpandAltOutlined />,
+      icon: isExpanded ? <ChevronsDownUp className="icon" /> : <ChevronsUpDown className="icon" />,
       tooltip: isExpanded ? t('code_block.collapse') : t('code_block.expand'),
       visible: () => codeCollapsible && showExpandButton,
       onClick: () => {
@@ -79,7 +83,7 @@ const SourceEditor = ({
     registerTool({
       id: 'wrap',
       type: 'quick',
-      icon: isUnwrapped ? <WrapIcon /> : <UnWrapIcon />,
+      icon: isUnwrapped ? <WrapIcon className="icon" /> : <UnWrapIcon className="icon" />,
       tooltip: isUnwrapped ? t('code_block.wrap.on') : t('code_block.wrap.off'),
       visible: () => codeWrappable,
       onClick: () => {
@@ -97,7 +101,7 @@ const SourceEditor = ({
     registerTool({
       id: 'save',
       type: 'core',
-      icon: <SaveOutlined />,
+      icon: <SaveIcon className="icon" />,
       tooltip: t('code_block.edit.save'),
       onClick: () => onSave?.(code + '\n'),
       order: 3

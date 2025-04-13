@@ -1,5 +1,5 @@
-import { FileImageOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons'
 import { download } from '@renderer/utils/download'
+import { FileImage, ZoomIn, ZoomOut } from 'lucide-react'
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -302,7 +302,7 @@ export const usePreviewTools = ({ handleZoom, handleCopyImage, handleDownload }:
       registerTool({
         id: ids.zoomIn,
         type: 'quick',
-        icon: <ZoomInOutlined />,
+        icon: <ZoomIn className="icon" />,
         tooltip: t('code_block.preview.zoom_in'),
         onClick: () => handleZoom(0.1),
         order: 34
@@ -312,7 +312,7 @@ export const usePreviewTools = ({ handleZoom, handleCopyImage, handleDownload }:
       registerTool({
         id: ids.zoomOut,
         type: 'quick',
-        icon: <ZoomOutOutlined />,
+        icon: <ZoomOut className="icon" />,
         tooltip: t('code_block.preview.zoom_out'),
         onClick: () => handleZoom(-0.1),
         order: 33
@@ -324,7 +324,7 @@ export const usePreviewTools = ({ handleZoom, handleCopyImage, handleDownload }:
       registerTool({
         id: ids.copyImage,
         type: 'quick',
-        icon: <FileImageOutlined />,
+        icon: <FileImage className="icon" />,
         tooltip: t('code_block.preview.copy.image'),
         onClick: handleCopyImage,
         order: 32

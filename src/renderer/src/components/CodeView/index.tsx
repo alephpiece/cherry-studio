@@ -1,24 +1,25 @@
-import {
-  BorderOutlined,
-  DownloadOutlined,
-  EditOutlined,
-  ExpandOutlined,
-  EyeOutlined,
-  LinkOutlined,
-  LoadingOutlined,
-  PlayCircleOutlined
-} from '@ant-design/icons'
+import { LoadingOutlined } from '@ant-design/icons'
 import { ToolbarProvider, ToolContext, useToolbar } from '@renderer/components/CodeView/context'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { runPythonScript } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
 import dayjs from 'dayjs'
+import {
+  CirclePlay,
+  CodeXml,
+  Copy,
+  Download,
+  Eye,
+  Link,
+  ScanEye,
+  Square,
+  SquarePen,
+  SquareSplitHorizontal
+} from 'lucide-react'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled, { css } from 'styled-components'
 
-import { CodeXmlIcon } from '../Icons/CodeXmlIcon'
-import { SplitHorizontalIcon } from '../Icons/SplitIcons'
 import CodePreview from './CodePreview'
 import MermaidPreview from './MermaidPreview'
 import PlantUmlPreview, { isValidPlantUML } from './PlantUmlPreview'
@@ -139,7 +140,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
     registerTool({
       id: 'copy',
       type: 'core',
-      icon: <i className="iconfont icon-copy" style={{ fontSize: 14 }}></i>,
+      icon: <Copy className="icon" />,
       tooltip: t('code_block.copy.source'),
       onClick: handleCopySource,
       order: 0
@@ -149,7 +150,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
     registerTool({
       id: 'download',
       type: 'core',
-      icon: <DownloadOutlined />,
+      icon: <Download className="icon" />,
       tooltip: t('code_block.download.source'),
       onClick: handleDownloadSource,
       order: 1
@@ -168,7 +169,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
       registerTool({
         id: 'edit',
         type: 'core',
-        icon: viewMode === 'source' ? <EyeOutlined /> : <EditOutlined />,
+        icon: viewMode === 'source' ? <Eye className="icon" /> : <SquarePen className="icon" />,
         tooltip: viewMode === 'source' ? t('code_block.preview') : t('code_block.edit'),
         onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source'),
         order: 2
@@ -177,7 +178,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
       registerTool({
         id: 'view-source',
         type: 'core',
-        icon: viewMode === 'source' ? <EyeOutlined /> : <CodeXmlIcon />,
+        icon: viewMode === 'source' ? <Eye className="icon" /> : <CodeXml className="icon" />,
         tooltip: viewMode === 'source' ? t('code_block.preview') : t('code_block.preview.source'),
         onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source'),
         order: 2
@@ -196,7 +197,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
     registerTool({
       id: 'split-view-horizontal',
       type: 'quick',
-      icon: viewMode === 'split' ? <BorderOutlined /> : <SplitHorizontalIcon />,
+      icon: viewMode === 'split' ? <Square className="icon" /> : <SquareSplitHorizontal className="icon" />,
       tooltip: viewMode === 'split' ? t('code_block.split.restore') : t('code_block.split'),
       onClick: () => setViewMode(viewMode === 'split' ? 'special' : 'split'),
       order: 1
@@ -212,7 +213,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
     registerTool({
       id: 'run',
       type: 'quick',
-      icon: isRunning ? <LoadingOutlined /> : <PlayCircleOutlined />,
+      icon: isRunning ? <LoadingOutlined /> : <CirclePlay className="icon" />,
       tooltip: t('code_block.run'),
       onClick: (ctx) => !isRunning && handleRunScript(ctx),
       order: 10
@@ -228,7 +229,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
     registerTool({
       id: 'html-open-in-app',
       type: 'quick',
-      icon: <ExpandOutlined />,
+      icon: <ScanEye className="icon" />,
       tooltip: t('chat.artifacts.button.preview'),
       onClick: handleOpenInApp,
       order: 21
@@ -237,7 +238,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
     registerTool({
       id: 'html-open-external',
       type: 'quick',
-      icon: <LinkOutlined />,
+      icon: <Link className="icon" />,
       tooltip: t('chat.artifacts.button.openExternal'),
       onClick: handleOpenExternal,
       order: 20

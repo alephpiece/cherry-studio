@@ -1,10 +1,8 @@
-import { ExpandAltOutlined, ShrinkOutlined } from '@ant-design/icons'
 import { useToolbar } from '@renderer/components/CodeView/context'
-import UnWrapIcon from '@renderer/components/Icons/UnWrapIcon'
-import WrapIcon from '@renderer/components/Icons/WrapIcon'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { getTokenStyleObject } from '@shikijs/core'
+import { ChevronsDownUp, ChevronsUpDown, Text as UnWrapIcon, WrapText as WrapIcon } from 'lucide-react'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ThemedToken } from 'shiki'
@@ -56,7 +54,7 @@ const CodePreview = ({
     registerTool({
       id: 'expand',
       type: 'quick',
-      icon: isExpanded ? <ShrinkOutlined /> : <ExpandAltOutlined />,
+      icon: isExpanded ? <ChevronsDownUp className="icon" /> : <ChevronsUpDown className="icon" />,
       tooltip: isExpanded ? t('code_block.collapse') : t('code_block.expand'),
       visible: () => codeCollapsible && showExpandButton,
       onClick: () => setIsExpanded(!isExpanded),
@@ -71,7 +69,7 @@ const CodePreview = ({
     registerTool({
       id: 'wrap',
       type: 'quick',
-      icon: isUnwrapped ? <WrapIcon /> : <UnWrapIcon />,
+      icon: isUnwrapped ? <WrapIcon className="icon" /> : <UnWrapIcon className="icon" />,
       tooltip: isUnwrapped ? t('code_block.wrap.on') : t('code_block.wrap.off'),
       visible: () => codeWrappable,
       onClick: () => setIsUnwrapped(!isUnwrapped),

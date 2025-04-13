@@ -1,7 +1,7 @@
-import { MoreOutlined } from '@ant-design/icons'
 import { Tool, useToolbar } from '@renderer/components/CodeView/context'
 import { HStack } from '@renderer/components/Layout'
 import { Tooltip } from 'antd'
+import { EllipsisVertical } from 'lucide-react'
 import React, { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -48,7 +48,7 @@ const Toolbar: React.FC = () => {
         {hasQuickTools && (
           <Tooltip title={t('code_block.more')} mouseEnterDelay={0.5}>
             <ToolWrapper onClick={() => setShowQuickTools(!showQuickTools)} className={showQuickTools ? 'active' : ''}>
-              <MoreOutlined />
+              <EllipsisVertical className="icon" />
             </ToolWrapper>
           </Tooltip>
         )}
@@ -85,16 +85,28 @@ const ToolWrapper = styled.div`
   height: 24px;
   border-radius: 4px;
   cursor: pointer;
-  color: var(--color-text-3);
   transition: all 0.2s ease;
+  color: var(--color-text-3);
 
   &:hover {
     background-color: var(--color-background-soft);
-    color: var(--color-text-1);
+    .icon {
+      color: var(--color-text-1);
+    }
   }
 
   &.active {
     color: var(--color-primary);
+    .icon {
+      color: var(--color-primary);
+    }
+  }
+
+  /* For Lucide icons */
+  .icon {
+    width: 14px;
+    height: 14px;
+    color: var(--color-text-3);
   }
 `
 
