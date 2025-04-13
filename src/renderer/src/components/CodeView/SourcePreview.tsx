@@ -82,11 +82,10 @@ const SourcePreview = ({ ref, children, language }: Props & { ref?: React.RefObj
     if (!codeContentRef.current) return
     const codeElement = codeContentRef.current
 
-    // 流式响应下禁用缓存和Worker
+    // 流式响应下禁用缓存
     const enableCache = !isStreamingRef.current
-    const enableWorker = !isStreamingRef.current
 
-    await codeToHtml(children, language, enableCache, enableWorker).then((html) => {
+    await codeToHtml(children, language, enableCache).then((html) => {
       codeElement.innerHTML = html
       codeElement.style.opacity = '1'
 

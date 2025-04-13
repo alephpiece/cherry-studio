@@ -4,11 +4,23 @@ import { shikiStreamService } from '@renderer/services/ShikiStreamService'
 import { ThemeMode } from '@renderer/types'
 import type React from 'react'
 import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
+import type { ThemedToken } from 'shiki'
 import { CodeToTokenTransformStream } from 'shiki-stream'
 
+type TokenCallback = (tokens: ThemedToken[]) => void
+
 interface CodeStyleContextType {
-  codeToHtml: (code: string, language: string, enableCache: boolean, enableWorker?: boolean) => Promise<string>
+  codeToHtml: (code: string, language: string, enableCache: boolean) => Promise<string>
   createTransformStream: (language: string) => Promise<CodeToTokenTransformStream>
+  createHighlighterStream: (
+    code: string,
+    language: string,
+    callerId: string
+  ) => Promise<{
+    subscribe: (callback: TokenCallback) => string
+    unsubscribe: (subscriberId: string) => void
+  }>
+  closeHighlighterStream: (callerId: string) => void
   themeNames: string[]
   currentTheme: string
   languageMap: Record<string, string>
@@ -19,6 +31,11 @@ const defaultCodeStyleContext: CodeStyleContextType = {
   createTransformStream: async () => {
     throw new Error('Not implemented')
   },
+  createHighlighterStream: async () => ({
+    subscribe: () => '',
+    unsubscribe: () => {}
+  }),
+  closeHighlighterStream: () => {},
   themeNames: ['auto'],
   currentTheme: 'none',
   languageMap: {}
@@ -107,15 +124,39 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
     [currentTheme, languageMap]
   )
 
+  // 创建代码高亮流
+  const createHighlighterStream = useCallback(
+    async (code: string, language: string, callerId: string) => {
+      const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
+      return shikiStreamService.createHighlighterStream(code, normalizedLang, currentTheme, callerId)
+    },
+    [currentTheme, languageMap]
+  )
+
+  // 关闭代码高亮流
+  const closeHighlighterStream = useCallback((callerId: string) => {
+    shikiStreamService.closeHighlighterStream(callerId)
+  }, [])
+
   const contextValue = useMemo(
     () => ({
       codeToHtml,
       createTransformStream,
+      createHighlighterStream,
+      closeHighlighterStream,
       themeNames,
       currentTheme,
       languageMap
     }),
-    [codeToHtml, createTransformStream, themeNames, currentTheme, languageMap]
+    [
+      codeToHtml,
+      createTransformStream,
+      createHighlighterStream,
+      closeHighlighterStream,
+      themeNames,
+      currentTheme,
+      languageMap
+    ]
   )
 
   return <CodeStyleContext value={contextValue}>{children}</CodeStyleContext>
