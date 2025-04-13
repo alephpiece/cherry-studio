@@ -218,7 +218,11 @@ const CodePreview = ({
         maxHeight: codeCollapsible && !isExpanded ? '350px' : 'none',
         overflow: codeCollapsible && !isExpanded ? 'auto' : 'visible'
       }}>
-      {tokens.length > 0 ? <ShikiTokensRenderer tokens={tokens} /> : <div style={{ opacity: 0.1 }}>{children}</div>}
+      {tokens.length > 0 ? (
+        <ShikiTokensRenderer language={language} tokens={tokens} />
+      ) : (
+        <div style={{ opacity: 0.1 }}>{children}</div>
+      )}
     </CodeViewContainer>
   )
 }
@@ -226,7 +230,21 @@ const CodePreview = ({
 /**
  * 渲染 Shiki 高亮后的 tokens
  */
-const ShikiTokensRenderer: React.FC<{ tokens: ThemedToken[] }> = memo(({ tokens }) => {
+const ShikiTokensRenderer: React.FC<{ language: string; tokens: ThemedToken[] }> = memo(({ language, tokens }) => {
+  const { getShikiPreProperties } = useCodeStyle()
+  const rendererRef = useRef<HTMLPreElement>(null)
+
+  useEffect(() => {
+    getShikiPreProperties(language).then((properties) => {
+      const pre = rendererRef.current
+      if (pre) {
+        pre.className = properties.class
+        pre.style.cssText = properties.style
+        pre.tabIndex = properties.tabindex
+      }
+    })
+  }, [language, getShikiPreProperties])
+
   // 将 tokens 转换为行
   const lines = useMemo(() => {
     if (tokens.length === 0) return []
@@ -274,7 +292,7 @@ const ShikiTokensRenderer: React.FC<{ tokens: ThemedToken[] }> = memo(({ tokens 
   }, [tokens])
 
   return (
-    <pre className="shiki shiki-stream">
+    <pre ref={rendererRef}>
       <code>
         {lines.map((lineTokens, lineIndex) => (
           <span key={`line-${lineIndex}`} className="line">

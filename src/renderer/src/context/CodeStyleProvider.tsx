@@ -1,6 +1,6 @@
 import { useMermaid } from '@renderer/hooks/useMermaid'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { shikiStreamService } from '@renderer/services/ShikiStreamService'
+import { ShikiPreProperties, shikiStreamService } from '@renderer/services/ShikiStreamService'
 import { ThemeMode } from '@renderer/types'
 import type React from 'react'
 import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
@@ -21,6 +21,7 @@ interface CodeStyleContextType {
     unsubscribe: (subscriberId: string) => void
   }>
   closeHighlighterStream: (callerId: string) => void
+  getShikiPreProperties: (language: string) => Promise<ShikiPreProperties>
   themeNames: string[]
   currentTheme: string
   languageMap: Record<string, string>
@@ -36,6 +37,11 @@ const defaultCodeStyleContext: CodeStyleContextType = {
     unsubscribe: () => {}
   }),
   closeHighlighterStream: () => {},
+  getShikiPreProperties: async () => ({
+    class: 'shiki',
+    style: '',
+    tabindex: 0
+  }),
   themeNames: ['auto'],
   currentTheme: 'none',
   languageMap: {}
@@ -138,12 +144,21 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
     shikiStreamService.closeHighlighterStream(callerId)
   }, [])
 
+  const getShikiPreProperties = useCallback(
+    (language: string) => {
+      const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
+      return shikiStreamService.getShikiPreProperties(normalizedLang, currentTheme)
+    },
+    [currentTheme, languageMap]
+  )
+
   const contextValue = useMemo(
     () => ({
       codeToHtml,
       createTransformStream,
       createHighlighterStream,
       closeHighlighterStream,
+      getShikiPreProperties,
       themeNames,
       currentTheme,
       languageMap
@@ -153,6 +168,7 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
       createTransformStream,
       createHighlighterStream,
       closeHighlighterStream,
+      getShikiPreProperties,
       themeNames,
       currentTheme,
       languageMap

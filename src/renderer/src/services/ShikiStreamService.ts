@@ -14,6 +14,12 @@ type StreamRecord = {
   callbackMap: Map<string, TokenCallback>
 }
 
+export type ShikiPreProperties = {
+  class: string
+  style: string
+  tabindex: number
+}
+
 /**
  * Shiki 代码高亮服务
  *
@@ -101,6 +107,31 @@ class ShikiStreamService {
     }
 
     return { actualLanguage, actualTheme }
+  }
+
+  /**
+   * 获取 Shiki 的 pre 标签属性
+   *
+   * 跑一个简单的 hast 结果，从中提取 properties 属性。
+   * 如果有更加稳定的方法可以替换。
+   * @param language 语言
+   * @param theme 主题
+   * @returns pre 标签属性
+   */
+  async getShikiPreProperties(language: string, theme: string): Promise<ShikiPreProperties> {
+    const { actualLanguage, actualTheme } = await this.ensureHighlighterConfigured(language, theme)
+
+    if (!this.highlighter) {
+      throw new Error('Highlighter not initialized')
+    }
+
+    const hast = this.highlighter.codeToHast('test', {
+      lang: actualLanguage,
+      theme: actualTheme
+    })
+
+    // @ts-ignore hack
+    return hast.children[0].properties as ShikiPreProperties
   }
 
   /**
