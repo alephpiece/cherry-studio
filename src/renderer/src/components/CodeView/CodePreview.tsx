@@ -209,11 +209,6 @@ const CodePreview = ({
       isUnwrapped={isUnwrapped}
       isCodeWrappable={codeWrappable}
       style={{
-        border: '0.5px solid var(--color-code-background)',
-        borderTopLeftRadius: 0,
-        borderTopRightRadius: 0,
-        marginTop: 0,
-        position: 'relative',
         fontSize: fontSize - 1,
         maxHeight: codeCollapsible && !isExpanded ? '350px' : 'none',
         overflow: codeCollapsible && !isExpanded ? 'auto' : 'visible'
@@ -315,7 +310,13 @@ const CodeViewContainer = styled.div<{
   isUnwrapped: boolean
   isCodeWrappable: boolean
 }>`
+  position: relative;
+  border: 0.5px solid var(--color-code-background);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  margin-top: 0;
   transition: opacity 0.3s ease;
+
   .shiki {
     padding: 1em;
 
