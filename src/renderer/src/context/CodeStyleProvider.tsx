@@ -7,7 +7,7 @@ import { createContext, type PropsWithChildren, use, useCallback, useEffect, use
 
 interface CodeStyleContextType {
   highlightCodeChunk: (trunk: string, language: string, callerId: string) => Promise<HighlightChunkResult>
-  cleanupTokenizer: (callerId: string) => void
+  cleanupTokenizers: (callerId: string) => void
   getShikiPreProperties: (language: string) => Promise<ShikiPreProperties>
   themeNames: string[]
   currentTheme: string
@@ -16,7 +16,7 @@ interface CodeStyleContextType {
 
 const defaultCodeStyleContext: CodeStyleContextType = {
   highlightCodeChunk: async () => ({ lines: [], recall: 0 }),
-  cleanupTokenizer: () => {},
+  cleanupTokenizers: () => {},
   getShikiPreProperties: async () => ({ class: '', style: '', tabindex: 0 }),
   themeNames: ['auto'],
   currentTheme: 'none',
@@ -96,8 +96,8 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   )
 
   // 清理代码高亮资源
-  const cleanupTokenizer = useCallback((callerId: string) => {
-    shikiStreamService.cleanupTokenizer(callerId)
+  const cleanupTokenizers = useCallback((callerId: string) => {
+    shikiStreamService.cleanupTokenizers(callerId)
   }, [])
 
   // 获取 Shiki pre 标签属性
@@ -112,13 +112,13 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   const contextValue = useMemo(
     () => ({
       highlightCodeChunk,
-      cleanupTokenizer,
+      cleanupTokenizers,
       getShikiPreProperties,
       themeNames,
       currentTheme,
       languageMap
     }),
-    [highlightCodeChunk, cleanupTokenizer, getShikiPreProperties, themeNames, currentTheme, languageMap]
+    [highlightCodeChunk, cleanupTokenizers, getShikiPreProperties, themeNames, currentTheme, languageMap]
   )
 
   return <CodeStyleContext value={contextValue}>{children}</CodeStyleContext>

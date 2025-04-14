@@ -26,7 +26,7 @@ const SourcePreview = ({
   language
 }: SourcePreviewProps & { ref?: React.RefObject<HTMLDivElement | null> }) => {
   const { codeShowLineNumbers, fontSize, codeCollapsible, codeWrappable } = useSettings()
-  const { highlightCodeChunk, cleanupTokenizer } = useCodeStyle()
+  const { highlightCodeChunk, cleanupTokenizers } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
   const [showExpandButton, setShowExpandButton] = useState(false)
@@ -130,7 +130,7 @@ const SourcePreview = ({
     } else {
       // FIXME: 长度有问题，清理 tokenizer
       if (prevCodeLengthRef.current > safeCodeString.length) {
-        cleanupTokenizer(callerId)
+        cleanupTokenizers(callerId)
       }
 
       // 不管是第一次高亮还是长度有问题，都传整个代码过去
@@ -146,12 +146,20 @@ const SourcePreview = ({
     if (shouldAutoScrollRef.current) {
       requestAnimationFrame(scrollToBottom)
     }
-  }, [callerId, cleanupTokenizer, highlightCodeChunk, language, safeCodeString, scrollToBottom, updateShowExpandButton])
+  }, [
+    callerId,
+    cleanupTokenizers,
+    highlightCodeChunk,
+    language,
+    safeCodeString,
+    scrollToBottom,
+    updateShowExpandButton
+  ])
 
   // 组件卸载时清理资源
   useEffect(() => {
-    return () => cleanupTokenizer(callerId)
-  }, [callerId, cleanupTokenizer])
+    return () => cleanupTokenizers(callerId)
+  }, [callerId, cleanupTokenizers])
 
   // 处理第二次开始的代码高亮
   useEffect(() => {

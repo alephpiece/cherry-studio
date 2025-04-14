@@ -368,11 +368,11 @@ class ShikiStreamService {
   }
 
   /**
-   * 清理特定调用者的 tokenizer
+   * 清理特定调用者的 tokenizers
    * @param callerId 调用者ID
    */
-  cleanupTokenizer(callerId: string): void {
-    // 先尝试清理 Worker 中的 tokenizer
+  cleanupTokenizers(callerId: string): void {
+    // 先尝试清理 Worker 中的 tokenizers
     if (this.worker && this.workerInitialized) {
       this.sendWorkerMessage({
         type: 'cleanup',
@@ -382,7 +382,7 @@ class ShikiStreamService {
       })
     }
 
-    // 清理主线程中的 tokenizer - 移除所有以callerId开头的缓存
+    // 再清理主线程中的 tokenizers，移除所有以 callerId 开头的缓存项
     for (const key of this.tokenizerCache.keys()) {
       if (key.startsWith(`${callerId}-`)) {
         const tokenizer = this.tokenizerCache.get(key)!
