@@ -20,11 +20,7 @@ interface SourcePreviewProps {
  * - 通过 shiki tokenizer 处理流式响应
  * - 为了正确执行语法高亮，必须保证流式响应都依次到达 tokenizer，不能跳过
  */
-const SourcePreview = ({
-  ref,
-  children,
-  language
-}: SourcePreviewProps & { ref?: React.RefObject<HTMLDivElement | null> }) => {
+const SourcePreview = ({ children, language }: SourcePreviewProps) => {
   const { codeShowLineNumbers, fontSize, codeCollapsible, codeWrappable } = useSettings()
   const { highlightCodeChunk, cleanupTokenizers } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
@@ -37,9 +33,6 @@ const SourcePreview = ({
   const callerId = useRef(`${Date.now()}-${uuid()}`).current
 
   const { t } = useTranslation()
-
-  // 合并引用
-  React.useImperativeHandle(ref, () => codeContentRef.current!, [])
 
   const { registerTool, removeTool } = useToolbar()
 

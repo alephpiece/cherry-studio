@@ -16,7 +16,7 @@ import {
   SquarePen,
   SquareSplitHorizontal
 } from 'lucide-react'
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled, { css } from 'styled-components'
 
@@ -56,7 +56,6 @@ interface Props {
 const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
   const { t } = useTranslation()
   const { codeEditor, codeExecution } = useSettings()
-  const previewRef = useRef<HTMLDivElement>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('special')
   const [isRunning, setIsRunning] = useState(false)
   const [output, setOutput] = useState('')
@@ -254,7 +253,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
   const sourceView = useMemo(() => {
     const SourceView = codeEditor.enabled ? SourceEditor : SourcePreview
     return (
-      <SourceView ref={previewRef} language={language} onSave={onSave}>
+      <SourceView language={language} onSave={onSave}>
         {children}
       </SourceView>
     )

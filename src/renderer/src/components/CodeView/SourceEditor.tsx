@@ -13,9 +13,8 @@ import {
   WrapText as WrapIcon
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import React, { memo } from 'react'
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import styled from 'styled-components'
 
 // 标记非用户编辑的变更
 const External = Annotation.define<boolean>()
@@ -29,24 +28,15 @@ interface Props {
 /**
  * 源代码编辑器，基于 CodeMirror
  */
-const SourceEditor = ({
-  children,
-  language,
-  onSave,
-  ref
-}: Props & { ref?: React.RefObject<HTMLDivElement | null> }) => {
+const SourceEditor = ({ children, language, onSave }: Props) => {
   const { fontSize, codeShowLineNumbers, codeCollapsible, codeWrappable, codeEditor } = useSettings()
   const { currentTheme, languageMap } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
   const initialContent = useRef(children?.trimEnd() ?? '')
   const [extensions, setExtensions] = useState<Extension[]>([])
-  const editorRef = useRef<HTMLDivElement>(null)
   const editorViewRef = useRef<EditorView | null>(null)
   const { t } = useTranslation()
-
-  // 合并引用
-  React.useImperativeHandle(ref, () => editorRef.current!, [])
 
   const { registerTool, removeTool } = useToolbar()
 
@@ -159,57 +149,50 @@ const SourceEditor = ({
   }, [currentTheme])
 
   return (
-    <CodemirrorWarpper ref={editorRef}>
-      <CodeMirror
-        // 维持一个稳定值，避免触发 CodeMirror 重置
-        value={initialContent.current}
-        width="100%"
-        maxHeight={codeCollapsible && !isExpanded ? '350px' : 'none'}
-        editable={true}
-        // @ts-ignore 强制使用，见 react-codemirror 的 Example.tsx
-        theme={cmTheme}
-        extensions={[...extensions, ...(isUnwrapped ? [] : [EditorView.lineWrapping])]}
-        onCreateEditor={(view: EditorView) => (editorViewRef.current = view)}
-        basicSetup={{
-          lineNumbers: codeShowLineNumbers,
-          highlightActiveLineGutter: codeEditor.highlightActiveLine,
-          foldGutter: codeEditor.foldGutter,
-          dropCursor: true,
-          allowMultipleSelections: true,
-          indentOnInput: true,
-          bracketMatching: true,
-          closeBrackets: true,
-          autocompletion: codeEditor.autocompletion,
-          rectangularSelection: true,
-          crosshairCursor: true,
-          highlightActiveLine: codeEditor.highlightActiveLine,
-          highlightSelectionMatches: true,
-          closeBracketsKeymap: codeEditor.keymap,
-          searchKeymap: codeEditor.keymap,
-          foldKeymap: codeEditor.keymap,
-          completionKeymap: codeEditor.keymap,
-          lintKeymap: codeEditor.keymap
-        }}
-        style={{
-          fontSize: `${fontSize - 1}px`,
-          overflow: codeCollapsible && !isExpanded ? 'auto' : 'visible'
-        }}
-      />
-    </CodemirrorWarpper>
+    <CodeMirror
+      // 维持一个稳定值，避免触发 CodeMirror 重置
+      value={initialContent.current}
+      width="100%"
+      maxHeight={codeCollapsible && !isExpanded ? '350px' : 'none'}
+      editable={true}
+      // @ts-ignore 强制使用，见 react-codemirror 的 Example.tsx
+      theme={cmTheme}
+      extensions={[...extensions, ...(isUnwrapped ? [] : [EditorView.lineWrapping])]}
+      onCreateEditor={(view: EditorView) => (editorViewRef.current = view)}
+      basicSetup={{
+        lineNumbers: codeShowLineNumbers,
+        highlightActiveLineGutter: codeEditor.highlightActiveLine,
+        foldGutter: codeEditor.foldGutter,
+        dropCursor: true,
+        allowMultipleSelections: true,
+        indentOnInput: true,
+        bracketMatching: true,
+        closeBrackets: true,
+        autocompletion: codeEditor.autocompletion,
+        rectangularSelection: true,
+        crosshairCursor: true,
+        highlightActiveLine: codeEditor.highlightActiveLine,
+        highlightSelectionMatches: true,
+        closeBracketsKeymap: codeEditor.keymap,
+        searchKeymap: codeEditor.keymap,
+        foldKeymap: codeEditor.keymap,
+        completionKeymap: codeEditor.keymap,
+        lintKeymap: codeEditor.keymap
+      }}
+      style={{
+        fontSize: `${fontSize - 1}px`,
+        overflow: codeCollapsible && !isExpanded ? 'auto' : 'visible',
+        position: 'relative',
+        border: '0.5px solid var(--color-code-background)',
+        marginTop: 0,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0
+      }}
+    />
   )
 }
 
 SourceEditor.displayName = 'SourceEditor'
-
-const CodemirrorWarpper = styled.div`
-  position: relative;
-  height: 100%;
-  width: 100%;
-  border: 0.5px solid var(--color-code-background);
-  margin-top: 0;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-`
 
 /**
  * 使用 fast-diff 计算代码变更，再转换为 CodeMirror 的 changes。
