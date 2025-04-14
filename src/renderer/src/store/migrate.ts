@@ -1233,6 +1233,14 @@ const migrateConfig = {
       return state
     }
   },
+  '97': (state: RootState) => {
+    try {
+      addMiniApp(state, 'zai')
+      return state
+    } catch (error) {
+      return state
+    }
+  },
   '98': (state: RootState) => {
     try {
       if (!state.settings.codeExecution) {
@@ -1251,6 +1259,7 @@ const migrateConfig = {
       delete state.settings.codeCacheTTL
       // @ts-ignore eslint-disable-next-line
       delete state.settings.codeCacheThreshold
+
       return state
     } catch (error) {
       return state
