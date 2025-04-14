@@ -56,10 +56,10 @@ class ShikiStreamService {
   private requestId = 0
 
   // 降级策略相关变量，用于记录调用 worker 失败过的 callerId
-  private failedWorkerCallerIds = new Set<string>()
-  private recentFailedCallerIds: string[] = []
-  private static readonly MAX_FAILED_CALLERS = 1000
-  private static readonly RETAIN_FAILED_CALLERS = 200
+  private workerDegradationCache = new LRUCache<string, boolean>({
+    max: 1000, // 最大记录数量
+    ttl: 1000 * 60 * 60 * 12 // 12小时自动过期
+  })
 
   constructor() {
     // 延迟初始化
@@ -157,7 +157,7 @@ class ShikiStreamService {
 
           // 如果是高亮操作超时，说明代码块太长，记录callerId以便降级
           if (message.type === 'highlight' && message.callerId) {
-            this.recordFailedCallerId(message.callerId)
+            this.workerDegradationCache.set(message.callerId, true)
             reject(new Error(`Worker ${message.type} request timeout for callerId ${message.callerId}`))
           } else {
             reject(new Error(`Worker ${message.type} request timeout`))
@@ -294,7 +294,7 @@ class ShikiStreamService {
     callerId: string
   ): Promise<HighlightChunkResult> {
     // 检查callerId是否需要降级处理
-    if (this.failedWorkerCallerIds.has(callerId)) {
+    if (this.workerDegradationCache.has(callerId)) {
       return this.highlightWithMainThread(chunk, language, theme, callerId)
     }
 
@@ -319,7 +319,7 @@ class ShikiStreamService {
       } catch (error) {
         // Worker 处理失败，记录callerId并永久降级到主线程
         // FIXME: 这种情况如果出现，流式高亮语法状态就会丢失，目前用降级策略来处理
-        this.recordFailedCallerId(callerId)
+        this.workerDegradationCache.set(callerId, true)
         console.error(
           `Worker highlight failed for callerId ${callerId}, permanently falling back to main thread:`,
           error
@@ -457,37 +457,6 @@ class ShikiStreamService {
     this.highlighter = null
     this.isInitialized = false
     this.highlighterInitPromise = null
-  }
-
-  /**
-   * 记录调用 worker 失败过的 callerId，达到容量上限时会清理。
-   */
-  private recordFailedCallerId(callerId: string): void {
-    this.failedWorkerCallerIds.add(callerId)
-
-    // 记录到最近失败队列
-    this.recentFailedCallerIds.push(callerId)
-
-    // 检查是否超出容量上限
-    if (this.failedWorkerCallerIds.size > ShikiStreamService.MAX_FAILED_CALLERS) {
-      const newSet = new Set<string>()
-      const newRecent: string[] = []
-
-      // 保留最近失败 callerId
-      const retainIds = this.recentFailedCallerIds.slice(-ShikiStreamService.RETAIN_FAILED_CALLERS)
-
-      // 添加到新集合
-      for (const id of retainIds) {
-        newSet.add(id)
-        newRecent.push(id)
-      }
-
-      // 替换原有集合
-      this.failedWorkerCallerIds = newSet
-      this.recentFailedCallerIds = newRecent
-
-      console.debug(`Cleaned up failed caller IDs cache, retained ${newSet.size} recent IDs`)
-    }
   }
 }
 
