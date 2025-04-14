@@ -3,7 +3,7 @@ import { useToolbar } from '@renderer/components/CodeView/context'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
 import * as cmThemes from '@uiw/codemirror-themes-all'
-import CodeMirror, { EditorView, Extension, ReactCodeMirrorProps, ViewUpdate } from '@uiw/react-codemirror'
+import CodeMirror, { EditorView, Extension, ReactCodeMirrorProps } from '@uiw/react-codemirror'
 import diff from 'fast-diff'
 import {
   ChevronsDownUp,
@@ -12,7 +12,7 @@ import {
   Text as UnWrapIcon,
   WrapText as WrapIcon
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import React, { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -45,7 +45,6 @@ const SourceEditor = ({
   const editorViewRef = useRef<EditorView | null>(null)
   const [showExpandButton, setShowExpandButton] = useState(false)
   const showExpandButtonRef = useRef(false)
-  const shouldAutoScrollRef = useRef<boolean>(true)
   const { t } = useTranslation()
 
   // 合并引用
@@ -127,18 +126,6 @@ const SourceEditor = ({
     return () => removeTool('save')
   }, [onSave, registerTool, removeTool, t])
 
-  // 滚动到底部
-  const scrollToBottom = useCallback(() => {
-    if (!editorViewRef.current) return
-
-    // 获取文档的末尾位置
-    const docLength = editorViewRef.current.state.doc.length
-
-    editorViewRef.current.dispatch({
-      effects: EditorView.scrollIntoView(docLength)
-    })
-  }, [])
-
   // 流式响应过程中计算 changes 来更新 EditorView
   // 无法处理用户在流式响应过程中编辑代码的情况（应该也不必处理）
   useEffect(() => {
@@ -154,36 +141,8 @@ const SourceEditor = ({
         changes,
         annotations: [External.of(true)]
       })
-
-      // 如果需要自动滚动，在下一帧执行滚动
-      if (shouldAutoScrollRef.current) {
-        requestAnimationFrame(scrollToBottom)
-      }
     }
-  }, [children, scrollToBottom])
-
-  // 处理滚动事件，判断是否需要继续自动滚动
-  const handleScroll = useCallback(() => {
-    if (!editorViewRef.current) {
-      shouldAutoScrollRef.current = false
-      return
-    }
-
-    const scroller = editorViewRef.current.scrollDOM
-    const { scrollTop, scrollHeight, clientHeight } = scroller
-
-    shouldAutoScrollRef.current = scrollHeight - (scrollTop + clientHeight) < 50
-  }, [])
-
-  // 创建滚动监听扩展
-  const scrollListener = useMemo(() => {
-    return EditorView.updateListener.of((update: ViewUpdate) => {
-      // 检查视图更新
-      if (update.viewportChanged) {
-        handleScroll()
-      }
-    })
-  }, [handleScroll])
+  }, [children])
 
   // 检查编辑器高度并决定是否显示展开按钮
   useEffect(() => {
@@ -225,7 +184,7 @@ const SourceEditor = ({
         editable={true}
         // @ts-ignore 强制使用，见 react-codemirror 的 Example.tsx
         theme={cmTheme}
-        extensions={[...extensions, ...(isUnwrapped ? [] : [EditorView.lineWrapping]), scrollListener]}
+        extensions={[...extensions, ...(isUnwrapped ? [] : [EditorView.lineWrapping])]}
         onCreateEditor={(view: EditorView) => (editorViewRef.current = view)}
         basicSetup={{
           lineNumbers: codeShowLineNumbers,
