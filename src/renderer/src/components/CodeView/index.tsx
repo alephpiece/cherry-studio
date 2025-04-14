@@ -316,8 +316,8 @@ const CodeView: React.FC<Props> = ({ children, language, onSave }) => {
 const CodeBlockWrapper = styled.div<{ isInSpecialView: boolean }>`
   position: relative;
 
-  ${({ isInSpecialView }) =>
-    isInSpecialView &&
+  ${(props) =>
+    props.isInSpecialView &&
     css`
       .toolbar {
         opacity: 0;

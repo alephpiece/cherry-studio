@@ -75,6 +75,8 @@ const ToolbarWrapper = styled(HStack)`
   right: 1rem;
   height: 24px;
   gap: 4px;
+  background-color: var(--color-background-mute);
+  border-radius: 4px;
 `
 
 const ToolWrapper = styled.div`
