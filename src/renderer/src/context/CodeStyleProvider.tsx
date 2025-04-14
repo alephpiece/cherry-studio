@@ -74,6 +74,7 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   const languageMap = useMemo(() => {
     return {
       bash: 'shell',
+      'objective-c++': 'objective-cpp',
       svg: 'xml',
       vab: 'vb'
     } as Record<string, string>

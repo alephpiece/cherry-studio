@@ -21,6 +21,9 @@ interface Props {
   onSave?: (newContent: string) => void
 }
 
+/**
+ * 源代码编辑器，基于 CodeMirror
+ */
 const SourceEditor = ({
   children,
   language,
@@ -46,7 +49,12 @@ const SourceEditor = ({
 
   // 加载语言
   useEffect(() => {
-    const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
+    let normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
+
+    // 如果语言名包含 `-`，转换为驼峰命名法
+    if (normalizedLang.includes('-')) {
+      normalizedLang = normalizedLang.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
+    }
 
     import('@uiw/codemirror-extensions-langs')
       .then(({ loadLanguage }) => {
