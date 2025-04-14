@@ -34,7 +34,7 @@ const SourceEditor = ({ children, language, onSave }: Props) => {
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
   const initialContent = useRef(children?.trimEnd() ?? '')
-  const [extensions, setExtensions] = useState<Extension[]>([])
+  const [langExtension, setLangExtension] = useState<Extension[]>([])
   const editorViewRef = useRef<EditorView | null>(null)
   const { t } = useTranslation()
 
@@ -53,7 +53,7 @@ const SourceEditor = ({ children, language, onSave }: Props) => {
       .then(({ loadLanguage }) => {
         const extension = loadLanguage(normalizedLang as any)
         if (extension) {
-          setExtensions([extension])
+          setLangExtension([extension])
         }
       })
       .catch((error) => {
@@ -166,11 +166,11 @@ const SourceEditor = ({ children, language, onSave }: Props) => {
 
   const enabledExtensions = useMemo(() => {
     return [
-      ...extensions,
+      ...langExtension,
       ...(isUnwrapped ? [] : [EditorView.lineWrapping]),
       ...(codeEditor.keymap ? [saveKeymap] : [])
     ]
-  }, [codeEditor.keymap, extensions, isUnwrapped, saveKeymap])
+  }, [codeEditor.keymap, langExtension, isUnwrapped, saveKeymap])
 
   return (
     <CodeMirror
