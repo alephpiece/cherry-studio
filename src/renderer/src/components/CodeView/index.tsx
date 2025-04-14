@@ -335,6 +335,15 @@ const CodeBlockWrapper = styled.div<{ isInSpecialView: boolean }>`
         }
       }
     `}
+
+  ${(props) =>
+    !props.isInSpecialView &&
+    css`
+      .toolbar {
+        background-color: var(--color-background-mute);
+        border-radius: 4px;
+      }
+    `}
 `
 
 const CodeHeader = styled.div`
