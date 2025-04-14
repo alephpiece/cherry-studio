@@ -43,8 +43,6 @@ const SourceEditor = ({
   const [extensions, setExtensions] = useState<Extension[]>([])
   const editorRef = useRef<HTMLDivElement>(null)
   const editorViewRef = useRef<EditorView | null>(null)
-  const [showExpandButton, setShowExpandButton] = useState(false)
-  const showExpandButtonRef = useRef(false)
   const { t } = useTranslation()
 
   // 合并引用
@@ -80,7 +78,10 @@ const SourceEditor = ({
       type: 'quick',
       icon: isExpanded ? <ChevronsDownUp className="icon" /> : <ChevronsUpDown className="icon" />,
       tooltip: isExpanded ? t('code_block.collapse') : t('code_block.expand'),
-      visible: () => codeCollapsible && showExpandButton,
+      visible: () => {
+        const scrollHeight = editorViewRef?.current?.scrollDOM?.scrollHeight
+        return codeCollapsible && (scrollHeight ?? 0) > 350
+      },
       onClick: () => {
         const newExpanded = !isExpanded
         setIsExpanded(newExpanded)
@@ -89,7 +90,7 @@ const SourceEditor = ({
     })
 
     return () => removeTool('expand')
-  }, [codeCollapsible, isExpanded, registerTool, removeTool, showExpandButton, t])
+  }, [codeCollapsible, isExpanded, registerTool, removeTool, t])
 
   // 自动换行工具
   useEffect(() => {
@@ -143,23 +144,6 @@ const SourceEditor = ({
       })
     }
   }, [children])
-
-  // 检查编辑器高度并决定是否显示展开按钮
-  useEffect(() => {
-    if (!editorRef.current) return
-
-    // 等待 DOM 更新完成后检查高度
-    setTimeout(() => {
-      const editorElement = editorRef.current?.querySelector('.cm-scroller')
-      if (!editorElement) return
-
-      const isShowExpandButton = editorElement.scrollHeight > 350
-      if (showExpandButtonRef.current === isShowExpandButton) return
-
-      showExpandButtonRef.current = isShowExpandButton
-      setShowExpandButton(isShowExpandButton)
-    }, 100)
-  }, [])
 
   useEffect(() => {
     setIsExpanded(!codeCollapsible)

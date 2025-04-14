@@ -29,9 +29,7 @@ const SourcePreview = ({
   const { highlightCodeChunk, cleanupTokenizers } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
-  const [showExpandButton, setShowExpandButton] = useState(false)
   const [tokenLines, setTokenLines] = useState<ThemedToken[][]>([])
-  const showExpandButtonRef = useRef(false)
   const codeContentRef = useRef<HTMLDivElement>(null)
   const prevCodeLengthRef = useRef(0)
   const shouldAutoScrollRef = useRef<boolean>(true)
@@ -51,13 +49,16 @@ const SourcePreview = ({
       type: 'quick',
       icon: isExpanded ? <ChevronsDownUp className="icon" /> : <ChevronsUpDown className="icon" />,
       tooltip: isExpanded ? t('code_block.collapse') : t('code_block.expand'),
-      visible: () => codeCollapsible && showExpandButton,
+      visible: () => {
+        const scrollHeight = codeContentRef.current?.scrollHeight
+        return codeCollapsible && (scrollHeight ?? 0) > 350
+      },
       onClick: () => setIsExpanded(!isExpanded),
       order: 1
     })
 
     return () => removeTool('expand')
-  }, [codeCollapsible, isExpanded, registerTool, removeTool, showExpandButton, t])
+  }, [codeCollapsible, isExpanded, registerTool, removeTool, t])
 
   // 自动换行工具
   useEffect(() => {
@@ -77,24 +78,12 @@ const SourcePreview = ({
   // 更新展开状态
   useEffect(() => {
     setIsExpanded(!codeCollapsible)
-    setShowExpandButton(codeCollapsible && (codeContentRef.current?.scrollHeight ?? 0) > 350)
   }, [codeCollapsible])
 
   // 更新换行状态
   useEffect(() => {
     setIsUnwrapped(!codeWrappable)
   }, [codeWrappable])
-
-  // 检查是否需要显示展开按钮
-  const updateShowExpandButton = useCallback(() => {
-    if (!codeContentRef.current) return
-
-    const isShowExpandButton = codeContentRef.current.scrollHeight > 350
-    if (showExpandButtonRef.current === isShowExpandButton) return
-
-    showExpandButtonRef.current = isShowExpandButton
-    setShowExpandButton(showExpandButtonRef.current)
-  }, [])
 
   const scrollToBottom = useCallback(() => {
     if (codeContentRef.current && !isExpanded) {
@@ -130,21 +119,11 @@ const SourcePreview = ({
       prevCodeLengthRef.current = safeCodeString.length
     }
 
-    updateShowExpandButton()
-
     // 如果需要自动滚动，则滚动到页面底部
     if (shouldAutoScrollRef.current) {
       requestAnimationFrame(scrollToBottom)
     }
-  }, [
-    callerId,
-    cleanupTokenizers,
-    highlightCodeChunk,
-    language,
-    safeCodeString,
-    scrollToBottom,
-    updateShowExpandButton
-  ])
+  }, [callerId, cleanupTokenizers, highlightCodeChunk, language, safeCodeString, scrollToBottom])
 
   // 组件卸载时清理资源
   useEffect(() => {
