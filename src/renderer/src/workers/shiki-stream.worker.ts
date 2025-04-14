@@ -83,7 +83,7 @@ async function ensureLanguageAndThemeLoaded(
 }
 
 // 获取或创建 tokenizer
-async function getOrCreateTokenizer(callerId: string, language: string, theme: string): Promise<ShikiStreamTokenizer> {
+async function getStreamTokenizer(callerId: string, language: string, theme: string): Promise<ShikiStreamTokenizer> {
   // 如果已存在，直接返回
   if (tokenizerMap.has(callerId)) {
     return tokenizerMap.get(callerId)!
@@ -118,7 +118,7 @@ async function highlightCodeChunk(
 ): Promise<HighlightChunkResult> {
   try {
     // 获取 tokenizer
-    const tokenizer = await getOrCreateTokenizer(callerId, language, theme)
+    const tokenizer = await getStreamTokenizer(callerId, language, theme)
 
     // 处理代码 chunk
     const result = await tokenizer.enqueue(chunk)

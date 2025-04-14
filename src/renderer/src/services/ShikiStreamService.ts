@@ -49,6 +49,12 @@ class ShikiStreamService {
   >()
   private requestId = 0
 
+  // 降级策略相关变量，用于记录调用 worker 失败过的 callerId
+  private failedWorkerCallerIds = new Set<string>()
+  private recentFailedCallerIds: string[] = []
+  private static readonly MAX_FAILED_CALLERS = 1000
+  private static readonly RETAIN_FAILED_CALLERS = 200
+
   constructor() {
     // 延迟初始化
   }
@@ -251,6 +257,11 @@ class ShikiStreamService {
     theme: string,
     callerId: string
   ): Promise<HighlightChunkResult> {
+    // 检查callerId是否需要降级处理
+    if (this.failedWorkerCallerIds.has(callerId)) {
+      return this.highlightWithMainThread(chunk, language, theme, callerId)
+    }
+
     // 初始化 worker
     if (!this.worker) {
       await this.initWorker().catch((error) => {
@@ -270,13 +281,34 @@ class ShikiStreamService {
         })
         return result
       } catch (error) {
-        // Worker 处理失败，回退到主线程处理
-        // FIXME: 这种情况如果出现，流式高亮语法状态就会丢失
-        console.error('Worker highlight failed, falling back to main thread:', error)
+        // Worker 处理失败，记录callerId并永久降级到主线程
+        // FIXME: 这种情况如果出现，流式高亮语法状态就会丢失，目前用降级策略来处理
+        this.recordFailedCallerId(callerId)
+        console.error(
+          `Worker highlight failed for callerId ${callerId}, permanently falling back to main thread:`,
+          error
+        )
       }
     }
 
-    // 主线程处理逻辑（保持不变）
+    // 使用主线程处理
+    return this.highlightWithMainThread(chunk, language, theme, callerId)
+  }
+
+  /**
+   * 使用主线程处理代码高亮
+   * @param chunk 代码内容
+   * @param language 语言
+   * @param theme 主题
+   * @param callerId 调用者ID
+   * @returns 高亮结果
+   */
+  private async highlightWithMainThread(
+    chunk: string,
+    language: string,
+    theme: string,
+    callerId: string
+  ): Promise<HighlightChunkResult> {
     try {
       const tokenizer = await this.getStreamTokenizer(callerId, language, theme)
 
@@ -382,6 +414,37 @@ class ShikiStreamService {
     this.highlighter = null
     this.isInitialized = false
     this.highlighterInitPromise = null
+  }
+
+  /**
+   * 记录调用 worker 失败过的 callerId，达到容量上限时会清理。
+   */
+  private recordFailedCallerId(callerId: string): void {
+    this.failedWorkerCallerIds.add(callerId)
+
+    // 记录到最近失败队列
+    this.recentFailedCallerIds.push(callerId)
+
+    // 检查是否超出容量上限
+    if (this.failedWorkerCallerIds.size > ShikiStreamService.MAX_FAILED_CALLERS) {
+      const newSet = new Set<string>()
+      const newRecent: string[] = []
+
+      // 保留最近失败 callerId
+      const retainIds = this.recentFailedCallerIds.slice(-ShikiStreamService.RETAIN_FAILED_CALLERS)
+
+      // 添加到新集合
+      for (const id of retainIds) {
+        newSet.add(id)
+        newRecent.push(id)
+      }
+
+      // 替换原有集合
+      this.failedWorkerCallerIds = newSet
+      this.recentFailedCallerIds = newRecent
+
+      console.debug(`Cleaned up failed caller IDs cache, retained ${newSet.size} recent IDs`)
+    }
   }
 }
 
