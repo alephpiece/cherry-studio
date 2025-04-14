@@ -57,11 +57,14 @@ async function ensureLanguageAndThemeLoaded(
 
   // 加载语言
   if (!highlighter.getLoadedLanguages().includes(language)) {
-    const { bundledLanguages } = await import('shiki')
-    const languageImportFn = bundledLanguages[language]
-    if (languageImportFn) {
-      await highlighter.loadLanguage(await languageImportFn())
-    } else {
+    try {
+      const { bundledLanguages } = await import('shiki')
+      const languageImportFn = bundledLanguages[language]
+      const langData = await languageImportFn()
+      await highlighter.loadLanguage(langData)
+    } catch (error) {
+      // 回退到 text
+      console.debug(`Worker: Failed to load language '${language}', falling back to 'text':`, error)
       await highlighter.loadLanguage('text')
       actualLanguage = 'text'
     }
@@ -69,13 +72,18 @@ async function ensureLanguageAndThemeLoaded(
 
   // 加载主题
   if (!highlighter.getLoadedThemes().includes(theme)) {
-    const { bundledThemes } = await import('shiki')
-    const themeImportFn = bundledThemes[theme]
-    if (themeImportFn) {
-      await highlighter.loadTheme(await themeImportFn())
-    } else {
-      await highlighter.loadTheme('none')
-      actualTheme = 'none'
+    try {
+      const { bundledThemes } = await import('shiki')
+      const themeImportFn = bundledThemes[theme]
+      const themeData = await themeImportFn()
+      await highlighter.loadTheme(themeData)
+    } catch (error) {
+      // 回退到 one-light
+      console.debug(`Worker: Failed to load theme '${theme}', falling back to 'one-light':`, error)
+      const { bundledThemes } = await import('shiki')
+      const oneLightTheme = await bundledThemes['one-light']()
+      await highlighter.loadTheme(oneLightTheme)
+      actualTheme = 'one-light'
     }
   }
 

@@ -128,13 +128,36 @@ class ShikiStreamService {
     const promise = new Promise((resolve, reject) => {
       this.pendingRequests.set(id, { resolve, reject })
 
+      // 根据操作类型设置不同的超时时间
+      const getTimeoutForMessageType = (type: string): number => {
+        switch (type) {
+          case 'init':
+            return 60000 // 初始化操作允许较长时间 (60秒)
+          case 'highlight':
+            return 30000 // 高亮操作 (30秒)
+          case 'cleanup':
+          case 'dispose':
+          default:
+            return 15000 // 其他操作 (15秒)
+        }
+      }
+
+      const timeout = getTimeoutForMessageType(message.type)
+
       // 设置超时处理
       setTimeout(() => {
         if (this.pendingRequests.has(id)) {
           this.pendingRequests.delete(id)
-          reject(new Error('Worker request timeout'))
+
+          // 如果是高亮操作超时，说明代码块太长，记录callerId以便降级
+          if (message.type === 'highlight' && message.callerId) {
+            this.recordFailedCallerId(message.callerId)
+            reject(new Error(`Worker ${message.type} request timeout for callerId ${message.callerId}`))
+          } else {
+            reject(new Error(`Worker ${message.type} request timeout`))
+          }
         }
-      }, 60000) // 60秒超时
+      }, timeout)
     })
 
     this.worker.postMessage({ id, ...message })
@@ -192,10 +215,13 @@ class ShikiStreamService {
 
     // 加载语言
     if (!this.highlighter.getLoadedLanguages().includes(language)) {
-      const languageImportFn = shiki.bundledLanguages[language]
-      if (languageImportFn) {
-        await this.highlighter.loadLanguage(await languageImportFn())
-      } else {
+      try {
+        const languageImportFn = shiki.bundledLanguages[language]
+        const langData = await languageImportFn()
+        await this.highlighter.loadLanguage(langData)
+      } catch (error) {
+        // 回退到 text
+        console.debug(`Failed to load language '${language}', falling back to 'text':`, error)
         await this.highlighter.loadLanguage('text')
         actualLanguage = 'text'
       }
@@ -203,12 +229,16 @@ class ShikiStreamService {
 
     // 加载主题
     if (!this.highlighter.getLoadedThemes().includes(theme)) {
-      const themeImportFn = shiki.bundledThemes[theme]
-      if (themeImportFn) {
-        await this.highlighter.loadTheme(await themeImportFn())
-      } else {
-        await this.highlighter.loadTheme('none')
-        actualTheme = 'none'
+      try {
+        const themeImportFn = shiki.bundledThemes[theme]
+        const themeData = await themeImportFn()
+        await this.highlighter.loadTheme(themeData)
+      } catch (error) {
+        // 回退到 one-light
+        console.debug(`Failed to load theme '${theme}', falling back to 'one-light':`, error)
+        const oneLightTheme = await shiki.bundledThemes['one-light']()
+        await this.highlighter.loadTheme(oneLightTheme)
+        actualTheme = 'one-light'
       }
     }
 
