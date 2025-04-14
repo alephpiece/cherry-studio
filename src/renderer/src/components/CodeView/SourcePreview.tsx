@@ -102,16 +102,6 @@ const SourcePreview = ({
     }
   }, [isExpanded])
 
-  const handleScroll = useCallback(() => {
-    if (!codeContentRef.current) {
-      shouldAutoScrollRef.current = false
-      return
-    }
-
-    const { scrollTop, scrollHeight, clientHeight } = codeContentRef.current
-    shouldAutoScrollRef.current = scrollHeight - (scrollTop + clientHeight) < 50
-  }, [])
-
   // 处理尾部空白字符
   const safeCodeString = useMemo(() => {
     return typeof children === 'string' ? children.trimEnd() : ''
@@ -189,6 +179,17 @@ const SourcePreview = ({
       observer.disconnect()
     }
   }, [highlightCode])
+
+  // 处理滚动事件，判断是否需要继续自动滚动
+  const handleScroll = useCallback(() => {
+    if (!codeContentRef.current) {
+      shouldAutoScrollRef.current = false
+      return
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } = codeContentRef.current
+    shouldAutoScrollRef.current = scrollHeight - (scrollTop + clientHeight) < 50
+  }, [])
 
   // 监听滚动事件
   useEffect(() => {
