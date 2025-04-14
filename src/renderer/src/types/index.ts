@@ -385,6 +385,7 @@ export interface MCPServer {
   env?: Record<string, string>
   isActive: boolean
   disabledTools?: string[] // List of tool names that are disabled for this server
+  headers?: Record<string, string> // Custom headers to be sent with requests to this server
 }
 
 export interface MCPToolInputSchema {
@@ -441,6 +442,23 @@ export interface MCPToolResponse {
   tool: MCPTool // tool info
   status: string // 'invoking' | 'done'
   response?: any
+}
+
+export interface MCPToolResultContent {
+  type: 'text' | 'image' | 'audio' | 'resource'
+  text?: string
+  data?: string
+  mimeType?: string
+  resource?: {
+    uri?: string
+    text?: string
+    mimeType?: string
+  }
+}
+
+export interface MCPCallToolResponse {
+  content: MCPToolResultContent[]
+  isError?: boolean
 }
 
 export interface MCPResource {
