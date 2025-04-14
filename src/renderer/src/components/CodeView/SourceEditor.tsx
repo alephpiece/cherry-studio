@@ -3,7 +3,7 @@ import { useToolbar } from '@renderer/components/CodeView/context'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
 import * as cmThemes from '@uiw/codemirror-themes-all'
-import CodeMirror, { EditorView, Extension, ReactCodeMirrorProps } from '@uiw/react-codemirror'
+import CodeMirror, { EditorView, Extension, keymap, ReactCodeMirrorProps } from '@uiw/react-codemirror'
 import diff from 'fast-diff'
 import {
   ChevronsDownUp,
@@ -12,7 +12,7 @@ import {
   Text as UnWrapIcon,
   WrapText as WrapIcon
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -100,6 +100,11 @@ const SourceEditor = ({ children, language, onSave }: Props) => {
     return () => removeTool('wrap')
   }, [codeWrappable, isUnwrapped, registerTool, removeTool, t])
 
+  const handleSave = useCallback(() => {
+    const currentDoc = editorViewRef.current?.state.doc.toString() ?? ''
+    onSave?.(currentDoc)
+  }, [onSave])
+
   // 保存按钮
   useEffect(() => {
     registerTool({
@@ -107,15 +112,12 @@ const SourceEditor = ({ children, language, onSave }: Props) => {
       type: 'core',
       icon: <SaveIcon className="icon" />,
       tooltip: t('code_block.edit.save'),
-      onClick: () => {
-        const currentDoc = editorViewRef.current?.state.doc.toString() ?? ''
-        onSave?.(currentDoc)
-      },
+      onClick: handleSave,
       order: 3
     })
 
     return () => removeTool('save')
-  }, [onSave, registerTool, removeTool, t])
+  }, [handleSave, registerTool, removeTool, t])
 
   // 流式响应过程中计算 changes 来更新 EditorView
   // 无法处理用户在流式响应过程中编辑代码的情况（应该也不必处理）
@@ -143,10 +145,32 @@ const SourceEditor = ({ children, language, onSave }: Props) => {
     setIsUnwrapped(!codeWrappable)
   }, [codeWrappable])
 
+  // 保存功能的快捷键
+  const saveKeymap = useMemo(() => {
+    return keymap.of([
+      {
+        key: 'Mod-s',
+        run: () => {
+          handleSave()
+          return true
+        },
+        preventDefault: true
+      }
+    ])
+  }, [handleSave])
+
   const cmTheme = useMemo(() => {
     const _cmTheme = currentTheme as ReactCodeMirrorProps['theme']
     return cmThemes[_cmTheme as keyof typeof cmThemes] || _cmTheme
   }, [currentTheme])
+
+  const enabledExtensions = useMemo(() => {
+    return [
+      ...extensions,
+      ...(isUnwrapped ? [] : [EditorView.lineWrapping]),
+      ...(codeEditor.keymap ? [saveKeymap] : [])
+    ]
+  }, [codeEditor.keymap, extensions, isUnwrapped, saveKeymap])
 
   return (
     <CodeMirror
@@ -157,7 +181,7 @@ const SourceEditor = ({ children, language, onSave }: Props) => {
       editable={true}
       // @ts-ignore 强制使用，见 react-codemirror 的 Example.tsx
       theme={cmTheme}
-      extensions={[...extensions, ...(isUnwrapped ? [] : [EditorView.lineWrapping])]}
+      extensions={enabledExtensions}
       onCreateEditor={(view: EditorView) => (editorViewRef.current = view)}
       basicSetup={{
         lineNumbers: codeShowLineNumbers,
