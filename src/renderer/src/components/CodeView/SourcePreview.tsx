@@ -29,7 +29,6 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
   const codeContentRef = useRef<HTMLDivElement>(null)
   const prevCodeLengthRef = useRef(0)
   const processingQueueRef = useRef<Promise<void>>(Promise.resolve())
-  const shouldAutoScrollRef = useRef<boolean>(true)
   const callerId = useRef(`${Date.now()}-${uuid()}`).current
 
   const { t } = useTranslation()
@@ -79,12 +78,6 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
     setIsUnwrapped(!codeWrappable)
   }, [codeWrappable])
 
-  const scrollToBottom = useCallback(() => {
-    if (codeContentRef.current && !isExpanded) {
-      codeContentRef.current.scrollTop = codeContentRef.current.scrollHeight
-    }
-  }, [isExpanded])
-
   // 处理尾部空白字符
   const safeCodeString = useMemo(() => {
     return typeof children === 'string' ? children.trimEnd() : ''
@@ -124,13 +117,8 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
       setTokenLines((lines) => [...lines.slice(0, lines.length - result.recall), ...result.lines])
 
       prevCodeLengthRef.current = endPos
-
-      // 如果需要自动滚动，则滚动到页面底部
-      if (shouldAutoScrollRef.current) {
-        requestAnimationFrame(scrollToBottom)
-      }
     })
-  }, [callerId, cleanupTokenizers, highlightCodeChunk, language, safeCodeString, scrollToBottom])
+  }, [callerId, cleanupTokenizers, highlightCodeChunk, language, safeCodeString])
 
   // 组件卸载时清理资源
   useEffect(() => {
@@ -165,27 +153,6 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
       observer.disconnect()
     }
   }, [highlightCode])
-
-  // 处理滚动事件，判断是否需要继续自动滚动
-  const handleScroll = useCallback(() => {
-    if (!codeContentRef.current) {
-      shouldAutoScrollRef.current = false
-      return
-    }
-
-    const { scrollTop, scrollHeight, clientHeight } = codeContentRef.current
-    shouldAutoScrollRef.current = scrollHeight - (scrollTop + clientHeight) < 50
-  }, [])
-
-  // 监听滚动事件
-  useEffect(() => {
-    const codeElement = codeContentRef.current
-    if (!codeElement) return
-
-    codeElement.addEventListener('scroll', handleScroll)
-
-    return () => codeElement.removeEventListener('scroll', handleScroll)
-  }, [handleScroll])
 
   return (
     <ContentContainer
