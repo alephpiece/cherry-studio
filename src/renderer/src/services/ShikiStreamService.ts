@@ -1,3 +1,4 @@
+import { LRUCache } from 'lru-cache'
 import type { HighlighterCore, ThemedToken } from 'shiki'
 
 import ShikiStreamWorker from '../workers/shiki-stream.worker?worker'
@@ -35,7 +36,12 @@ class ShikiStreamService {
   private highlighter: HighlighterCore | null = null
   private highlighterInitPromise: Promise<void> | null = null
   private isInitialized: boolean = false
-  private tokenizerMap = new Map<string, ShikiStreamTokenizer>()
+
+  // 保存以 callerId-language-theme 为键的 tokenizer map
+  private tokenizerCache = new LRUCache<string, ShikiStreamTokenizer>({
+    max: 100, // 最大缓存数量
+    ttl: 1000 * 60 * 30 // 30分钟过期时间
+  })
 
   // Worker 相关资源
   private worker: Worker | null = null
@@ -376,11 +382,13 @@ class ShikiStreamService {
       })
     }
 
-    // 同时清理主线程中的 tokenizer
-    if (this.tokenizerMap.has(callerId)) {
-      const tokenizer = this.tokenizerMap.get(callerId)!
-      tokenizer.clear()
-      this.tokenizerMap.delete(callerId)
+    // 清理主线程中的 tokenizer - 移除所有以callerId开头的缓存
+    for (const key of this.tokenizerCache.keys()) {
+      if (key.startsWith(`${callerId}-`)) {
+        const tokenizer = this.tokenizerCache.get(key)!
+        tokenizer.clear()
+        this.tokenizerCache.delete(key)
+      }
     }
   }
 
@@ -392,9 +400,12 @@ class ShikiStreamService {
    * @returns tokenizer 实例
    */
   private async getStreamTokenizer(callerId: string, language: string, theme: string): Promise<ShikiStreamTokenizer> {
+    // 创建复合键
+    const cacheKey = `${callerId}-${language}-${theme}`
+
     // 如果已存在，直接返回
-    if (this.tokenizerMap.has(callerId)) {
-      return this.tokenizerMap.get(callerId)!
+    if (this.tokenizerCache.has(cacheKey)) {
+      return this.tokenizerCache.get(cacheKey)!
     }
 
     // 确保 highlighter 已配置
@@ -412,7 +423,7 @@ class ShikiStreamService {
     }
 
     const tokenizer = new ShikiStreamTokenizer(options)
-    this.tokenizerMap.set(callerId, tokenizer)
+    this.tokenizerCache.set(cacheKey, tokenizer)
 
     return tokenizer
   }
@@ -437,9 +448,11 @@ class ShikiStreamService {
     }
 
     // 清理主线程的所有 tokenizers
-    for (const callerId of this.tokenizerMap.keys()) {
-      this.cleanupTokenizer(callerId)
+    for (const key of this.tokenizerCache.keys()) {
+      const tokenizer = this.tokenizerCache.get(key)!
+      tokenizer.clear()
     }
+    this.tokenizerCache.clear()
 
     this.highlighter = null
     this.isInitialized = false

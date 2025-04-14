@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 
+import { LRUCache } from 'lru-cache'
 import type { HighlighterCore, ThemedToken } from 'shiki'
 
 import { ShikiStreamTokenizer, ShikiStreamTokenizerOptions } from '../services/ShikiStreamTokenizer'
@@ -32,7 +33,12 @@ interface HighlightChunkResult {
 
 // Worker 全局变量
 let highlighter: HighlighterCore | null = null
-const tokenizerMap = new Map<string, ShikiStreamTokenizer>()
+
+// 保存以 callerId-language-theme 为键的 tokenizer map
+const tokenizerMap = new LRUCache<string, ShikiStreamTokenizer>({
+  max: 100, // 最大缓存数量
+  ttl: 1000 * 60 * 15 // 15分钟过期时间
+})
 
 // 初始化高亮器
 async function initHighlighter(themes: string[], languages: string[]): Promise<void> {
@@ -92,9 +98,12 @@ async function ensureLanguageAndThemeLoaded(
 
 // 获取或创建 tokenizer
 async function getStreamTokenizer(callerId: string, language: string, theme: string): Promise<ShikiStreamTokenizer> {
+  // 创建复合键
+  const cacheKey = `${callerId}-${language}-${theme}`
+
   // 如果已存在，直接返回
-  if (tokenizerMap.has(callerId)) {
-    return tokenizerMap.get(callerId)!
+  if (tokenizerMap.has(cacheKey)) {
+    return tokenizerMap.get(cacheKey)!
   }
 
   if (!highlighter) {
@@ -112,7 +121,7 @@ async function getStreamTokenizer(callerId: string, language: string, theme: str
   }
 
   const tokenizer = new ShikiStreamTokenizer(options)
-  tokenizerMap.set(callerId, tokenizer)
+  tokenizerMap.set(cacheKey, tokenizer)
 
   return tokenizer
 }
@@ -150,17 +159,23 @@ async function highlightCodeChunk(
 
 // 清理特定调用者的 tokenizer
 function cleanupTokenizer(callerId: string): void {
-  if (tokenizerMap.has(callerId)) {
-    const tokenizer = tokenizerMap.get(callerId)!
-    tokenizer.clear()
-    tokenizerMap.delete(callerId)
+  // 清理所有以callerId开头的缓存
+  for (const key of tokenizerMap.keys()) {
+    if (key.startsWith(`${callerId}-`)) {
+      const tokenizer = tokenizerMap.get(key)!
+      tokenizer.clear()
+      tokenizerMap.delete(key)
+    }
   }
 }
 
 // 清理所有资源
 function disposeAll(): void {
   // 清理所有 tokenizer
-  tokenizerMap.forEach((tokenizer) => tokenizer.clear())
+  for (const key of tokenizerMap.keys()) {
+    const tokenizer = tokenizerMap.get(key)!
+    tokenizer.clear()
+  }
   tokenizerMap.clear()
 
   // 清理 highlighter
