@@ -102,22 +102,22 @@ const SourcePreview = ({
     if (prevCodeLengthRef.current < safeCodeString.length) {
       // 传递增量部分，获取高亮的 token lines
       const incrementalCode = safeCodeString.slice(prevCodeLengthRef.current)
-      const result = await highlightCodeChunk(incrementalCode, language, callerId)
-
-      setTokenLines((lines) => [...lines.slice(0, lines.length - result.recall), ...result.lines])
-      prevCodeLengthRef.current = safeCodeString.length
+      if (incrementalCode.length > 0) {
+        const result = await highlightCodeChunk(incrementalCode, language, callerId)
+        setTokenLines((lines) => [...lines.slice(0, lines.length - result.recall), ...result.lines])
+      }
     } else {
       // FIXME: 长度有问题，清理 tokenizer
       if (prevCodeLengthRef.current > safeCodeString.length) {
         cleanupTokenizers(callerId)
       }
 
-      // 不管是第一次高亮还是长度有问题，都传整个代码过去
       const result = await highlightCodeChunk(safeCodeString, language, callerId)
 
       setTokenLines(result.lines)
-      prevCodeLengthRef.current = safeCodeString.length
     }
+
+    prevCodeLengthRef.current = safeCodeString.length
 
     // 如果需要自动滚动，则滚动到页面底部
     if (shouldAutoScrollRef.current) {

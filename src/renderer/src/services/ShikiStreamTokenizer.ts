@@ -29,7 +29,7 @@ export interface ShikiStreamTokenizerEnqueueResult {
 export class ShikiStreamTokenizer {
   public readonly options: ShikiStreamTokenizerOptions
 
-  public linesStable: ThemedToken[][] = []
+  // public linesStable: ThemedToken[][] = []
   public linesUnstable: ThemedToken[][] = []
 
   public lastUnstableCodeChunk: string = ''
@@ -67,10 +67,10 @@ export class ShikiStreamTokenizer {
         unstable.push(result.tokens[0])
         this.lastUnstableCodeChunk = subTrunck
       }
-
-      this.linesStable.push(...stable)
-      this.linesUnstable = unstable
     })
+
+    // this.linesStable.push(...stable)
+    this.linesUnstable = unstable
 
     return {
       recall,
@@ -90,19 +90,10 @@ export class ShikiStreamTokenizer {
   }
 
   clear(): void {
-    this.linesStable = []
+    // this.linesStable = []
     this.linesUnstable = []
     this.lastUnstableCodeChunk = ''
     this.lastStableGrammarState = undefined
-  }
-
-  clone(): ShikiStreamTokenizer {
-    const clone = new ShikiStreamTokenizer(this.options)
-    clone.lastUnstableCodeChunk = this.lastUnstableCodeChunk
-    clone.linesUnstable = this.linesUnstable
-    clone.linesStable = this.linesStable
-    clone.lastStableGrammarState = this.lastStableGrammarState
-    return clone
   }
 }
 
