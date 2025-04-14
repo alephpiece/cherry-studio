@@ -32,6 +32,7 @@ const SourcePreview = ({
   const [tokenLines, setTokenLines] = useState<ThemedToken[][]>([])
   const codeContentRef = useRef<HTMLDivElement>(null)
   const prevCodeLengthRef = useRef(0)
+  const processingQueueRef = useRef<Promise<void>>(Promise.resolve())
   const shouldAutoScrollRef = useRef<boolean>(true)
   const callerId = useRef(`${Date.now()}-${uuid()}`).current
 
@@ -99,30 +100,43 @@ const SourcePreview = ({
   const highlightCode = useCallback(async () => {
     if (!safeCodeString) return
 
-    if (prevCodeLengthRef.current < safeCodeString.length) {
-      // 传递增量部分，获取高亮的 token lines
-      const incrementalCode = safeCodeString.slice(prevCodeLengthRef.current)
-      if (incrementalCode.length > 0) {
-        const result = await highlightCodeChunk(incrementalCode, language, callerId)
-        setTokenLines((lines) => [...lines.slice(0, lines.length - result.recall), ...result.lines])
-      }
-    } else {
-      // FIXME: 长度有问题，清理 tokenizer
+    if (prevCodeLengthRef.current === safeCodeString.length) return
+
+    // 捕获当前状态
+    const startPos = prevCodeLengthRef.current
+    const endPos = safeCodeString.length
+
+    // 添加到处理队列，确保按顺序处理
+    processingQueueRef.current = processingQueueRef.current.then(async () => {
+      // FIXME: 长度有问题，清理 tokenizer，使用完整代码重新高亮
       if (prevCodeLengthRef.current > safeCodeString.length) {
         cleanupTokenizers(callerId)
+        prevCodeLengthRef.current = 0
+
+        const result = await highlightCodeChunk(safeCodeString, language, callerId)
+        setTokenLines(result.lines)
+
+        prevCodeLengthRef.current = safeCodeString.length
+
+        return
       }
 
-      const result = await highlightCodeChunk(safeCodeString, language, callerId)
+      // 跳过 race condition，延迟到后续任务
+      if (prevCodeLengthRef.current !== startPos) {
+        return
+      }
 
-      setTokenLines(result.lines)
-    }
+      const incrementalCode = safeCodeString.slice(startPos, endPos)
+      const result = await highlightCodeChunk(incrementalCode, language, callerId)
+      setTokenLines((lines) => [...lines.slice(0, lines.length - result.recall), ...result.lines])
 
-    prevCodeLengthRef.current = safeCodeString.length
+      prevCodeLengthRef.current = endPos
 
-    // 如果需要自动滚动，则滚动到页面底部
-    if (shouldAutoScrollRef.current) {
-      requestAnimationFrame(scrollToBottom)
-    }
+      // 如果需要自动滚动，则滚动到页面底部
+      if (shouldAutoScrollRef.current) {
+        requestAnimationFrame(scrollToBottom)
+      }
+    })
   }, [callerId, cleanupTokenizers, highlightCodeChunk, language, safeCodeString, scrollToBottom])
 
   // 组件卸载时清理资源
