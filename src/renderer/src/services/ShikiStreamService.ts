@@ -267,7 +267,7 @@ class ShikiStreamService {
       throw new Error('Highlighter not initialized')
     }
 
-    const hast = this.highlighter.codeToHast('test', {
+    const hast = this.highlighter.codeToHast('1', {
       lang: actualLanguage,
       theme: actualTheme
     })
