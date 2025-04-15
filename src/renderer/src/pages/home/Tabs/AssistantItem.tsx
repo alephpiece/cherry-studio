@@ -1,8 +1,19 @@
-import { DeleteOutlined, EditOutlined, MessageOutlined, MinusCircleOutlined, SaveOutlined } from '@ant-design/icons'
+import {
+  DeleteOutlined,
+  EditOutlined,
+  MessageOutlined,
+  MinusCircleOutlined,
+  SaveOutlined,
+  SmileOutlined,
+  SortAscendingOutlined,
+  SortDescendingOutlined
+} from '@ant-design/icons'
 import ModelAvatar from '@renderer/components/Avatar/ModelAvatar'
+import EmojiIcon from '@renderer/components/EmojiIcon'
 import CopyIcon from '@renderer/components/Icons/CopyIcon'
 import { useActiveTopicContext } from '@renderer/context/ActiveTopicContext'
 import { useAssistant } from '@renderer/hooks/useAssistant'
+import { useAssistants } from '@renderer/hooks/useAssistant'
 import { useTopicsQueueStateWithEvent } from '@renderer/hooks/useQueue'
 import { modelGenerating } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
@@ -17,6 +28,7 @@ import { omit } from 'lodash'
 import { FC, startTransition, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
+import * as tinyPinyin from 'tiny-pinyin'
 
 interface AssistantItemProps {
   assistant: Assistant
@@ -30,14 +42,33 @@ interface AssistantItemProps {
 
 const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, onDelete, addAgent, addAssistant }) => {
   const { t } = useTranslation()
-  const { clickAssistantToShowTopic, topicPosition, showAssistantIcon } = useSettings()
+  const { clickAssistantToShowTopic, topicPosition, assistantIconType, setAssistantIconType } = useSettings()
   const defaultModel = getDefaultModel()
+  const { assistants, updateAssistants } = useAssistants()
 
   const { setActiveTopic } = useActiveTopicContext()
   const { topics, removeAllTopics } = useAssistant(assistant.id)
 
   // 使用基于事件的Hook监听队列状态
   const isChatting = useTopicsQueueStateWithEvent(topics)
+
+  const sortByPinyinAsc = useCallback(() => {
+    const sorted = [...assistants].sort((a, b) => {
+      const pinyinA = tinyPinyin.convertToPinyin(a.name, '', true)
+      const pinyinB = tinyPinyin.convertToPinyin(b.name, '', true)
+      return pinyinA.localeCompare(pinyinB)
+    })
+    updateAssistants(sorted)
+  }, [assistants, updateAssistants])
+
+  const sortByPinyinDesc = useCallback(() => {
+    const sorted = [...assistants].sort((a, b) => {
+      const pinyinA = tinyPinyin.convertToPinyin(a.name, '', true)
+      const pinyinB = tinyPinyin.convertToPinyin(b.name, '', true)
+      return pinyinB.localeCompare(pinyinA)
+    })
+    updateAssistants(sorted)
+  }, [assistants, updateAssistants])
 
   const getMenuItems = useCallback(
     (assistant: Assistant): ItemType[] => [
@@ -92,6 +123,41 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
           })
         }
       },
+      {
+        label: t('assistants.icon.type'),
+        key: 'icon-type',
+        icon: <SmileOutlined />,
+        children: [
+          {
+            label: t('settings.assistant.icon.type.model'),
+            key: 'model',
+            onClick: () => setAssistantIconType('model')
+          },
+          {
+            label: t('settings.assistant.icon.type.emoji'),
+            key: 'emoji',
+            onClick: () => setAssistantIconType('emoji')
+          },
+          {
+            label: t('settings.assistant.icon.type.none'),
+            key: 'none',
+            onClick: () => setAssistantIconType('none')
+          }
+        ]
+      },
+      { type: 'divider' },
+      {
+        label: t('common.sort.pinyin.asc'),
+        key: 'sort-asc',
+        icon: <SortAscendingOutlined />,
+        onClick: () => sortByPinyinAsc()
+      },
+      {
+        label: t('common.sort.pinyin.desc'),
+        key: 'sort-desc',
+        icon: <SortDescendingOutlined />,
+        onClick: () => sortByPinyinDesc()
+      },
       { type: 'divider' },
       {
         label: t('common.delete'),
@@ -126,7 +192,17 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
         }
       }
     ],
-    [t, addAssistant, removeAllTopics, addAgent, topics.length, onDelete]
+    [
+      addAgent,
+      addAssistant,
+      onDelete,
+      removeAllTopics,
+      setAssistantIconType,
+      sortByPinyinAsc,
+      sortByPinyinDesc,
+      t,
+      topics.length
+    ]
   )
 
   // 在这里“切换”助手只是筛选话题列表，这尽量保持了以前的行为
@@ -170,14 +246,21 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
     <Dropdown menu={{ items: getMenuItems(assistant) }} trigger={['contextMenu']}>
       <Container onClick={handleSwitch} className={isActive ? 'active' : ''}>
         <AssistantNameRow className="name" title={fullAssistantName}>
-          {showAssistantIcon && (
+          {assistantIconType === 'model' ? (
             <ModelAvatar
               model={assistant.model || defaultModel}
-              size={22}
+              size={24}
               className={isChatting ? 'animation-pulse' : ''}
             />
+          ) : (
+            assistantIconType === 'emoji' && (
+              <EmojiIcon
+                emoji={assistant.emoji || assistantName.slice(0, 1)}
+                className={isChatting ? 'animation-pulse' : ''}
+              />
+            )
           )}
-          <AssistantName className="text-nowrap">{showAssistantIcon ? assistantName : fullAssistantName}</AssistantName>
+          <AssistantName className="text-nowrap">{assistantName}</AssistantName>
         </AssistantNameRow>
         <MenuButton onClick={() => EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)}>
           <TopicCount className="topics-count">{topics.length}</TopicCount>
@@ -191,7 +274,8 @@ const Container = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding: 7px 10px;
+  padding: 0 10px;
+  height: 37px;
   position: relative;
   font-family: Ubuntu;
   border-radius: var(--list-item-border-radius);
@@ -219,10 +303,12 @@ const AssistantNameRow = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
 `
 
-const AssistantName = styled.div``
+const AssistantName = styled.div`
+  font-size: 13px;
+`
 
 const MenuButton = styled.div`
   display: flex;

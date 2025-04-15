@@ -112,11 +112,17 @@ const MCPToolsSection = ({ tools, server, onToggleTool }: MCPToolsSectionProps) 
                     </Flex>
                     {tool.description && (
                       <Typography.Text type="secondary" style={{ fontSize: '13px', marginTop: 4 }}>
-                        {tool.description}
+                        {tool.description.length > 100 ? `${tool.description.substring(0, 100)}...` : tool.description}
                       </Typography.Text>
                     )}
                   </Flex>
-                  <Switch checked={isToolEnabled(tool)} onChange={(checked) => handleToggle(tool, checked)} />
+                  <Switch
+                    checked={isToolEnabled(tool)}
+                    onChange={(checked, event) => {
+                      event?.stopPropagation()
+                      handleToggle(tool, checked)
+                    }}
+                  />
                 </Flex>
               }>
               <SelectableContent>{renderToolProperties(tool)}</SelectableContent>
@@ -132,7 +138,6 @@ const MCPToolsSection = ({ tools, server, onToggleTool }: MCPToolsSectionProps) 
 
 const Section = styled.div`
   margin-top: 8px;
-  border-top: 1px solid var(--color-border);
   padding-top: 8px;
 `
 

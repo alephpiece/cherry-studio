@@ -1,4 +1,3 @@
-import { BarsOutlined, SettingOutlined } from '@ant-design/icons'
 import AddAssistantPopup from '@renderer/components/Popups/AddAssistantPopup'
 import { useAssistants, useDefaultAssistant } from '@renderer/hooks/useAssistant'
 import { useSettings } from '@renderer/hooks/useSettings'
@@ -47,8 +46,7 @@ const HomeTabs: FC<Props> = ({ selectedAssistant, setSelectedAssistant, activeAs
 
   const assistantTab = {
     label: t('assistants.abbr'),
-    value: 'assistants',
-    icon: <i className="iconfont icon-business-smart-assistant" />
+    value: 'assistants'
   }
 
   const onCreateAssistant = async () => {
@@ -101,13 +99,11 @@ const HomeTabs: FC<Props> = ({ selectedAssistant, setSelectedAssistant, activeAs
               position === 'left' && topicPosition === 'left' ? assistantTab : undefined,
               {
                 label: t('common.topics'),
-                value: 'topic',
-                icon: <BarsOutlined />
+                value: 'topic'
               },
               {
                 label: t('settings.title'),
-                value: 'settings',
-                icon: <SettingOutlined />
+                value: 'settings'
               }
             ].filter(Boolean) as SegmentedProps['options']
           }
@@ -183,6 +179,9 @@ const Segmented = styled(AntSegmented)`
     font-size: 13px;
     height: 100%;
   }
+  .ant-segmented-item-label[aria-selected='true'] {
+    color: var(--color-text);
+  }
   .iconfont {
     font-size: 13px;
     margin-left: -2px;
@@ -202,6 +201,11 @@ const Segmented = styled(AntSegmented)`
     border: 0.5px solid var(--color-border);
     border-radius: var(--list-item-border-radius);
     box-shadow: none;
+  }
+  .ant-segmented-item-label,
+  .ant-segmented-item-icon {
+    display: flex;
+    align-items: center;
   }
   /* These styles ensure the same appearance as before */
   border-radius: 0;

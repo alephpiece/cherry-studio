@@ -1,4 +1,4 @@
-import { SearchOutlined, SyncOutlined, TranslationOutlined } from '@ant-design/icons'
+import { SyncOutlined, TranslationOutlined } from '@ant-design/icons'
 import { isOpenAIWebSearch } from '@renderer/config/models'
 import { getModelUniqId } from '@renderer/services/ModelService'
 import { Message, Model } from '@renderer/types'
@@ -6,6 +6,7 @@ import { getBriefInfo } from '@renderer/utils'
 import { withMessageThought } from '@renderer/utils/formats'
 import { Divider, Flex, Tooltip } from 'antd'
 import { clone } from 'lodash'
+import { Search } from 'lucide-react'
 import React, { Fragment, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import BarLoader from 'react-spinners/BarLoader'
@@ -101,7 +102,7 @@ const MessageContent: React.FC<Props> = ({ message: _message, model }) => {
     const searchResults =
       message?.metadata?.webSearch?.results ||
       message?.metadata?.webSearchInfo ||
-      message?.metadata?.groundingMetadata?.groundingChunks.map((chunk) => chunk.web) ||
+      message?.metadata?.groundingMetadata?.groundingChunks?.map((chunk) => chunk?.web) ||
       message?.metadata?.annotations?.map((annotation) => annotation.url_citation) ||
       []
     const citationsUrls = formattedCitations || []
@@ -197,7 +198,7 @@ const MessageContent: React.FC<Props> = ({ message: _message, model }) => {
   if (message.status === 'searching') {
     return (
       <SearchingContainer>
-        <SearchOutlined size={24} />
+        <Search size={24} />
         <SearchingText>{t('message.searching')}</SearchingText>
         <BarLoader color="#1677ff" />
       </SearchingContainer>
@@ -212,13 +213,13 @@ const MessageContent: React.FC<Props> = ({ message: _message, model }) => {
     const content = `[@${model.name}](#)  ${getBriefInfo(message.content)}`
     return <Markdown message={{ ...message, content }} />
   }
-
+  const toolUseRegex = /<tool_use>([\s\S]*?)<\/tool_use>/g
   return (
     <Fragment>
       {renderMentions()}
       <MessageThought message={message} />
       <MessageTools message={message} />
-      <Markdown message={{ ...message, content: processedContent }} />
+      <Markdown message={{ ...message, content: processedContent.replace(toolUseRegex, '') }} />
       {message.metadata?.generateImage && <MessageImage message={message} />}
       {message.translatedContent && (
         <Fragment>
@@ -235,18 +236,22 @@ const MessageContent: React.FC<Props> = ({ message: _message, model }) => {
       {message?.metadata?.groundingMetadata && message.status == 'success' && (
         <>
           <CitationsList
-            citations={message.metadata.groundingMetadata.groundingChunks.map((chunk, index) => ({
-              number: index + 1,
-              url: chunk.web?.uri,
-              title: chunk.web?.title,
-              showFavicon: false
-            }))}
+            citations={
+              message.metadata.groundingMetadata?.groundingChunks?.map((chunk, index) => ({
+                number: index + 1,
+                url: chunk?.web?.uri || '',
+                title: chunk?.web?.title,
+                showFavicon: false
+              })) || []
+            }
           />
           <SearchEntryPoint
             dangerouslySetInnerHTML={{
-              __html: message.metadata.groundingMetadata.searchEntryPoint?.renderedContent
-                ?.replace(/@media \(prefers-color-scheme: light\)/g, 'body[theme-mode="light"]')
-                .replace(/@media \(prefers-color-scheme: dark\)/g, 'body[theme-mode="dark"]')
+              __html: message.metadata.groundingMetadata?.searchEntryPoint?.renderedContent
+                ? message.metadata.groundingMetadata.searchEntryPoint.renderedContent
+                    .replace(/@media \(prefers-color-scheme: light\)/g, 'body[theme-mode="light"]')
+                    .replace(/@media \(prefers-color-scheme: dark\)/g, 'body[theme-mode="dark"]')
+                : ''
             }}
           />
         </>
