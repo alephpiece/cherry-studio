@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 import { LRUCache } from 'lru-cache'
-import type { HighlighterCore, ThemedToken } from 'shiki'
+import type { HighlighterCore, ThemedToken } from 'shiki/core'
 
 import { ShikiStreamTokenizer, ShikiStreamTokenizerOptions } from '../services/ShikiStreamTokenizer'
 

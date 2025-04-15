@@ -1,5 +1,5 @@
 import { LRUCache } from 'lru-cache'
-import type { HighlighterCore, ThemedToken } from 'shiki'
+import type { HighlighterCore, ThemedToken } from 'shiki/core'
 
 import ShikiStreamWorker from '../workers/shiki-stream.worker?worker'
 import { ShikiStreamTokenizer, ShikiStreamTokenizerOptions } from './ShikiStreamTokenizer'

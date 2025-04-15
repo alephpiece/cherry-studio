@@ -1,4 +1,4 @@
-import type { CodeToTokensOptions, GrammarState, HighlighterCore, HighlighterGeneric, ThemedToken } from '@shikijs/core'
+import type { CodeToTokensOptions, GrammarState, HighlighterCore, HighlighterGeneric, ThemedToken } from 'shiki/core'
 
 export type ShikiStreamTokenizerOptions = CodeToTokensOptions<string, string> & {
   highlighter: HighlighterCore | HighlighterGeneric<any, any>
