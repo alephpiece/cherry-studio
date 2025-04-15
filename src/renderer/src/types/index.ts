@@ -373,6 +373,12 @@ export interface MCPServerParameter {
   description: string
 }
 
+export interface MCPConfigSample {
+  command: string
+  args: string[]
+  env?: Record<string, string> | undefined
+}
+
 export interface MCPServer {
   id: string
   name: string
@@ -385,6 +391,7 @@ export interface MCPServer {
   env?: Record<string, string>
   isActive: boolean
   disabledTools?: string[] // List of tool names that are disabled for this server
+  configSample?: MCPConfigSample
   headers?: Record<string, string> // Custom headers to be sent with requests to this server
 }
 
