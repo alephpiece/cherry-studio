@@ -535,15 +535,6 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
         return event.preventDefault()
       }
 
-      if (selectedKnowledgeBases.length > 0) {
-        setSelectedKnowledgeBases((prev) => {
-          const newSelectedKnowledgeBases = prev.slice(0, -1)
-          updateAssistant({ ...assistant, knowledge_bases: newSelectedKnowledgeBases })
-          return newSelectedKnowledgeBases
-        })
-        return event.preventDefault()
-      }
-
       if (files.length > 0) {
         setFiles((prev) => prev.slice(0, -1))
         return event.preventDefault()

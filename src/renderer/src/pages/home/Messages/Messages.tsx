@@ -166,7 +166,6 @@ const Messages: React.FC<MessagesProps> = ({ assistant, topic, setActiveTopic })
 
         // 将分支的消息放入数据库
         await db.topics.add({ id: newTopic.id, messages: branchMessages })
-
         addTopic(newTopic)
         setActiveTopic(newTopic)
         autoRenameTopic(assistant, newTopic.id)
