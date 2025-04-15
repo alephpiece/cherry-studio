@@ -2,6 +2,7 @@ import { useMermaid } from '@renderer/hooks/useMermaid'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { HighlightChunkResult, ShikiPreProperties, shikiStreamService } from '@renderer/services/ShikiStreamService'
 import { ThemeMode } from '@renderer/types'
+import { ReactCodeMirrorProps } from '@uiw/react-codemirror'
 import type React from 'react'
 import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -10,7 +11,7 @@ interface CodeStyleContextType {
   cleanupTokenizers: (callerId: string) => void
   getShikiPreProperties: (language: string) => Promise<ShikiPreProperties>
   themeNames: string[]
-  currentTheme: string
+  activeCmTheme: ReactCodeMirrorProps['theme'] | null
   languageMap: Record<string, string>
 }
 
@@ -19,7 +20,7 @@ const defaultCodeStyleContext: CodeStyleContextType = {
   cleanupTokenizers: () => {},
   getShikiPreProperties: async () => ({ class: '', style: '', tabindex: 0 }),
   themeNames: ['auto'],
-  currentTheme: 'none',
+  activeCmTheme: null,
   languageMap: {}
 }
 
@@ -59,7 +60,7 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   }, [cmThemes, codeEditor.enabled, shikiThemes])
 
   // 获取当前使用的主题名称
-  const currentTheme = useMemo(() => {
+  const activeThemeName = useMemo(() => {
     if (!codeStyle || codeStyle === 'auto' || !themeNames.includes(codeStyle)) {
       if (codeEditor.enabled) {
         return theme === ThemeMode.light ? 'materialLight' : 'dark'
@@ -69,6 +70,14 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
     }
     return codeStyle
   }, [codeEditor.enabled, codeStyle, themeNames, theme])
+
+  // 获取当前使用的 CodeMirror 主题
+  const activeCmTheme = useMemo(() => {
+    if (!codeEditor.enabled) return null
+
+    const _cmTheme = activeThemeName as ReactCodeMirrorProps['theme']
+    return cmThemes[_cmTheme as keyof typeof cmThemes] || _cmTheme
+  }, [activeThemeName, cmThemes, codeEditor.enabled])
 
   // 一些语言的别名
   const languageMap = useMemo(() => {
@@ -91,9 +100,9 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   const highlightCodeChunk = useCallback(
     async (trunk: string, language: string, callerId: string) => {
       const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
-      return shikiStreamService.highlightCodeChunk(trunk, normalizedLang, currentTheme, callerId)
+      return shikiStreamService.highlightCodeChunk(trunk, normalizedLang, activeThemeName, callerId)
     },
-    [currentTheme, languageMap]
+    [activeThemeName, languageMap]
   )
 
   // 清理代码高亮资源
@@ -105,9 +114,9 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   const getShikiPreProperties = useCallback(
     async (language: string) => {
       const normalizedLang = languageMap[language as keyof typeof languageMap] || language.toLowerCase()
-      return shikiStreamService.getShikiPreProperties(normalizedLang, currentTheme)
+      return shikiStreamService.getShikiPreProperties(normalizedLang, activeThemeName)
     },
-    [currentTheme, languageMap]
+    [activeThemeName, languageMap]
   )
 
   const contextValue = useMemo(
@@ -116,10 +125,10 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
       cleanupTokenizers,
       getShikiPreProperties,
       themeNames,
-      currentTheme,
+      activeCmTheme,
       languageMap
     }),
-    [highlightCodeChunk, cleanupTokenizers, getShikiPreProperties, themeNames, currentTheme, languageMap]
+    [highlightCodeChunk, cleanupTokenizers, getShikiPreProperties, themeNames, activeCmTheme, languageMap]
   )
 
   return <CodeStyleContext value={contextValue}>{children}</CodeStyleContext>

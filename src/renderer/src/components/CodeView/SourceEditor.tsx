@@ -1,9 +1,7 @@
-import { Annotation } from '@codemirror/state'
 import { useToolbar } from '@renderer/components/CodeView/context'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
-import * as cmThemes from '@uiw/codemirror-themes-all'
-import CodeMirror, { EditorView, Extension, keymap, ReactCodeMirrorProps } from '@uiw/react-codemirror'
+import CodeMirror, { EditorView, Extension, keymap, Annotation } from '@uiw/react-codemirror'
 import diff from 'fast-diff'
 import {
   ChevronsDownUp,
@@ -30,7 +28,7 @@ interface Props {
  */
 const SourceEditor = ({ children, language, onSave }: Props) => {
   const { fontSize, codeShowLineNumbers, codeCollapsible, codeWrappable, codeEditor } = useSettings()
-  const { currentTheme, languageMap } = useCodeStyle()
+  const { activeCmTheme, languageMap } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
   const initialContent = useRef(children?.trimEnd() ?? '')
@@ -159,11 +157,6 @@ const SourceEditor = ({ children, language, onSave }: Props) => {
     ])
   }, [handleSave])
 
-  const cmTheme = useMemo(() => {
-    const _cmTheme = currentTheme as ReactCodeMirrorProps['theme']
-    return cmThemes[_cmTheme as keyof typeof cmThemes] || _cmTheme
-  }, [currentTheme])
-
   const enabledExtensions = useMemo(() => {
     return [
       ...langExtension,
@@ -180,7 +173,7 @@ const SourceEditor = ({ children, language, onSave }: Props) => {
       maxHeight={codeCollapsible && !isExpanded ? '350px' : 'none'}
       editable={true}
       // @ts-ignore 强制使用，见 react-codemirror 的 Example.tsx
-      theme={cmTheme}
+      theme={activeCmTheme}
       extensions={enabledExtensions}
       onCreateEditor={(view: EditorView) => (editorViewRef.current = view)}
       basicSetup={{
