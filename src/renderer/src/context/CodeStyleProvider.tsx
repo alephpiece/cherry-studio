@@ -2,7 +2,7 @@ import { useMermaid } from '@renderer/hooks/useMermaid'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { HighlightChunkResult, ShikiPreProperties, shikiStreamService } from '@renderer/services/ShikiStreamService'
 import { ThemeMode } from '@renderer/types'
-import { ReactCodeMirrorProps } from '@uiw/react-codemirror'
+import * as cmThemes from '@uiw/codemirror-themes-all'
 import type React from 'react'
 import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -11,7 +11,7 @@ interface CodeStyleContextType {
   cleanupTokenizers: (callerId: string) => void
   getShikiPreProperties: (language: string) => Promise<ShikiPreProperties>
   themeNames: string[]
-  activeCmTheme: ReactCodeMirrorProps['theme'] | null
+  activeCmTheme: any
   languageMap: Record<string, string>
 }
 
@@ -28,16 +28,11 @@ const CodeStyleContext = createContext<CodeStyleContextType>(defaultCodeStyleCon
 
 export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const { codeEditor, codeStyle, theme } = useSettings()
-  const [cmThemes, setCmThemes] = useState({})
   const [shikiThemes, setShikiThemes] = useState({})
   useMermaid()
 
   useEffect(() => {
-    if (codeEditor.enabled) {
-      import('@uiw/codemirror-themes-all').then((themes) => {
-        setCmThemes(themes)
-      })
-    } else {
+    if (!codeEditor.enabled) {
       import('shiki').then(({ bundledThemes }) => {
         setShikiThemes(bundledThemes)
       })
@@ -57,7 +52,7 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
 
     // Shiki 主题
     return ['auto', ...Object.keys(shikiThemes)]
-  }, [cmThemes, codeEditor.enabled, shikiThemes])
+  }, [codeEditor.enabled, shikiThemes])
 
   // 获取当前使用的主题名称
   const activeThemeName = useMemo(() => {
@@ -75,9 +70,8 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
   const activeCmTheme = useMemo(() => {
     if (!codeEditor.enabled) return null
 
-    const _cmTheme = activeThemeName as ReactCodeMirrorProps['theme']
-    return cmThemes[_cmTheme as keyof typeof cmThemes] || _cmTheme
-  }, [activeThemeName, cmThemes, codeEditor.enabled])
+    return cmThemes[activeThemeName as keyof typeof cmThemes] || activeThemeName
+  }, [activeThemeName, codeEditor.enabled])
 
   // 一些语言的别名
   const languageMap = useMemo(() => {
