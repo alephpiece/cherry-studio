@@ -1,6 +1,7 @@
-import { RobotOutlined } from '@ant-design/icons'
+import {} from '@ant-design/icons'
 import { MentionedAssistant } from '@renderer/types'
 import { ConfigProvider, Flex, Tag } from 'antd'
+import { Bot } from 'lucide-react'
 import { FC } from 'react'
 import styled from 'styled-components'
 
@@ -20,7 +21,7 @@ const MentionAssistantsInput: FC<{
         }}>
         {selectedAssistants.map((assistant) => (
           <Tag
-            icon={assistant.emoji ? <span>{assistant.emoji}</span> : <RobotOutlined />}
+            icon={assistant.emoji ? <span>{assistant.emoji}</span> : <Bot />}
             bordered={false}
             color="processing"
             key={assistant.id}

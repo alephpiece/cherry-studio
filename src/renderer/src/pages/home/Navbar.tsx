@@ -91,7 +91,7 @@ const HeaderNavbar: FC = () => {
               <ShowModelSelectorButton
                 size="small"
                 type="text"
-                icon={showModelSelector ? <ChevronRight size={18} /> : <EllipsisVertical size={18} />}
+                icon={showModelSelector ? <ChevronRight size={14} /> : <EllipsisVertical size={14} />}
                 onClick={() => setShowModelSelector(!showModelSelector)}
               />
             </Tooltip>
@@ -172,6 +172,7 @@ const NarrowIcon = styled(NavbarIcon)`
 
 const ShowModelSelectorButton = styled(Button)`
   -webkit-app-region: none;
+  padding-top: 2px;
   width: 18px !important;
   color: var(--color-text-3);
 

@@ -28,7 +28,7 @@ const SelectAssistantButton: React.FC = () => {
   }
 
   return (
-    <DropdownButton size="small" type="default" onClick={onSelectAssistant}>
+    <DropdownButton size="small" type="text" onClick={onSelectAssistant}>
       <ButtonContent>
         <AssistantAvatar assistant={currentAssistant} size={20} />
         <AssistantName>{currentAssistant.name}</AssistantName>

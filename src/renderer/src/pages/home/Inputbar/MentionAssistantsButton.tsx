@@ -1,9 +1,9 @@
-import { PlusOutlined, RobotOutlined } from '@ant-design/icons'
 import { useQuickPanel } from '@renderer/components/QuickPanel'
 import { QuickPanelListItem } from '@renderer/components/QuickPanel/types'
 import { useAssistants } from '@renderer/hooks/useAssistant'
 import { MentionedAssistant } from '@renderer/types'
 import { Tooltip } from 'antd'
+import { Bot, Plus } from 'lucide-react'
 import { FC, useCallback, useImperativeHandle } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
@@ -29,14 +29,14 @@ const MentionAssistantsButton: FC<Props> = ({ ref, mentionedAssistants, onMentio
     const items: QuickPanelListItem[] = assistants.map((asst) => ({
       label: asst.name,
       description: asst.description || '',
-      icon: asst.emoji ? <span>{asst.emoji}</span> : <RobotOutlined />,
+      icon: asst.emoji ? <span>{asst.emoji}</span> : <Bot size={18} />,
       action: () => onMentionAssistant(asst),
       isSelected: mentionedAssistants.some((a) => a.id === asst.id)
     }))
 
     items.push({
       label: t('chat.add.assistant.title') + '...',
-      icon: <PlusOutlined />,
+      icon: <Plus />,
       action: () => navigate('/settings/assistants'),
       isSelected: false
     })
@@ -71,7 +71,7 @@ const MentionAssistantsButton: FC<Props> = ({ ref, mentionedAssistants, onMentio
   return (
     <Tooltip placement="top" title={t('chat.input.mention_assistant')} arrow>
       <ToolbarButton type="text" onClick={handleOpenQuickPanel}>
-        <RobotOutlined />
+        <Bot size={18} />
       </ToolbarButton>
     </Tooltip>
   )
