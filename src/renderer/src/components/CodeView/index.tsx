@@ -1,7 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons'
 import { ToolbarProvider, ToolContext, useToolbar } from '@renderer/components/CodeView/context'
 import { useSettings } from '@renderer/hooks/useSettings'
-import { runPythonScript } from '@renderer/services/PyodideService'
+import { pyodideService } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
 import dayjs from 'dayjs'
 import {
@@ -119,7 +119,8 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
       setIsRunning(true)
       setOutput('')
 
-      runPythonScript(ctx.code, {}, codeExecution.timeoutMinutes * 60000)
+      pyodideService
+        .runScript(ctx.code, {}, codeExecution.timeoutMinutes * 60000)
         .then((formattedOutput) => {
           setOutput(formattedOutput)
         })
