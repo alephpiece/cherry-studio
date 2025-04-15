@@ -50,7 +50,7 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
   const { topics, removeAllTopics } = useAssistant(assistant.id)
 
   // 使用基于事件的Hook监听队列状态
-  const isChatting = useTopicsQueueStateWithEvent(topics)
+  const isSpeaking = useTopicsQueueStateWithEvent(topics)
 
   const sortByPinyinAsc = useCallback(() => {
     const sorted = [...assistants].sort((a, b) => {
@@ -250,13 +250,13 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, isActive, onSwitch, 
             <ModelAvatar
               model={assistant.model || defaultModel}
               size={24}
-              className={isChatting ? 'animation-pulse' : ''}
+              className={isSpeaking ? 'animation-pulse' : ''}
             />
           ) : (
             assistantIconType === 'emoji' && (
               <EmojiIcon
                 emoji={assistant.emoji || assistantName.slice(0, 1)}
-                className={isChatting ? 'animation-pulse' : ''}
+                className={isSpeaking ? 'animation-pulse' : ''}
               />
             )
           )}
