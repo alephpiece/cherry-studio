@@ -2,11 +2,10 @@ import { useToolbar } from '@renderer/components/CodeView/context'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { uuid } from '@renderer/utils'
-import { getTokenStyleObject } from '@shikijs/core'
 import { ChevronsDownUp, ChevronsUpDown, Text as UnWrapIcon, WrapText as WrapIcon } from 'lucide-react'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ThemedToken } from 'shiki'
+import { getTokenStyleObject, ThemedToken } from 'shiki/core'
 import styled from 'styled-components'
 
 interface SourcePreviewProps {
