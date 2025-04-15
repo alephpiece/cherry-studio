@@ -1240,6 +1240,13 @@ const migrateConfig = {
   },
   '98': (state: RootState) => {
     try {
+      if (!state.topics) {
+        state.topics = {
+          topics: [],
+          activeTopic: null
+        }
+      }
+
       const allTopics: any[] = []
 
       // Handle default assistant topics
