@@ -1,7 +1,7 @@
 import { useToolbar } from '@renderer/components/CodeView/context'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
-import CodeMirror, { EditorView, Extension, keymap, Annotation } from '@uiw/react-codemirror'
+import CodeMirror, { Annotation, EditorView, Extension, keymap } from '@uiw/react-codemirror'
 import diff from 'fast-diff'
 import {
   ChevronsDownUp,
