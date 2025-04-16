@@ -270,10 +270,8 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
   }, [children])
 
   const renderHeader = useMemo(() => {
-    if (isInSpecialView) {
-      return null
-    }
-    return <CodeHeader>{'<' + language.toUpperCase() + '>'}</CodeHeader>
+    const langTag = '<' + language.toUpperCase() + '>'
+    return <CodeHeader isInSpecialView={isInSpecialView}>{isInSpecialView ? '' : langTag}</CodeHeader>
   }, [isInSpecialView, language])
 
   // 根据视图模式和语言选择组件，优先展示特殊视图，fallback是源代码视图
@@ -347,7 +345,7 @@ const CodeBlockWrapper = styled.div<{ isInSpecialView: boolean }>`
     `}
 `
 
-const CodeHeader = styled.div`
+const CodeHeader = styled.div<{ isInSpecialView: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -358,6 +356,12 @@ const CodeHeader = styled.div`
   padding: 0 10px;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
+
+  ${(props) =>
+    props.isInSpecialView &&
+    css`
+      height: 16px;
+    `}
 `
 
 const SplitViewWrapper = styled.div`
