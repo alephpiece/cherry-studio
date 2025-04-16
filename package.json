@@ -93,6 +93,7 @@
     "js-yaml": "^4.1.0",
     "jsdom": "^26.0.0",
     "markdown-it": "^14.1.0",
+    "mermaid": "^11.6.0",
     "officeparser": "^4.1.1",
     "proxy-agent": "^6.5.0",
     "tar": "^7.4.3",

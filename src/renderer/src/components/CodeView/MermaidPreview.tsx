@@ -1,7 +1,7 @@
-import { useTheme } from '@renderer/context/ThemeProvider'
-import { useRuntime } from '@renderer/hooks/useRuntime'
-import { ThemeMode } from '@renderer/types'
-import React, { memo, useEffect, useRef } from 'react'
+import { nanoid } from '@reduxjs/toolkit'
+import { useMermaid } from '@renderer/hooks/useMermaid'
+import { Flex, Spin } from 'antd'
+import React, { memo, useDeferredValue, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 
 import { usePreviewToolHandlers, usePreviewTools } from './usePreviewTools'
@@ -11,32 +11,19 @@ interface Props {
 }
 
 const MermaidPreview: React.FC<Props> = ({ children }) => {
-  const { theme } = useTheme()
-  const { generating } = useRuntime()
+  const { mermaid, isLoading, error: mermaidError } = useMermaid()
   const mermaidRef = useRef<HTMLDivElement>(null)
+  const deferredCode = useDeferredValue(children)
+  const [error, setError] = useState<string | null>(null)
+  const [isRendering, setIsRendering] = useState(false)
+  const diagramId = useRef<string>(`mermaid-${nanoid(6)}`).current
 
   // 使用通用图像工具
   const { handleZoom, handleCopyImage, handleDownload } = usePreviewToolHandlers(mermaidRef, {
     imgSelector: 'svg',
-    prefix: 'mermaid-diagram',
+    prefix: 'mermaid',
     enableWheelZoom: true
   })
-
-  useEffect(() => {
-    if (generating || !window.mermaid) return
-
-    if (mermaidRef.current) {
-      mermaidRef.current.innerHTML = children
-      mermaidRef.current.removeAttribute('data-processed')
-      if (window.mermaid.initialize) {
-        window.mermaid.initialize({
-          startOnLoad: true,
-          theme: theme === ThemeMode.dark ? 'dark' : 'default'
-        })
-      }
-      window.mermaid.contentLoaded()
-    }
-  }, [children, generating, theme])
 
   // 使用工具栏
   usePreviewTools({
@@ -45,15 +32,70 @@ const MermaidPreview: React.FC<Props> = ({ children }) => {
     handleDownload
   })
 
+  // 渲染Mermaid图表
+  useEffect(() => {
+    if (isLoading) return
+
+    const render = async () => {
+      try {
+        setIsRendering(true)
+        setError(null)
+
+        if (!deferredCode) return
+
+        // 验证语法，提前抛出异常
+        await mermaid.parse(deferredCode)
+
+        if (!mermaidRef.current) return
+        const { svg } = await mermaid.render(diagramId, deferredCode, mermaidRef.current)
+        mermaidRef.current.innerHTML = svg
+      } catch (error) {
+        setError((error as Error).message)
+      } finally {
+        setIsRendering(false)
+      }
+    }
+
+    render()
+  }, [deferredCode, diagramId, isLoading, mermaid])
+
   return (
-    <StyledMermaid ref={mermaidRef} className="mermaid">
-      {children}
-    </StyledMermaid>
+    <Flex vertical>
+      <StyledMermaid ref={mermaidRef} className="mermaid" isRendering={isRendering} />
+      {isRendering && (
+        <StyledLoading>
+          <Spin size="large" />
+        </StyledLoading>
+      )}
+      {(mermaidError || error) && <StyledError>{mermaidError || error}</StyledError>}
+    </Flex>
   )
 }
 
-const StyledMermaid = styled.div`
+const StyledMermaid = styled.div<{ isRendering: boolean }>`
   overflow: auto;
+  ${({ isRendering }) =>
+    isRendering &&
+    `
+    visibility: hidden;
+  `}
+`
+
+const StyledError = styled.div`
+  overflow: auto;
+  padding: 16px;
+  color: #ff4d4f;
+  border: 1px solid #ff4d4f;
+  border-radius: 4px;
+`
+
+const StyledLoading = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  padding: 40px;
+  background-color: transparent;
 `
 
 export default memo(MermaidPreview)

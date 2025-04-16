@@ -1,36 +1,76 @@
 import { useTheme } from '@renderer/context/ThemeProvider'
 import { ThemeMode } from '@renderer/types'
-import { loadScript, runAsyncFunction } from '@renderer/utils'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+
+// 跟踪 mermaid 模块状态，单例模式
+let mermaidModule: any = null
+let mermaidLoading = false
+let mermaidLoadPromise: Promise<any> | null = null
+
+/**
+ * 导入 mermaid 库
+ */
+const loadMermaidModule = async () => {
+  if (mermaidModule) return mermaidModule
+  if (mermaidLoading && mermaidLoadPromise) return mermaidLoadPromise
+
+  mermaidLoading = true
+  mermaidLoadPromise = import('mermaid')
+    .then((module) => {
+      mermaidModule = module.default || module
+      mermaidLoading = false
+      return mermaidModule
+    })
+    .catch((error) => {
+      mermaidLoading = false
+      throw error
+    })
+
+  return mermaidLoadPromise
+}
 
 export const useMermaid = () => {
   const { theme } = useTheme()
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
+  // 初始化 mermaid 并监听主题变化
   useEffect(() => {
-    runAsyncFunction(async () => {
-      if (!window.mermaid) {
-        await loadScript('https://unpkg.com/mermaid@11.4.0/dist/mermaid.min.js')
-      }
-      window.mermaid.initialize({
-        startOnLoad: true,
-        theme: theme === ThemeMode.dark ? 'dark' : 'default'
-      })
-    })
-  }, [theme])
+    let mounted = true
 
-  useEffect(() => {
-    if (!window.mermaid) return
+    const initialize = async () => {
+      try {
+        setIsLoading(true)
 
-    const renderMermaid = () => {
-      const mermaidElements = document.querySelectorAll('.mermaid')
-      mermaidElements.forEach((element) => {
-        if (!element.querySelector('svg')) {
-          element.removeAttribute('data-processed')
+        const mermaid = await loadMermaidModule()
+
+        if (!mounted) return
+
+        mermaid.initialize({
+          startOnLoad: false, // 禁用自动启动
+          theme: theme === ThemeMode.dark ? 'dark' : 'default'
+        })
+
+        setError(null)
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to initialize Mermaid')
+      } finally {
+        if (mounted) {
+          setIsLoading(false)
         }
-      })
-      window.mermaid.contentLoaded()
+      }
     }
 
-    setTimeout(renderMermaid, 100)
-  }, [])
+    initialize()
+
+    return () => {
+      mounted = false
+    }
+  }, [theme])
+
+  return {
+    mermaid: mermaidModule,
+    isLoading,
+    error
+  }
 }
