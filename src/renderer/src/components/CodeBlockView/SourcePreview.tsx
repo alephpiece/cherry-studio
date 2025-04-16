@@ -1,4 +1,4 @@
-import { useToolbar } from '@renderer/components/CodeView/context'
+import { useToolbar } from '@renderer/components/CodeBlockView/context'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { uuid } from '@renderer/utils'

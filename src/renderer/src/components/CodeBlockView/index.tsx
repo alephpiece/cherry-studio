@@ -1,5 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons'
-import { ToolbarProvider, ToolContext, useToolbar } from '@renderer/components/CodeView/context'
+import { ToolContext, useToolbar } from '@renderer/components/CodeBlockView/context'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { pyodideService } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
@@ -20,9 +20,9 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled, { css } from 'styled-components'
 
+import CodeEditor from './CodeEditor'
 import MermaidPreview from './MermaidPreview'
 import PlantUmlPreview, { isValidPlantUML } from './PlantUmlPreview'
-import SourceEditor from './SourceEditor'
 import SourcePreview from './SourcePreview'
 import StatusBar from './StatusBar'
 import SvgPreview from './SvgPreview'
@@ -53,7 +53,7 @@ interface Props {
  * - quick 工具
  * - core 工具
  */
-const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
+const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
   const { t } = useTranslation()
   const { codeEditor, codeExecution } = useSettings()
   const [viewMode, setViewMode] = useState<ViewMode>('special')
@@ -252,7 +252,7 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
 
   // 源代码视图组件
   const sourceView = useMemo(() => {
-    const SourceView = codeEditor.enabled ? SourceEditor : SourcePreview
+    const SourceView = codeEditor.enabled ? CodeEditor : SourcePreview
     return (
       <SourceView language={language} onSave={onSave}>
         {children}
@@ -301,14 +301,6 @@ const CodeViewImpl: React.FC<Props> = ({ children, language, onSave }) => {
       {renderContent}
       {isExecutable && output && <StatusBar>{output}</StatusBar>}
     </CodeBlockWrapper>
-  )
-}
-
-const CodeView: React.FC<Props> = ({ children, language, onSave }) => {
-  return (
-    <ToolbarProvider>
-      <CodeViewImpl children={children} language={language} onSave={onSave} />
-    </ToolbarProvider>
   )
 }
 
@@ -376,4 +368,4 @@ const SplitViewWrapper = styled.div`
   }
 `
 
-export default memo(CodeView)
+export default memo(CodeBlockView)

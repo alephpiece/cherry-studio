@@ -1,4 +1,4 @@
-import { Tool, useToolbar } from '@renderer/components/CodeView/context'
+import { Tool, useToolbar } from '@renderer/components/CodeBlockView/context'
 import { HStack } from '@renderer/components/Layout'
 import { Tooltip } from 'antd'
 import { EllipsisVertical } from 'lucide-react'

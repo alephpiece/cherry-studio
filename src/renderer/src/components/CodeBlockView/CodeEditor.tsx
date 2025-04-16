@@ -1,4 +1,4 @@
-import { useToolbar } from '@renderer/components/CodeView/context'
+import { useToolbar } from '@renderer/components/CodeBlockView/context'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
 import CodeMirror, { Annotation, EditorView, Extension, keymap } from '@uiw/react-codemirror'
@@ -26,7 +26,7 @@ interface Props {
 /**
  * 源代码编辑器，基于 CodeMirror
  */
-const SourceEditor = ({ children, language, onSave }: Props) => {
+const CodeEditor = ({ children, language, onSave }: Props) => {
   const { fontSize, codeShowLineNumbers, codeCollapsible, codeWrappable, codeEditor } = useSettings()
   const { activeCmTheme, languageMap } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
@@ -209,7 +209,7 @@ const SourceEditor = ({ children, language, onSave }: Props) => {
   )
 }
 
-SourceEditor.displayName = 'SourceEditor'
+CodeEditor.displayName = 'CodeEditor'
 
 /**
  * 使用 fast-diff 计算代码变更，再转换为 CodeMirror 的 changes。
@@ -247,4 +247,4 @@ function prepareCodeChanges(oldCode: string, newCode: string) {
   return changes
 }
 
-export default memo(SourceEditor)
+export default memo(CodeEditor)
