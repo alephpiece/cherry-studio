@@ -388,9 +388,7 @@ class ShikiStreamService {
     // 再清理主线程中的 tokenizers，移除所有以 callerId 开头的缓存项
     for (const key of this.tokenizerCache.keys()) {
       if (key.startsWith(`${callerId}-`)) {
-        const tokenizer = this.tokenizerCache.get(key)!
         this.tokenizerCache.delete(key)
-        tokenizer.clear()
       }
     }
   }
@@ -450,13 +448,7 @@ class ShikiStreamService {
       this.pendingRequests.clear()
     }
 
-    // 清理主线程的所有 tokenizers
-    for (const key of this.tokenizerCache.keys()) {
-      const tokenizer = this.tokenizerCache.get(key)!
-      this.tokenizerCache.delete(key)
-      tokenizer.clear()
-    }
-
+    this.tokenizerCache.clear()
     this.highlighter = null
     this.isInitialized = false
     this.highlighterInitPromise = null

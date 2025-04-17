@@ -165,9 +165,7 @@ function cleanupTokenizer(callerId: string): void {
   // 清理所有以callerId开头的缓存
   for (const key of tokenizerMap.keys()) {
     if (key.startsWith(`${callerId}-`)) {
-      const tokenizer = tokenizerMap.get(key)!
       tokenizerMap.delete(key)
-      tokenizer.clear()
     }
   }
 }
@@ -175,11 +173,7 @@ function cleanupTokenizer(callerId: string): void {
 // 清理所有资源
 function disposeAll(): void {
   // 清理所有 tokenizer
-  for (const key of tokenizerMap.keys()) {
-    const tokenizer = tokenizerMap.get(key)!
-    tokenizerMap.delete(key)
-    tokenizer.clear()
-  }
+  tokenizerMap.clear()
 
   // 清理 highlighter
   highlighter = null
