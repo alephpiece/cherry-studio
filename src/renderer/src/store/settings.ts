@@ -300,6 +300,9 @@ const settingsSlice = createSlice({
     setTheme: (state, action: PayloadAction<ThemeMode>) => {
       state.theme = action.payload
     },
+    setCustomCss: (state, action: PayloadAction<string>) => {
+      state.customCss = action.payload
+    },
     setFontSize: (state, action: PayloadAction<number>) => {
       state.fontSize = action.payload
     },
@@ -417,9 +420,6 @@ const settingsSlice = createSlice({
     },
     setPasteLongTextThreshold: (state, action: PayloadAction<number>) => {
       state.pasteLongTextThreshold = action.payload
-    },
-    setCustomCss: (state, action: PayloadAction<string>) => {
-      state.customCss = action.payload
     },
     setTopicNamingPrompt: (state, action: PayloadAction<string>) => {
       state.topicNamingPrompt = action.payload
