@@ -37,7 +37,10 @@ let highlighter: HighlighterCore | null = null
 // 保存以 callerId-language-theme 为键的 tokenizer map
 const tokenizerMap = new LRUCache<string, ShikiStreamTokenizer>({
   max: 100, // 最大缓存数量
-  ttl: 1000 * 60 * 15 // 15分钟过期时间
+  ttl: 1000 * 60 * 15, // 15分钟过期时间
+  dispose: (value) => {
+    if (value) value.clear()
+  }
 })
 
 // 初始化高亮器
@@ -163,8 +166,8 @@ function cleanupTokenizer(callerId: string): void {
   for (const key of tokenizerMap.keys()) {
     if (key.startsWith(`${callerId}-`)) {
       const tokenizer = tokenizerMap.get(key)!
-      tokenizer.clear()
       tokenizerMap.delete(key)
+      tokenizer.clear()
     }
   }
 }
@@ -174,9 +177,9 @@ function disposeAll(): void {
   // 清理所有 tokenizer
   for (const key of tokenizerMap.keys()) {
     const tokenizer = tokenizerMap.get(key)!
+    tokenizerMap.delete(key)
     tokenizer.clear()
   }
-  tokenizerMap.clear()
 
   // 清理 highlighter
   highlighter = null

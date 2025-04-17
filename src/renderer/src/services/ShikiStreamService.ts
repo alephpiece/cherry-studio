@@ -40,7 +40,10 @@ class ShikiStreamService {
   // 保存以 callerId-language-theme 为键的 tokenizer map
   private tokenizerCache = new LRUCache<string, ShikiStreamTokenizer>({
     max: 100, // 最大缓存数量
-    ttl: 1000 * 60 * 30 // 30分钟过期时间
+    ttl: 1000 * 60 * 30, // 30分钟过期时间
+    dispose: (value) => {
+      if (value) value.clear()
+    }
   })
 
   // Worker 相关资源
@@ -386,8 +389,8 @@ class ShikiStreamService {
     for (const key of this.tokenizerCache.keys()) {
       if (key.startsWith(`${callerId}-`)) {
         const tokenizer = this.tokenizerCache.get(key)!
-        tokenizer.clear()
         this.tokenizerCache.delete(key)
+        tokenizer.clear()
       }
     }
   }
@@ -450,9 +453,9 @@ class ShikiStreamService {
     // 清理主线程的所有 tokenizers
     for (const key of this.tokenizerCache.keys()) {
       const tokenizer = this.tokenizerCache.get(key)!
+      this.tokenizerCache.delete(key)
       tokenizer.clear()
     }
-    this.tokenizerCache.clear()
 
     this.highlighter = null
     this.isInitialized = false
