@@ -1,6 +1,6 @@
 import { nanoid } from '@reduxjs/toolkit'
 import { useMermaid } from '@renderer/hooks/useMermaid'
-import { Flex, Spin } from 'antd'
+import { Flex } from 'antd'
 import React, { memo, useDeferredValue, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 
@@ -65,11 +65,6 @@ const MermaidPreview: React.FC<Props> = ({ children }) => {
   return (
     <Flex vertical>
       <StyledMermaid ref={mermaidRef} className="mermaid" isRendering={isRendering} />
-      {isRendering && (
-        <StyledLoading>
-          <Spin size="large" />
-        </StyledLoading>
-      )}
       {(mermaidError || error) && <StyledError>{mermaidError || error}</StyledError>}
     </Flex>
   )
@@ -77,6 +72,7 @@ const MermaidPreview: React.FC<Props> = ({ children }) => {
 
 const StyledMermaid = styled.div<{ isRendering: boolean }>`
   overflow: auto;
+  min-height: 350px;
   ${({ isRendering }) =>
     isRendering &&
     `
@@ -90,15 +86,6 @@ const StyledError = styled.div`
   color: #ff4d4f;
   border: 1px solid #ff4d4f;
   border-radius: 4px;
-`
-
-const StyledLoading = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-  padding: 40px;
-  background-color: transparent;
 `
 
 export default memo(MermaidPreview)

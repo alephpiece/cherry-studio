@@ -64,7 +64,7 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
     return codeExecution.enabled && language === 'python'
   }, [codeExecution.enabled, language])
 
-  const hasSpecialView = ['mermaid', 'plantuml', 'svg'].includes(language)
+  const hasSpecialView = useMemo(() => ['mermaid', 'plantuml', 'svg'].includes(language), [language])
 
   const isInSpecialView = useMemo(() => {
     return hasSpecialView && viewMode === 'special'
