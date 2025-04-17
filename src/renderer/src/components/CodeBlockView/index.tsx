@@ -269,23 +269,26 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
 const CodeBlockWrapper = styled.div<{ isInSpecialView: boolean }>`
   position: relative;
 
+  .toolbar {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    transform: translateZ(0);
+    will-change: opacity;
+    &.show {
+      opacity: 1;
+    }
+  }
+  &:hover {
+    .toolbar {
+      opacity: 1;
+    }
+  }
+
   ${(props) =>
     props.isInSpecialView &&
     css`
       .toolbar {
-        opacity: 0;
-        transition: opacity 0.2s ease;
-        transform: translateZ(0);
-        will-change: opacity;
         margin-top: 20px;
-        &.show {
-          opacity: 1;
-        }
-      }
-      &:hover {
-        .toolbar {
-          opacity: 1;
-        }
       }
     `}
 
