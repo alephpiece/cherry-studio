@@ -226,7 +226,7 @@ const ShikiTokensRenderer: React.FC<{ language: string; tokenLines: ThemedToken[
           {tokenLines.map((lineTokens, lineIndex) => (
             <span key={`line-${lineIndex}`} className="line">
               {lineTokens.map((token, tokenIndex) => (
-                <span key={`${lineIndex}-${tokenIndex}-${token.content}`} style={getReactStyleFromToken(token)}>
+                <span key={`token-${tokenIndex}`} style={getReactStyleFromToken(token)}>
                   {token.content}
                 </span>
               ))}
