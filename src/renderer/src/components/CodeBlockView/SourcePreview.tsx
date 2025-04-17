@@ -27,6 +27,7 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
   const [tokenLines, setTokenLines] = useState<ThemedToken[][]>([])
   const codeContentRef = useRef<HTMLDivElement>(null)
   const prevCodeLengthRef = useRef(0)
+  const safeCodeStringRef = useRef(children)
   const processingQueueRef = useRef<Promise<void>>(Promise.resolve())
   const callerId = useRef(`${Date.now()}-${uuid()}`).current
 
@@ -93,8 +94,8 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
 
     // 添加到处理队列，确保按顺序处理
     processingQueueRef.current = processingQueueRef.current.then(async () => {
-      // FIXME: 长度有问题，清理 tokenizer，使用完整代码重新高亮
-      if (prevCodeLengthRef.current > safeCodeString.length) {
+      // FIXME: 长度有问题，或者破坏了流式内容，需要清理 tokenizer 并使用完整代码重新高亮
+      if (prevCodeLengthRef.current > safeCodeString.length || !safeCodeString.startsWith(safeCodeStringRef.current)) {
         cleanupTokenizers(callerId)
         prevCodeLengthRef.current = 0
 
@@ -102,6 +103,7 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
         setTokenLines(result.lines)
 
         prevCodeLengthRef.current = safeCodeString.length
+        safeCodeStringRef.current = safeCodeString
 
         return
       }
@@ -116,6 +118,7 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
       setTokenLines((lines) => [...lines.slice(0, lines.length - result.recall), ...result.lines])
 
       prevCodeLengthRef.current = endPos
+      safeCodeStringRef.current = safeCodeString
     })
   }, [callerId, cleanupTokenizers, highlightCodeChunk, language, safeCodeString])
 
