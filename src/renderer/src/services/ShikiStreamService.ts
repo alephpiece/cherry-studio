@@ -41,6 +41,7 @@ class ShikiStreamService {
   private tokenizerCache = new LRUCache<string, ShikiStreamTokenizer>({
     max: 100, // 最大缓存数量
     ttl: 1000 * 60 * 30, // 30分钟过期时间
+    updateAgeOnGet: true,
     dispose: (value) => {
       if (value) value.clear()
     }

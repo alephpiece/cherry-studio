@@ -38,6 +38,7 @@ let highlighter: HighlighterCore | null = null
 const tokenizerMap = new LRUCache<string, ShikiStreamTokenizer>({
   max: 100, // 最大缓存数量
   ttl: 1000 * 60 * 15, // 15分钟过期时间
+  updateAgeOnGet: true,
   dispose: (value) => {
     if (value) value.clear()
   }
@@ -170,15 +171,6 @@ function cleanupTokenizer(callerId: string): void {
   }
 }
 
-// 清理所有资源
-function disposeAll(): void {
-  // 清理所有 tokenizer
-  tokenizerMap.clear()
-
-  // 清理 highlighter
-  highlighter = null
-}
-
 // 定义 worker 上下文类型
 declare const self: DedicatedWorkerGlobalScope
 
@@ -220,7 +212,8 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         break
 
       case 'dispose':
-        disposeAll()
+        tokenizerMap.clear()
+        highlighter = null
         self.postMessage({ id, type: 'dispose-result', result: { success: true } } as WorkerResponse)
         break
 
