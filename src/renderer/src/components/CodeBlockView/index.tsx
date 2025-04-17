@@ -241,7 +241,7 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
     const showSourceView = !specialView || viewMode !== 'special'
 
     return (
-      <SplitViewWrapper className="split-view-wrapper">
+      <SplitViewWrapper className="split-view-wrapper" showSpecialView={!!showSpecialView}>
         {showSpecialView && specialView}
         {showSourceView && sourceView}
       </SplitViewWrapper>
@@ -318,16 +318,20 @@ const CodeHeader = styled.div<{ isInSpecialView: boolean }>`
     `}
 `
 
-const SplitViewWrapper = styled.div`
+const SplitViewWrapper = styled.div<{ showSpecialView: boolean }>`
   display: table;
   width: 100%;
   table-layout: fixed;
 
-  > * {
-    display: table-cell;
-    vertical-align: top;
-    width: 50%;
-  }
+  ${(props) =>
+    props.showSpecialView &&
+    css`
+      > * {
+        display: table-cell;
+        vertical-align: top;
+        width: 50%;
+      }
+    `}
 `
 
 export default memo(CodeBlockView)
