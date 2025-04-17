@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 import { LRUCache } from 'lru-cache'
-import type { HighlighterCore, ThemedToken } from 'shiki/core'
+import type { HighlighterCore, SpecialLanguage, ThemedToken } from 'shiki/core'
 
 import { ShikiStreamTokenizer, ShikiStreamTokenizerOptions } from '../services/ShikiStreamTokenizer'
 
@@ -66,12 +66,16 @@ async function ensureLanguageAndThemeLoaded(
   let actualTheme = theme
 
   // 加载语言
-  if (language === 'text' || !highlighter.getLoadedLanguages().includes(language)) {
+  if (!highlighter.getLoadedLanguages().includes(language)) {
     try {
-      const { bundledLanguages } = await import('shiki')
-      const languageImportFn = bundledLanguages[language]
-      const langData = await languageImportFn()
-      await highlighter.loadLanguage(langData)
+      if (['text', 'ansi'].includes(language)) {
+        await highlighter.loadLanguage(language as SpecialLanguage)
+      } else {
+        const { bundledLanguages } = await import('shiki')
+        const languageImportFn = bundledLanguages[language]
+        const langData = await languageImportFn()
+        await highlighter.loadLanguage(langData)
+      }
     } catch (error) {
       // 回退到 text
       await highlighter.loadLanguage('text')
