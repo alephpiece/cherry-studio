@@ -231,7 +231,6 @@ class ShikiStreamService {
         await this.highlighter.loadLanguage(langData)
       } catch (error) {
         // 回退到 text
-        console.debug(`Failed to load language '${language}', falling back to 'text':`, error)
         await this.highlighter.loadLanguage('text')
         actualLanguage = 'text'
       }

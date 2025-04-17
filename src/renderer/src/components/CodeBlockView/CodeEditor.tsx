@@ -55,7 +55,7 @@ const CodeEditor = ({ children, language, onSave }: Props) => {
         }
       })
       .catch((error) => {
-        console.error(`Failed to load language: ${normalizedLang}`, error)
+        console.debug(`Failed to load language: ${normalizedLang}`, error)
       })
   }, [language, languageMap])
 
