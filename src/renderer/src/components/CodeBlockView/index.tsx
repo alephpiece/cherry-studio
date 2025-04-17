@@ -4,30 +4,19 @@ import { useSettings } from '@renderer/hooks/useSettings'
 import { pyodideService } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
 import dayjs from 'dayjs'
-import {
-  CirclePlay,
-  CodeXml,
-  Copy,
-  Download,
-  Eye,
-  Link,
-  ScanEye,
-  Square,
-  SquarePen,
-  SquareSplitHorizontal
-} from 'lucide-react'
+import { CirclePlay, CodeXml, Copy, Download, Eye, Square, SquarePen, SquareSplitHorizontal } from 'lucide-react'
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled, { css } from 'styled-components'
 
 import CodeEditor from './CodeEditor'
+import HtmlArtifacts from './HtmlArtifacts'
 import MermaidPreview from './MermaidPreview'
 import PlantUmlPreview, { isValidPlantUML } from './PlantUmlPreview'
 import SourcePreview from './SourcePreview'
 import StatusBar from './StatusBar'
 import SvgPreview from './SvgPreview'
 import Toolbar from './Toolbar'
-import { useHtmlHandlers } from './useHtmlTools'
 
 type ViewMode = 'source' | 'special' | 'split'
 
@@ -69,8 +58,6 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
   const isInSpecialView = useMemo(() => {
     return hasSpecialView && viewMode === 'special'
   }, [hasSpecialView, viewMode])
-
-  const { handleOpenInApp, handleOpenExternal } = useHtmlHandlers()
 
   const { updateContext, registerTool, removeTool } = useToolbar()
 
@@ -222,34 +209,6 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
     return () => isExecutable && removeTool('run')
   }, [isExecutable, isRunning, handleRunScript, registerTool, removeTool, t])
 
-  // HTML 打开按钮
-  useEffect(() => {
-    if (language !== 'html') return
-
-    registerTool({
-      id: 'html-open-in-app',
-      type: 'quick',
-      icon: <ScanEye className="icon" />,
-      tooltip: t('chat.artifacts.button.preview'),
-      onClick: handleOpenInApp,
-      order: 21
-    })
-
-    registerTool({
-      id: 'html-open-external',
-      type: 'quick',
-      icon: <Link className="icon" />,
-      tooltip: t('chat.artifacts.button.openExternal'),
-      onClick: handleOpenExternal,
-      order: 20
-    })
-
-    return () => {
-      removeTool('html-open-in-app')
-      removeTool('html-open-external')
-    }
-  }, [handleOpenExternal, handleOpenInApp, language, registerTool, removeTool, t])
-
   // 源代码视图组件
   const sourceView = useMemo(() => {
     const SourceView = codeEditor.enabled ? CodeEditor : SourcePreview
@@ -289,11 +248,19 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
     )
   }, [language, sourceView, specialViewMap, viewMode])
 
+  const renderArtifacts = useMemo(() => {
+    if (language === 'html') {
+      return <HtmlArtifacts html={children} />
+    }
+    return null
+  }, [children, language])
+
   return (
     <CodeBlockWrapper className="code-block" isInSpecialView={isInSpecialView}>
       {renderHeader}
       <Toolbar />
       {renderContent}
+      {renderArtifacts}
       {isExecutable && output && <StatusBar>{output}</StatusBar>}
     </CodeBlockWrapper>
   )
