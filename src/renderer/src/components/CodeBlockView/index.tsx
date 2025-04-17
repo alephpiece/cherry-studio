@@ -278,20 +278,15 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
   const renderContent = useMemo(() => {
     const specialView = specialViewMap[language]
 
-    if (viewMode === 'special' && specialView) {
-      return specialView
-    }
+    const showSpecialView = specialView && ['special', 'split'].includes(viewMode)
+    const showSourceView = !specialView || viewMode !== 'special'
 
-    if (viewMode === 'split' && specialView) {
-      return (
-        <SplitViewWrapper className="split-view-wrapper">
-          {specialView}
-          {sourceView}
-        </SplitViewWrapper>
-      )
-    }
-
-    return sourceView
+    return (
+      <SplitViewWrapper className="split-view-wrapper">
+        {showSpecialView && specialView}
+        {showSourceView && sourceView}
+      </SplitViewWrapper>
+    )
   }, [language, sourceView, specialViewMap, viewMode])
 
   return (
