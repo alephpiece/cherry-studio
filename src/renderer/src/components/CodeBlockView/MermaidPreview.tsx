@@ -72,7 +72,6 @@ const MermaidPreview: React.FC<Props> = ({ children }) => {
 
 const StyledMermaid = styled.div<{ isRendering: boolean }>`
   overflow: auto;
-  min-height: 350px;
   ${({ isRendering }) =>
     isRendering &&
     `
