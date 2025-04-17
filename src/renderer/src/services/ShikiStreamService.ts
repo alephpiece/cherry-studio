@@ -224,7 +224,7 @@ class ShikiStreamService {
     let actualTheme = theme
 
     // 加载语言
-    if (!this.highlighter.getLoadedLanguages().includes(language)) {
+    if (language === 'text' || !this.highlighter.getLoadedLanguages().includes(language)) {
       try {
         const languageImportFn = shiki.bundledLanguages[language]
         const langData = await languageImportFn()

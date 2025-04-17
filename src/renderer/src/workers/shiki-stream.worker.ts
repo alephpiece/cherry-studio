@@ -66,7 +66,7 @@ async function ensureLanguageAndThemeLoaded(
   let actualTheme = theme
 
   // 加载语言
-  if (!highlighter.getLoadedLanguages().includes(language)) {
+  if (language === 'text' || !highlighter.getLoadedLanguages().includes(language)) {
     try {
       const { bundledLanguages } = await import('shiki')
       const languageImportFn = bundledLanguages[language]
