@@ -343,6 +343,9 @@ const SettingsTab: FC<Props> = (props) => {
             onChange={(checked) => dispatch(setMessageFont(checked ? 'serif' : 'system'))}
           />
         </SettingRow>
+      </SettingGroup>
+      <SettingGroup>
+        <SettingSubtitle style={{ marginTop: 0 }}>{t('chat.settings.code.title')}</SettingSubtitle>
         <SettingDivider />
         <SettingRow>
           <SettingRowTitleSmall>
@@ -446,6 +449,9 @@ const SettingsTab: FC<Props> = (props) => {
             onChange={(checked) => dispatch(setCodeCollapsible(checked))}
           />
         </SettingRow>
+      </SettingGroup>
+      <SettingGroup>
+        <SettingSubtitle style={{ marginTop: 0 }}>{t('settings.display.title')}</SettingSubtitle>
         <SettingDivider />
         <SettingRow>
           <SettingRowTitleSmall>{t('chat.settings.code_wrappable')}</SettingRowTitleSmall>

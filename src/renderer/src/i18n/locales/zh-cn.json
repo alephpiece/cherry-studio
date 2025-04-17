@@ -160,6 +160,7 @@
       },
       "resend": "重新发送",
       "save": "保存",
+      "settings.code.title": "代码设置",
       "settings.code_editor": {
         "title": "代码编辑器",
         "highlight_active_line": "高亮当前行",

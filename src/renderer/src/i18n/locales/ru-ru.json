@@ -158,6 +158,7 @@
       },
       "resend": "Переотправить",
       "save": "Сохранить",
+      "settings.code.title": "Настройки кода",
       "settings.code_editor": {
         "title": "Редактор кода",
         "highlight_active_line": "Выделить активную строку",

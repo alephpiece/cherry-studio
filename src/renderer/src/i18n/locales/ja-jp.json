@@ -158,6 +158,7 @@
       },
       "resend": "再送信",
       "save": "保存",
+      "settings.code.title": "コード設定",
       "settings.code_editor": {
         "title": "コードエディター",
         "highlight_active_line": "アクティブ行をハイライト",
