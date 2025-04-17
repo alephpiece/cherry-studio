@@ -28,7 +28,7 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
   const codeContentRef = useRef<HTMLDivElement>(null)
   const prevCodeLengthRef = useRef(0)
   const safeCodeStringRef = useRef(children)
-  const processingQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const highlightQueueRef = useRef<Promise<void>>(Promise.resolve())
   const callerId = useRef(`${Date.now()}-${uuid()}`).current
 
   const { t } = useTranslation()
@@ -93,11 +93,12 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
     const endPos = safeCodeString.length
 
     // 添加到处理队列，确保按顺序处理
-    processingQueueRef.current = processingQueueRef.current.then(async () => {
+    highlightQueueRef.current = highlightQueueRef.current.then(async () => {
       // FIXME: 长度有问题，或者破坏了流式内容，需要清理 tokenizer 并使用完整代码重新高亮
       if (prevCodeLengthRef.current > safeCodeString.length || !safeCodeString.startsWith(safeCodeStringRef.current)) {
         cleanupTokenizers(callerId)
         prevCodeLengthRef.current = 0
+        safeCodeStringRef.current = ''
 
         const result = await highlightCodeChunk(safeCodeString, language, callerId)
         setTokenLines(result.lines)
@@ -115,8 +116,7 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
 
       const incrementalCode = safeCodeString.slice(startPos, endPos)
       const result = await highlightCodeChunk(incrementalCode, language, callerId)
-      setTokenLines((lines) => [...lines.slice(0, lines.length - result.recall), ...result.lines])
-
+      setTokenLines((lines) => [...lines.slice(0, Math.max(0, lines.length - result.recall)), ...result.lines])
       prevCodeLengthRef.current = endPos
       safeCodeStringRef.current = safeCodeString
     })
@@ -198,31 +198,6 @@ const ShikiTokensRenderer: React.FC<{ language: string; tokenLines: ThemedToken[
       })
     }, [language, getShikiPreProperties])
 
-    // Shiki token 样式转换为 React 样式对象
-    function getReactStyleFromToken(token: ThemedToken): Record<string, string> {
-      const style = token.htmlStyle || getTokenStyleObject(token)
-      const reactStyle: Record<string, string> = {}
-      for (const [key, value] of Object.entries(style)) {
-        switch (key) {
-          case 'font-style':
-            reactStyle.fontStyle = value
-            break
-          case 'font-weight':
-            reactStyle.fontWeight = value
-            break
-          case 'background-color':
-            reactStyle.backgroundColor = value
-            break
-          case 'text-decoration':
-            reactStyle.textDecoration = value
-            break
-          default:
-            reactStyle[key] = value
-        }
-      }
-      return reactStyle
-    }
-
     return (
       <pre className="shiki" ref={rendererRef}>
         <code>
@@ -301,5 +276,30 @@ const ContentContainer = styled.div<{
 `
 
 SourcePreview.displayName = 'SourcePreview'
+
+// Shiki token 样式转换为 React 样式对象
+function getReactStyleFromToken(token: ThemedToken): Record<string, string> {
+  const style = token.htmlStyle || getTokenStyleObject(token)
+  const reactStyle: Record<string, string> = {}
+  for (const [key, value] of Object.entries(style)) {
+    switch (key) {
+      case 'font-style':
+        reactStyle.fontStyle = value
+        break
+      case 'font-weight':
+        reactStyle.fontWeight = value
+        break
+      case 'background-color':
+        reactStyle.backgroundColor = value
+        break
+      case 'text-decoration':
+        reactStyle.textDecoration = value
+        break
+      default:
+        reactStyle[key] = value
+    }
+  }
+  return reactStyle
+}
 
 export default memo(SourcePreview)
