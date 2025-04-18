@@ -11,6 +11,7 @@ interface CodeStyleContextType {
   cleanupTokenizers: (callerId: string) => void
   getShikiPreProperties: (language: string) => Promise<ShikiPreProperties>
   themeNames: string[]
+  activeThemeName: string
   activeCmTheme: any
   languageMap: Record<string, string>
 }
@@ -20,6 +21,7 @@ const defaultCodeStyleContext: CodeStyleContextType = {
   cleanupTokenizers: () => {},
   getShikiPreProperties: async () => ({ class: '', style: '', tabindex: 0 }),
   themeNames: ['auto'],
+  activeThemeName: 'auto',
   activeCmTheme: null,
   languageMap: {}
 }
@@ -119,10 +121,19 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
       cleanupTokenizers,
       getShikiPreProperties,
       themeNames,
+      activeThemeName,
       activeCmTheme,
       languageMap
     }),
-    [highlightCodeChunk, cleanupTokenizers, getShikiPreProperties, themeNames, activeCmTheme, languageMap]
+    [
+      highlightCodeChunk,
+      cleanupTokenizers,
+      getShikiPreProperties,
+      themeNames,
+      activeThemeName,
+      activeCmTheme,
+      languageMap
+    ]
   )
 
   return <CodeStyleContext value={contextValue}>{children}</CodeStyleContext>

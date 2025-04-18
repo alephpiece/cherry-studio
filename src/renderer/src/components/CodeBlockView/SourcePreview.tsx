@@ -21,7 +21,7 @@ interface SourcePreviewProps {
  */
 const SourcePreview = ({ children, language }: SourcePreviewProps) => {
   const { codeShowLineNumbers, fontSize, codeCollapsible, codeWrappable } = useSettings()
-  const { highlightCodeChunk, cleanupTokenizers } = useCodeStyle()
+  const { activeThemeName, highlightCodeChunk, cleanupTokenizers } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
   const [tokenLines, setTokenLines] = useState<ThemedToken[][]>([])
@@ -30,6 +30,7 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
   const safeCodeStringRef = useRef(children)
   const highlightQueueRef = useRef<Promise<void>>(Promise.resolve())
   const callerId = useRef(`${Date.now()}-${uuid()}`).current
+  const shikiThemeRef = useRef(activeThemeName)
 
   const { t } = useTranslation()
 
@@ -121,6 +122,14 @@ const SourcePreview = ({ children, language }: SourcePreviewProps) => {
       safeCodeStringRef.current = safeCodeString
     })
   }, [callerId, cleanupTokenizers, highlightCodeChunk, language, safeCodeString])
+
+  // 主题变化时强制重新高亮
+  useEffect(() => {
+    if (shikiThemeRef.current !== activeThemeName) {
+      prevCodeLengthRef.current++
+      shikiThemeRef.current = activeThemeName
+    }
+  }, [activeThemeName])
 
   // 组件卸载时清理资源
   useEffect(() => {
