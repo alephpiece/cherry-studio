@@ -67,7 +67,8 @@ export interface SettingsState {
   codeWrappable: boolean
   mathEngine: 'MathJax' | 'KaTeX'
   messageStyle: 'plain' | 'bubble'
-  codeStyle: CodeStyleVarious
+  codeStyleLight: CodeStyleVarious
+  codeStyleDark: CodeStyleVarious
   foldDisplayMode: 'expanded' | 'compact'
   gridColumns: number
   gridPopoverTrigger: 'hover' | 'click'
@@ -179,7 +180,8 @@ export const initialState: SettingsState = {
   codeWrappable: false,
   mathEngine: 'KaTeX',
   messageStyle: 'plain',
-  codeStyle: 'auto',
+  codeStyleLight: 'auto',
+  codeStyleDark: 'auto',
   foldDisplayMode: 'expanded',
   gridColumns: 2,
   gridPopoverTrigger: 'click',
@@ -406,8 +408,11 @@ const settingsSlice = createSlice({
     setMessageStyle: (state, action: PayloadAction<'plain' | 'bubble'>) => {
       state.messageStyle = action.payload
     },
-    setCodeStyle: (state, action: PayloadAction<CodeStyleVarious>) => {
-      state.codeStyle = action.payload
+    setCodeStyleLight: (state, action: PayloadAction<CodeStyleVarious>) => {
+      state.codeStyleLight = action.payload
+    },
+    setCodeStyleDark: (state, action: PayloadAction<CodeStyleVarious>) => {
+      state.codeStyleDark = action.payload
     },
     setTranslateModelPrompt: (state, action: PayloadAction<string>) => {
       state.translateModelPrompt = action.payload
@@ -572,7 +577,8 @@ export const {
   setGridColumns,
   setGridPopoverTrigger,
   setMessageStyle,
-  setCodeStyle,
+  setCodeStyleLight,
+  setCodeStyleDark,
   setTranslateModelPrompt,
   setAutoTranslateWithSpace,
   setEnableTopicNaming,

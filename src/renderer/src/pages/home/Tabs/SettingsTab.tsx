@@ -23,7 +23,8 @@ import {
   setCodeEditor,
   setCodeExecution,
   setCodeShowLineNumbers,
-  setCodeStyle,
+  setCodeStyleDark,
+  setCodeStyleLight,
   setCodeWrappable,
   setEnableBackspaceDeleteModel,
   setEnableQuickPanelTriggers,
@@ -44,7 +45,7 @@ import { Assistant, AssistantSettings, CodeStyleVarious, ThemeMode, TranslateLan
 import { modalConfirm } from '@renderer/utils'
 import { Button, Col, InputNumber, Row, Segmented, Select, Slider, Switch, Tooltip } from 'antd'
 import { CircleHelp, RotateCcw, Settings2 } from 'lucide-react'
-import { FC, useCallback, useEffect, useState } from 'react'
+import { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -54,7 +55,7 @@ interface Props {
 
 const SettingsTab: FC<Props> = (props) => {
   const { assistant, updateAssistantSettings, updateAssistant } = useAssistant(props.assistant.id)
-  const { messageStyle, codeStyle, fontSize, language } = useSettings()
+  const { messageStyle, codeStyleLight, codeStyleDark, fontSize, language, theme } = useSettings()
   const { themeNames } = useCodeStyle()
 
   const [temperature, setTemperature] = useState(assistant?.settings?.temperature ?? DEFAULT_TEMPERATURE)
@@ -141,6 +142,21 @@ const SettingsTab: FC<Props> = (props) => {
       }
     })
   }
+
+  const codeStyle = useMemo(() => {
+    return theme === ThemeMode.light ? codeStyleLight : codeStyleDark
+  }, [codeStyleLight, codeStyleDark, theme])
+
+  const onCodeStyleChange = useCallback(
+    (value: CodeStyleVarious) => {
+      if (theme === ThemeMode.light) {
+        dispatch(setCodeStyleLight(value))
+      } else {
+        dispatch(setCodeStyleDark(value))
+      }
+    },
+    [dispatch, theme]
+  )
 
   useEffect(() => {
     setTemperature(assistant?.settings?.temperature ?? DEFAULT_TEMPERATURE)
@@ -517,7 +533,7 @@ const SettingsTab: FC<Props> = (props) => {
           <SettingRowTitleSmall>{t('message.message.code_style')}</SettingRowTitleSmall>
           <StyledSelect
             value={codeStyle}
-            onChange={(value) => dispatch(setCodeStyle(value as CodeStyleVarious))}
+            onChange={(value) => onCodeStyleChange(value as CodeStyleVarious)}
             style={{ width: 135 }}
             size="small">
             {themeNames.map((theme) => (

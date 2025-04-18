@@ -530,6 +530,7 @@ const migrateConfig = {
   },
   '39': (state: RootState) => {
     try {
+      // @ts-ignore eslint-disable-next-line
       state.settings.codeStyle = 'auto'
       return state
     } catch (error) {
@@ -1251,6 +1252,16 @@ const migrateConfig = {
         state.settings.codeEditor = settingsInitialState.codeEditor
       }
 
+      if (!state.settings.codeStyleLight) {
+        state.settings.codeStyleLight = settingsInitialState.codeStyleLight
+      }
+
+      if (!state.settings.codeStyleDark) {
+        state.settings.codeStyleDark = settingsInitialState.codeStyleDark
+      }
+
+      // @ts-ignore eslint-disable-next-line
+      delete state.settings.codeStyle
       // @ts-ignore eslint-disable-next-line
       delete state.settings.codeCacheable
       // @ts-ignore eslint-disable-next-line

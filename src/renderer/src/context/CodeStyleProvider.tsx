@@ -29,7 +29,7 @@ const defaultCodeStyleContext: CodeStyleContextType = {
 const CodeStyleContext = createContext<CodeStyleContextType>(defaultCodeStyleContext)
 
 export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const { codeEditor, codeStyle, theme } = useSettings()
+  const { codeEditor, codeStyleLight, codeStyleDark, theme } = useSettings()
   const [shikiThemes, setShikiThemes] = useState({})
   useMermaid()
 
@@ -56,8 +56,10 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
     return ['auto', ...Object.keys(shikiThemes)]
   }, [codeEditor.enabled, shikiThemes])
 
-  // 获取当前使用的主题名称
+  // 获取当前使用的主题名称，区分明暗主题
   const activeThemeName = useMemo(() => {
+    const codeStyle = theme === ThemeMode.light ? codeStyleLight : codeStyleDark
+
     if (!codeStyle || codeStyle === 'auto' || !themeNames.includes(codeStyle)) {
       if (codeEditor.enabled) {
         return theme === ThemeMode.light ? 'materialLight' : 'dark'
@@ -66,7 +68,7 @@ export const CodeStyleProvider: React.FC<PropsWithChildren> = ({ children }) => 
       }
     }
     return codeStyle
-  }, [codeEditor.enabled, codeStyle, themeNames, theme])
+  }, [codeEditor.enabled, codeStyleLight, codeStyleDark, themeNames, theme])
 
   // 获取当前使用的 CodeMirror 主题
   const activeCmTheme = useMemo(() => {
