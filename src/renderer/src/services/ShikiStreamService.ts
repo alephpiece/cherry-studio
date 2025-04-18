@@ -49,6 +49,8 @@ class ShikiStreamService {
   // Worker 相关资源
   private worker: Worker | null = null
   private workerInitPromise: Promise<void> | null = null
+  private workerInitRetryCount: number = 0
+  private static readonly MAX_WORKER_INIT_RETRY = 3
   private pendingRequests = new Map<
     number,
     {
@@ -83,6 +85,10 @@ class ShikiStreamService {
       return Promise.resolve()
     }
 
+    if (this.workerInitRetryCount >= ShikiStreamService.MAX_WORKER_INIT_RETRY) {
+      return Promise.reject(new Error('ShikiStream worker initialization failed too many times'))
+    }
+
     this.workerInitPromise = new Promise((resolve, reject) => {
       try {
         this.worker = new ShikiStreamWorker()
@@ -103,6 +109,7 @@ class ShikiStreamService {
             pendingRequest.resolve({ success: true })
             resolve()
             this.workerInitPromise = null
+            this.workerInitRetryCount = 0
           } else {
             pendingRequest.resolve(result)
           }
@@ -116,12 +123,14 @@ class ShikiStreamService {
         }).catch((error) => {
           console.error('Failed to initialize worker:', error)
           this.worker = null
+          this.workerInitRetryCount++
           this.workerInitPromise = Promise.reject(error)
           reject(error)
         })
       } catch (error) {
         console.error('Failed to create worker:', error)
         this.worker = null
+        this.workerInitRetryCount++
         this.workerInitPromise = Promise.reject(error)
         reject(error)
       }
@@ -450,6 +459,7 @@ class ShikiStreamService {
     this.tokenizerCache.clear()
     this.highlighter = null
     this.highlighterInitPromise = null
+    this.workerInitRetryCount = 0
   }
 }
 
