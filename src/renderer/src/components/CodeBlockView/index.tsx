@@ -10,10 +10,10 @@ import { useTranslation } from 'react-i18next'
 import styled, { css } from 'styled-components'
 
 import CodeEditor from './CodeEditor'
+import CodePreview from './CodePreview'
 import HtmlArtifacts from './HtmlArtifacts'
 import MermaidPreview from './MermaidPreview'
 import PlantUmlPreview, { isValidPlantUML } from './PlantUmlPreview'
-import SourcePreview from './SourcePreview'
 import StatusBar from './StatusBar'
 import SvgPreview from './SvgPreview'
 import Toolbar from './Toolbar'
@@ -211,7 +211,7 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
 
   // 源代码视图组件
   const sourceView = useMemo(() => {
-    const SourceView = codeEditor.enabled ? CodeEditor : SourcePreview
+    const SourceView = codeEditor.enabled ? CodeEditor : CodePreview
     return (
       <SourceView language={language} onSave={onSave}>
         {children}

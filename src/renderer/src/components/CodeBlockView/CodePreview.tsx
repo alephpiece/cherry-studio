@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { getTokenStyleObject, ThemedToken } from 'shiki/core'
 import styled from 'styled-components'
 
-interface SourcePreviewProps {
+interface CodePreviewProps {
   children: string
   language: string
 }
@@ -19,7 +19,7 @@ interface SourcePreviewProps {
  * - 通过 shiki tokenizer 处理流式响应
  * - 为了正确执行语法高亮，必须保证流式响应都依次到达 tokenizer，不能跳过
  */
-const SourcePreview = ({ children, language }: SourcePreviewProps) => {
+const CodePreview = ({ children, language }: CodePreviewProps) => {
   const { codeShowLineNumbers, fontSize, codeCollapsible, codeWrappable } = useSettings()
   const { activeShikiTheme, highlightCodeChunk, cleanupTokenizers } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
@@ -284,7 +284,7 @@ const ContentContainer = styled.div<{
     `}
 `
 
-SourcePreview.displayName = 'SourcePreview'
+CodePreview.displayName = 'CodePreview'
 
 // Shiki token 样式转换为 React 样式对象
 function getReactStyleFromToken(token: ThemedToken): Record<string, string> {
@@ -311,4 +311,4 @@ function getReactStyleFromToken(token: ThemedToken): Record<string, string> {
   return reactStyle
 }
 
-export default memo(SourcePreview)
+export default memo(CodePreview)
