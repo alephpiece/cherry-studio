@@ -57,18 +57,22 @@ export interface SettingsState {
   }
   codeEditor: {
     enabled: boolean
+    themeLight: string
+    themeDark: string
     highlightActiveLine: boolean
     foldGutter: boolean
     autocompletion: boolean
     keymap: boolean
+  }
+  codePreview: {
+    themeLight: CodeStyleVarious
+    themeDark: CodeStyleVarious
   }
   codeShowLineNumbers: boolean
   codeCollapsible: boolean
   codeWrappable: boolean
   mathEngine: 'MathJax' | 'KaTeX'
   messageStyle: 'plain' | 'bubble'
-  codeStyleLight: CodeStyleVarious
-  codeStyleDark: CodeStyleVarious
   foldDisplayMode: 'expanded' | 'compact'
   gridColumns: number
   gridPopoverTrigger: 'hover' | 'click'
@@ -170,18 +174,22 @@ export const initialState: SettingsState = {
   },
   codeEditor: {
     enabled: false,
+    themeLight: 'auto',
+    themeDark: 'auto',
     highlightActiveLine: false,
     foldGutter: false,
     autocompletion: true,
     keymap: false
+  },
+  codePreview: {
+    themeLight: 'auto',
+    themeDark: 'auto'
   },
   codeShowLineNumbers: false,
   codeCollapsible: false,
   codeWrappable: false,
   mathEngine: 'KaTeX',
   messageStyle: 'plain',
-  codeStyleLight: 'auto',
-  codeStyleDark: 'auto',
   foldDisplayMode: 'expanded',
   gridColumns: 2,
   gridPopoverTrigger: 'click',
@@ -362,6 +370,8 @@ const settingsSlice = createSlice({
       state,
       action: PayloadAction<{
         enabled?: boolean
+        themeLight?: string
+        themeDark?: string
         highlightActiveLine?: boolean
         foldGutter?: boolean
         autocompletion?: boolean
@@ -370,6 +380,12 @@ const settingsSlice = createSlice({
     ) => {
       if (action.payload.enabled !== undefined) {
         state.codeEditor.enabled = action.payload.enabled
+      }
+      if (action.payload.themeLight !== undefined) {
+        state.codeEditor.themeLight = action.payload.themeLight
+      }
+      if (action.payload.themeDark !== undefined) {
+        state.codeEditor.themeDark = action.payload.themeDark
       }
       if (action.payload.highlightActiveLine !== undefined) {
         state.codeEditor.highlightActiveLine = action.payload.highlightActiveLine
@@ -382,6 +398,14 @@ const settingsSlice = createSlice({
       }
       if (action.payload.keymap !== undefined) {
         state.codeEditor.keymap = action.payload.keymap
+      }
+    },
+    setCodePreview: (state, action: PayloadAction<{ themeLight?: string; themeDark?: string }>) => {
+      if (action.payload.themeLight !== undefined) {
+        state.codePreview.themeLight = action.payload.themeLight
+      }
+      if (action.payload.themeDark !== undefined) {
+        state.codePreview.themeDark = action.payload.themeDark
       }
     },
     setCodeShowLineNumbers: (state, action: PayloadAction<boolean>) => {
@@ -407,12 +431,6 @@ const settingsSlice = createSlice({
     },
     setMessageStyle: (state, action: PayloadAction<'plain' | 'bubble'>) => {
       state.messageStyle = action.payload
-    },
-    setCodeStyleLight: (state, action: PayloadAction<CodeStyleVarious>) => {
-      state.codeStyleLight = action.payload
-    },
-    setCodeStyleDark: (state, action: PayloadAction<CodeStyleVarious>) => {
-      state.codeStyleDark = action.payload
     },
     setTranslateModelPrompt: (state, action: PayloadAction<string>) => {
       state.translateModelPrompt = action.payload
@@ -569,6 +587,7 @@ export const {
   setWebdavSyncInterval,
   setCodeExecution,
   setCodeEditor,
+  setCodePreview,
   setCodeShowLineNumbers,
   setCodeCollapsible,
   setCodeWrappable,
@@ -577,8 +596,6 @@ export const {
   setGridColumns,
   setGridPopoverTrigger,
   setMessageStyle,
-  setCodeStyleLight,
-  setCodeStyleDark,
   setTranslateModelPrompt,
   setAutoTranslateWithSpace,
   setEnableTopicNaming,

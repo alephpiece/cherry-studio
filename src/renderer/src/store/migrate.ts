@@ -1257,20 +1257,16 @@ const migrateConfig = {
   },
   '99': (state: RootState) => {
     try {
-      if (!state.settings.codeExecution) {
-        state.settings.codeExecution = settingsInitialState.codeExecution
-      }
+      state.settings.codeExecution = settingsInitialState.codeExecution
+      state.settings.codeEditor = settingsInitialState.codeEditor
+      state.settings.codePreview = settingsInitialState.codePreview
 
-      if (!state.settings.codeEditor) {
-        state.settings.codeEditor = settingsInitialState.codeEditor
-      }
-
-      if (!state.settings.codeStyleLight) {
-        state.settings.codeStyleLight = settingsInitialState.codeStyleLight
-      }
-
-      if (!state.settings.codeStyleDark) {
-        state.settings.codeStyleDark = settingsInitialState.codeStyleDark
+      // @ts-ignore eslint-disable-next-line
+      if (state.settings.codeStyle) {
+        // @ts-ignore eslint-disable-next-line
+        state.settings.codePreview.themeLight = state.settings.codeStyle
+        // @ts-ignore eslint-disable-next-line
+        state.settings.codePreview.themeDark = state.settings.codeStyle
       }
 
       // @ts-ignore eslint-disable-next-line

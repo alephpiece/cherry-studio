@@ -22,9 +22,8 @@ import {
   setCodeCollapsible,
   setCodeEditor,
   setCodeExecution,
+  setCodePreview,
   setCodeShowLineNumbers,
-  setCodeStyleDark,
-  setCodeStyleLight,
   setCodeWrappable,
   setEnableBackspaceDeleteModel,
   setEnableQuickPanelTriggers,
@@ -55,7 +54,7 @@ interface Props {
 
 const SettingsTab: FC<Props> = (props) => {
   const { assistant, updateAssistantSettings, updateAssistant } = useAssistant(props.assistant.id)
-  const { messageStyle, codeStyleLight, codeStyleDark, fontSize, language, theme } = useSettings()
+  const { messageStyle, fontSize, language, theme } = useSettings()
   const { themeNames } = useCodeStyle()
 
   const [temperature, setTemperature] = useState(assistant?.settings?.temperature ?? DEFAULT_TEMPERATURE)
@@ -83,6 +82,7 @@ const SettingsTab: FC<Props> = (props) => {
     codeCollapsible,
     codeWrappable,
     codeEditor,
+    codePreview,
     codeExecution,
     mathEngine,
     autoTranslateWithSpace,
@@ -144,18 +144,29 @@ const SettingsTab: FC<Props> = (props) => {
   }
 
   const codeStyle = useMemo(() => {
-    return theme === ThemeMode.light ? codeStyleLight : codeStyleDark
-  }, [codeStyleLight, codeStyleDark, theme])
+    return codeEditor.enabled
+      ? theme === ThemeMode.light
+        ? codeEditor.themeLight
+        : codeEditor.themeDark
+      : theme === ThemeMode.light
+        ? codePreview.themeLight
+        : codePreview.themeDark
+  }, [
+    codeEditor.enabled,
+    codeEditor.themeLight,
+    codeEditor.themeDark,
+    theme,
+    codePreview.themeLight,
+    codePreview.themeDark
+  ])
 
   const onCodeStyleChange = useCallback(
     (value: CodeStyleVarious) => {
-      if (theme === ThemeMode.light) {
-        dispatch(setCodeStyleLight(value))
-      } else {
-        dispatch(setCodeStyleDark(value))
-      }
+      const field = theme === ThemeMode.light ? 'themeLight' : 'themeDark'
+      const action = codeEditor.enabled ? setCodeEditor : setCodePreview
+      dispatch(action({ [field]: value }))
     },
-    [dispatch, theme]
+    [dispatch, theme, codeEditor.enabled]
   )
 
   useEffect(() => {
