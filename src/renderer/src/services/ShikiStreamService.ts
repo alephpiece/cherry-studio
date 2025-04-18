@@ -35,7 +35,6 @@ class ShikiStreamService {
   // 主线程 highlighter 和 tokenizers
   private highlighter: HighlighterCore | null = null
   private highlighterInitPromise: Promise<void> | null = null
-  private isInitialized: boolean = false
 
   // 保存以 callerId-language-theme 为键的 tokenizer map
   private tokenizerCache = new LRUCache<string, ShikiStreamTokenizer>({
@@ -49,7 +48,7 @@ class ShikiStreamService {
 
   // Worker 相关资源
   private worker: Worker | null = null
-  private workerInitialized = false
+  private workerInitPromise: Promise<void> | null = null
   private pendingRequests = new Map<
     number,
     {
@@ -77,12 +76,14 @@ class ShikiStreamService {
       return Promise.resolve()
     }
 
-    // 如果已经初始化，直接返回
-    if (this.worker && this.workerInitialized) {
+    // 已有初始化在进行或已完成，直接返回
+    if (this.workerInitPromise) {
+      return this.workerInitPromise
+    } else if (this.worker) {
       return Promise.resolve()
     }
 
-    return new Promise((resolve, reject) => {
+    this.workerInitPromise = new Promise((resolve, reject) => {
       try {
         this.worker = new ShikiStreamWorker()
 
@@ -99,9 +100,9 @@ class ShikiStreamService {
           if (type === 'error') {
             pendingRequest.reject(new Error(error))
           } else if (type === 'init-result') {
-            this.workerInitialized = true
             pendingRequest.resolve({ success: true })
             resolve()
+            this.workerInitPromise = null
           } else {
             pendingRequest.resolve(result)
           }
@@ -115,15 +116,18 @@ class ShikiStreamService {
         }).catch((error) => {
           console.error('Failed to initialize worker:', error)
           this.worker = null
-          this.workerInitialized = false
+          this.workerInitPromise = Promise.reject(error)
           reject(error)
         })
       } catch (error) {
         console.error('Failed to create worker:', error)
         this.worker = null
+        this.workerInitPromise = Promise.reject(error)
         reject(error)
       }
     })
+
+    return this.workerInitPromise
   }
 
   /**
@@ -178,24 +182,19 @@ class ShikiStreamService {
    * 初始化 highlighter
    */
   private async initHighlighter(): Promise<void> {
-    if (this.isInitialized || this.highlighterInitPromise) {
-      return this.highlighterInitPromise || Promise.resolve()
+    if (this.highlighterInitPromise) {
+      return this.highlighterInitPromise
+    } else if (this.highlighter) {
+      return Promise.resolve()
     }
 
     this.highlighterInitPromise = (async () => {
-      try {
-        const { createHighlighter } = await import('shiki')
+      const { createHighlighter } = await import('shiki')
 
-        this.highlighter = await createHighlighter({
-          langs: ShikiStreamService.DEFAULT_LANGUAGES,
-          themes: ShikiStreamService.DEFAULT_THEMES
-        })
-
-        this.isInitialized = true
-      } catch (error) {
-        this.isInitialized = false
-        throw error
-      }
+      this.highlighter = await createHighlighter({
+        langs: ShikiStreamService.DEFAULT_LANGUAGES,
+        themes: ShikiStreamService.DEFAULT_THEMES
+      })
     })()
 
     return this.highlighterInitPromise
@@ -211,7 +210,7 @@ class ShikiStreamService {
     theme: string
   ): Promise<{ actualLanguage: string; actualTheme: string }> {
     // 确保 highlighter 已初始化
-    if (!this.isInitialized) {
+    if (!(this.highlighter && !this.highlighterInitPromise)) {
       await this.initHighlighter()
     }
 
@@ -306,13 +305,15 @@ class ShikiStreamService {
 
     // 初始化 worker
     if (!this.worker) {
-      await this.initWorker().catch((error) => {
+      try {
+        await this.initWorker()
+      } catch (error) {
         console.warn('Failed to initialize worker, falling back to main thread:', error)
-      })
+      }
     }
 
     // 如果 Worker 可用，优先使用 Worker 处理
-    if (this.worker && this.workerInitialized) {
+    if (this.worker && !this.workerInitPromise) {
       try {
         const result = await this.sendWorkerMessage({
           type: 'highlight',
@@ -379,7 +380,7 @@ class ShikiStreamService {
    */
   cleanupTokenizers(callerId: string): void {
     // 先尝试清理 Worker 中的 tokenizers
-    if (this.worker && this.workerInitialized) {
+    if (this.worker && !this.workerInitPromise) {
       this.sendWorkerMessage({
         type: 'cleanup',
         callerId
@@ -438,22 +439,16 @@ class ShikiStreamService {
   dispose() {
     // 清理 Worker 资源
     if (this.worker) {
-      try {
-        this.sendWorkerMessage({ type: 'dispose' }).catch((error) => {
-          console.error('Failed to dispose worker:', error)
-        })
-        this.worker.terminate()
-      } catch (error) {
-        console.error('Failed to terminate worker:', error)
-      }
+      this.sendWorkerMessage({ type: 'dispose' }).catch((error) => {
+        console.error('Failed to dispose worker:', error)
+      })
+      this.worker.terminate()
       this.worker = null
-      this.workerInitialized = false
       this.pendingRequests.clear()
     }
 
     this.tokenizerCache.clear()
     this.highlighter = null
-    this.isInitialized = false
     this.highlighterInitPromise = null
   }
 }
