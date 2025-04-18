@@ -1244,6 +1244,19 @@ const migrateConfig = {
   },
   '98': (state: RootState) => {
     try {
+      if (state.websearch && state.websearch.providers) {
+        state.websearch.providers.forEach((provider) => {
+          provider.basicAuthUsername = ''
+          provider.basicAuthPassword = ''
+        })
+      }
+      return state
+    } catch (error) {
+      return state
+    }
+  },
+  '99': (state: RootState) => {
+    try {
       if (!state.settings.codeExecution) {
         state.settings.codeExecution = settingsInitialState.codeExecution
       }
