@@ -14,8 +14,9 @@ class PyodideService {
   private static instance: PyodideService | null = null
 
   private worker: Worker | null = null
-  private isInitialized: boolean = false
   private initPromise: Promise<void> | null = null
+  private initRetryCount: number = 0
+  private static readonly MAX_INIT_RETRY = 3
   private resolvers: Map<string, { resolve: (value: any) => void; reject: (error: Error) => void }> = new Map()
 
   private constructor() {
@@ -39,6 +40,12 @@ class PyodideService {
     if (this.initPromise) {
       return this.initPromise
     }
+    if (this.worker) {
+      return Promise.resolve()
+    }
+    if (this.initRetryCount >= PyodideService.MAX_INIT_RETRY) {
+      return Promise.reject(new Error('Pyodide worker initialization failed too many times'))
+    }
 
     this.initPromise = new Promise<void>((resolve, reject) => {
       // 动态导入 worker
@@ -51,6 +58,9 @@ class PyodideService {
 
           // 设置初始化超时
           const timeout = setTimeout(() => {
+            this.worker = null
+            this.initPromise = null
+            this.initRetryCount++
             reject(new Error('Pyodide initialization timeout'))
           }, 60000) // 60秒初始化超时
 
@@ -58,19 +68,26 @@ class PyodideService {
           const initHandler = (event: MessageEvent) => {
             if (event.data?.type === 'initialized') {
               clearTimeout(timeout)
-              this.isInitialized = true
-              resolve()
               this.worker?.removeEventListener('message', initHandler)
+              this.initRetryCount = 0
+              this.initPromise = null
+              resolve()
             } else if (event.data?.type === 'error') {
               clearTimeout(timeout)
-              reject(new Error(`Pyodide initialization failed: ${event.data.error}`))
               this.worker?.removeEventListener('message', initHandler)
+              this.worker = null
+              this.initPromise = null
+              this.initRetryCount++
+              reject(new Error(`Pyodide initialization failed: ${event.data.error}`))
             }
           }
 
           this.worker.addEventListener('message', initHandler)
         })
         .catch((error) => {
+          this.worker = null
+          this.initPromise = null
+          this.initRetryCount++
           reject(new Error(`Failed to load Pyodide worker: ${error instanceof Error ? error.message : String(error)}`))
         })
     })
@@ -106,13 +123,11 @@ class PyodideService {
    */
   public async runScript(script: string, context: Record<string, any> = {}, timeout: number = 60000): Promise<string> {
     // 确保Pyodide已初始化
-    if (!this.isInitialized) {
-      try {
-        await this.initialize()
-      } catch (error: unknown) {
-        console.error('Pyodide initialization failed, cannot execute Python code', error)
-        return `Initialization failed: ${error instanceof Error ? error.message : String(error)}`
-      }
+    try {
+      await this.initialize()
+    } catch (error: unknown) {
+      console.error('Pyodide initialization failed, cannot execute Python code', error)
+      return `Initialization failed: ${error instanceof Error ? error.message : String(error)}`
     }
 
     if (!this.worker) {
@@ -199,8 +214,8 @@ class PyodideService {
     if (this.worker) {
       this.worker.terminate()
       this.worker = null
-      this.isInitialized = false
       this.initPromise = null
+      this.initRetryCount = 0
 
       // 清理所有等待的请求
       this.resolvers.forEach((resolver) => {
