@@ -582,6 +582,7 @@
         "invoking": "調用中",
         "error": "發生錯誤"
       },
+      "translation.copied": "翻譯已複製",
       "topic.added": "新話題已新增",
       "upgrade.success.button": "重新啟動",
       "upgrade.success.content": "請重新啟動程式以完成升級",
@@ -929,7 +930,9 @@
           "syncError": "備份錯誤",
           "syncStatus": "備份狀態",
           "title": "WebDAV",
-          "user": "WebDAV 使用者名稱"
+          "user": "WebDAV 使用者名稱",
+          "maxBackups": "最大備份數量",
+          "maxBackups.unlimited": "無限制"
         },
         "yuque": {
           "check": {
@@ -1415,6 +1418,7 @@
         "content": "翻譯後將覆蓋原文，是否繼續？",
         "title": "翻譯確認"
       },
+      "copy": "複製翻譯",
       "error.failed": "翻譯失敗",
       "error.not_configured": "翻譯模型未設定",
       "history": {

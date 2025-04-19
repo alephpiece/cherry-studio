@@ -583,6 +583,7 @@
         "error": "Error occurred"
       },
       "topic.added": "New topic added",
+      "translation.copied": "Translation copied",
       "upgrade.success.button": "Restart",
       "upgrade.success.content": "Please restart the application to complete the upgrade",
       "upgrade.success.title": "Upgrade successfully",
@@ -929,7 +930,9 @@
           "syncError": "Backup Error",
           "syncStatus": "Backup Status",
           "title": "WebDAV",
-          "user": "WebDAV User"
+          "user": "WebDAV User",
+          "maxBackups": "Maximum Backups",
+          "maxBackups.unlimited": "Unlimited"
         },
         "yuque": {
           "check": {
@@ -1415,6 +1418,7 @@
         "content": "Translation will replace the original text, continue?",
         "title": "Translation Confirmation"
       },
+      "copy": "Copy",
       "error.failed": "Translation failed",
       "error.not_configured": "Translation model is not configured",
       "history": {
