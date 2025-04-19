@@ -56,7 +56,11 @@ const Markdown: FC<Props> = ({ message }) => {
   )
 
   const rehypePlugins = useMemo(() => {
-    return [rehypeRaw, [rehypeSanitize, sanitizeSchema], mathEngine === 'KaTeX' ? rehypeKatex : rehypeMathjax]
+    return [
+      rehypeRaw,
+      [rehypeSanitize, sanitizeSchema] as const,
+      mathEngine === 'KaTeX' ? rehypeKatex : rehypeMathjax
+    ] as const as any[]
   }, [mathEngine])
 
   const components = useMemo(() => {
