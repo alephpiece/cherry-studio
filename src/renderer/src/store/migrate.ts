@@ -1237,13 +1237,7 @@ const migrateConfig = {
   '97': (state: RootState) => {
     try {
       addMiniApp(state, 'zai')
-      return state
-    } catch (error) {
-      return state
-    }
-  },
-  '98': (state: RootState) => {
-    try {
+      state.settings.webdavMaxBackups = 0
       if (state.websearch && state.websearch.providers) {
         state.websearch.providers.forEach((provider) => {
           provider.basicAuthUsername = ''
@@ -1255,7 +1249,7 @@ const migrateConfig = {
       return state
     }
   },
-  '99': (state: RootState) => {
+  '98': (state: RootState) => {
     try {
       state.settings.codeExecution = settingsInitialState.codeExecution
       state.settings.codeEditor = settingsInitialState.codeEditor
