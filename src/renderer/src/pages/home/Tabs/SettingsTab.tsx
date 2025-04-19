@@ -372,7 +372,113 @@ const SettingsTab: FC<Props> = (props) => {
         </SettingRow>
       </SettingGroup>
       <SettingGroup>
+        <SettingSubtitle style={{ marginTop: 0 }}>{t('settings.display.title')}</SettingSubtitle>
+        <SettingDivider />
+        <SettingRow>
+          <SettingRowTitleSmall>
+            {t('chat.settings.thought_auto_collapse')}
+            <Tooltip title={t('chat.settings.thought_auto_collapse.tip')}>
+              <CircleHelp size={14} style={{ marginLeft: 4 }} color="var(--color-text-2)" />
+            </Tooltip>
+          </SettingRowTitleSmall>
+          <Switch
+            size="small"
+            checked={thoughtAutoCollapse}
+            onChange={(checked) => dispatch(setThoughtAutoCollapse(checked))}
+          />
+        </SettingRow>
+        <SettingDivider />
+        <SettingRow>
+          <SettingRowTitleSmall>{t('message.message.style')}</SettingRowTitleSmall>
+          <StyledSelect
+            value={messageStyle}
+            onChange={(value) => dispatch(setMessageStyle(value as 'plain' | 'bubble'))}
+            style={{ width: 135 }}
+            size="small">
+            <Select.Option value="plain">{t('message.message.style.plain')}</Select.Option>
+            <Select.Option value="bubble">{t('message.message.style.bubble')}</Select.Option>
+          </StyledSelect>
+        </SettingRow>
+        <SettingDivider />
+        <SettingRow>
+          <SettingRowTitleSmall>{t('message.message.multi_model_style')}</SettingRowTitleSmall>
+          <StyledSelect
+            size="small"
+            value={multiModelMessageStyle}
+            onChange={(value) =>
+              dispatch(setMultiModelMessageStyle(value as 'fold' | 'vertical' | 'horizontal' | 'grid'))
+            }
+            style={{ width: 135 }}>
+            <Select.Option value="fold">{t('message.message.multi_model_style.fold')}</Select.Option>
+            <Select.Option value="vertical">{t('message.message.multi_model_style.vertical')}</Select.Option>
+            <Select.Option value="horizontal">{t('message.message.multi_model_style.horizontal')}</Select.Option>
+            <Select.Option value="grid">{t('message.message.multi_model_style.grid')}</Select.Option>
+          </StyledSelect>
+        </SettingRow>
+        <SettingDivider />
+        <SettingRow>
+          <SettingRowTitleSmall>{t('settings.messages.navigation')}</SettingRowTitleSmall>
+          <StyledSelect
+            size="small"
+            value={messageNavigation}
+            onChange={(value) => dispatch(setMessageNavigation(value as 'none' | 'buttons' | 'anchor'))}
+            style={{ width: 135 }}>
+            <Select.Option value="none">{t('settings.messages.navigation.none')}</Select.Option>
+            <Select.Option value="buttons">{t('settings.messages.navigation.buttons')}</Select.Option>
+            <Select.Option value="anchor">{t('settings.messages.navigation.anchor')}</Select.Option>
+          </StyledSelect>
+        </SettingRow>
+        <SettingDivider />
+        <SettingRow>
+          <SettingRowTitleSmall>{t('settings.messages.math_engine')}</SettingRowTitleSmall>
+          <StyledSelect
+            value={mathEngine}
+            onChange={(value) => dispatch(setMathEngine(value as 'MathJax' | 'KaTeX'))}
+            style={{ width: 135 }}
+            size="small">
+            <Select.Option value="KaTeX">KaTeX</Select.Option>
+            <Select.Option value="MathJax">MathJax</Select.Option>
+          </StyledSelect>
+        </SettingRow>
+        <SettingDivider />
+        <SettingRow>
+          <SettingRowTitleSmall>{t('settings.font_size.title')}</SettingRowTitleSmall>
+        </SettingRow>
+        <Row align="middle" gutter={10}>
+          <Col span={24}>
+            <Slider
+              value={fontSizeValue}
+              onChange={(value) => setFontSizeValue(value)}
+              onChangeComplete={(value) => dispatch(setFontSize(value))}
+              min={12}
+              max={22}
+              step={1}
+              marks={{
+                12: <span style={{ fontSize: '12px' }}>A</span>,
+                14: <span style={{ fontSize: '14px' }}>{t('common.default')}</span>,
+                22: <span style={{ fontSize: '18px' }}>A</span>
+              }}
+            />
+          </Col>
+        </Row>
+      </SettingGroup>
+      <SettingGroup>
         <SettingSubtitle style={{ marginTop: 0 }}>{t('chat.settings.code.title')}</SettingSubtitle>
+        <SettingDivider />
+        <SettingRow>
+          <SettingRowTitleSmall>{t('message.message.code_style')}</SettingRowTitleSmall>
+          <StyledSelect
+            value={codeStyle}
+            onChange={(value) => onCodeStyleChange(value as CodeStyleVarious)}
+            style={{ width: 135 }}
+            size="small">
+            {themeNames.map((theme) => (
+              <Select.Option key={theme} value={theme}>
+                {theme}
+              </Select.Option>
+            ))}
+          </StyledSelect>
+        </SettingRow>
         <SettingDivider />
         <SettingRow>
           <SettingRowTitleSmall>
@@ -476,117 +582,11 @@ const SettingsTab: FC<Props> = (props) => {
             onChange={(checked) => dispatch(setCodeCollapsible(checked))}
           />
         </SettingRow>
-      </SettingGroup>
-      <SettingGroup>
-        <SettingSubtitle style={{ marginTop: 0 }}>{t('settings.display.title')}</SettingSubtitle>
         <SettingDivider />
         <SettingRow>
           <SettingRowTitleSmall>{t('chat.settings.code_wrappable')}</SettingRowTitleSmall>
           <Switch size="small" checked={codeWrappable} onChange={(checked) => dispatch(setCodeWrappable(checked))} />
         </SettingRow>
-        <SettingDivider />
-        <SettingRow>
-          <SettingRowTitleSmall>
-            {t('chat.settings.thought_auto_collapse')}
-            <Tooltip title={t('chat.settings.thought_auto_collapse.tip')}>
-              <CircleHelp size={14} style={{ marginLeft: 4 }} color="var(--color-text-2)" />
-            </Tooltip>
-          </SettingRowTitleSmall>
-          <Switch
-            size="small"
-            checked={thoughtAutoCollapse}
-            onChange={(checked) => dispatch(setThoughtAutoCollapse(checked))}
-          />
-        </SettingRow>
-        <SettingDivider />
-        <SettingRow>
-          <SettingRowTitleSmall>{t('message.message.style')}</SettingRowTitleSmall>
-          <StyledSelect
-            value={messageStyle}
-            onChange={(value) => dispatch(setMessageStyle(value as 'plain' | 'bubble'))}
-            style={{ width: 135 }}
-            size="small">
-            <Select.Option value="plain">{t('message.message.style.plain')}</Select.Option>
-            <Select.Option value="bubble">{t('message.message.style.bubble')}</Select.Option>
-          </StyledSelect>
-        </SettingRow>
-        <SettingDivider />
-        <SettingRow>
-          <SettingRowTitleSmall>{t('message.message.multi_model_style')}</SettingRowTitleSmall>
-          <StyledSelect
-            size="small"
-            value={multiModelMessageStyle}
-            onChange={(value) =>
-              dispatch(setMultiModelMessageStyle(value as 'fold' | 'vertical' | 'horizontal' | 'grid'))
-            }
-            style={{ width: 135 }}>
-            <Select.Option value="fold">{t('message.message.multi_model_style.fold')}</Select.Option>
-            <Select.Option value="vertical">{t('message.message.multi_model_style.vertical')}</Select.Option>
-            <Select.Option value="horizontal">{t('message.message.multi_model_style.horizontal')}</Select.Option>
-            <Select.Option value="grid">{t('message.message.multi_model_style.grid')}</Select.Option>
-          </StyledSelect>
-        </SettingRow>
-        <SettingDivider />
-        <SettingRow>
-          <SettingRowTitleSmall>{t('settings.messages.navigation')}</SettingRowTitleSmall>
-          <StyledSelect
-            size="small"
-            value={messageNavigation}
-            onChange={(value) => dispatch(setMessageNavigation(value as 'none' | 'buttons' | 'anchor'))}
-            style={{ width: 135 }}>
-            <Select.Option value="none">{t('settings.messages.navigation.none')}</Select.Option>
-            <Select.Option value="buttons">{t('settings.messages.navigation.buttons')}</Select.Option>
-            <Select.Option value="anchor">{t('settings.messages.navigation.anchor')}</Select.Option>
-          </StyledSelect>
-        </SettingRow>
-        <SettingDivider />
-        <SettingRow>
-          <SettingRowTitleSmall>{t('message.message.code_style')}</SettingRowTitleSmall>
-          <StyledSelect
-            value={codeStyle}
-            onChange={(value) => onCodeStyleChange(value as CodeStyleVarious)}
-            style={{ width: 135 }}
-            size="small">
-            {themeNames.map((theme) => (
-              <Select.Option key={theme} value={theme}>
-                {theme}
-              </Select.Option>
-            ))}
-          </StyledSelect>
-        </SettingRow>
-        <SettingDivider />
-        <SettingRow>
-          <SettingRowTitleSmall>{t('settings.messages.math_engine')}</SettingRowTitleSmall>
-          <StyledSelect
-            value={mathEngine}
-            onChange={(value) => dispatch(setMathEngine(value as 'MathJax' | 'KaTeX'))}
-            style={{ width: 135 }}
-            size="small">
-            <Select.Option value="KaTeX">KaTeX</Select.Option>
-            <Select.Option value="MathJax">MathJax</Select.Option>
-          </StyledSelect>
-        </SettingRow>
-        <SettingDivider />
-        <SettingRow>
-          <SettingRowTitleSmall>{t('settings.font_size.title')}</SettingRowTitleSmall>
-        </SettingRow>
-        <Row align="middle" gutter={10}>
-          <Col span={24}>
-            <Slider
-              value={fontSizeValue}
-              onChange={(value) => setFontSizeValue(value)}
-              onChangeComplete={(value) => dispatch(setFontSize(value))}
-              min={12}
-              max={22}
-              step={1}
-              marks={{
-                12: <span style={{ fontSize: '12px' }}>A</span>,
-                14: <span style={{ fontSize: '14px' }}>{t('common.default')}</span>,
-                22: <span style={{ fontSize: '18px' }}>A</span>
-              }}
-            />
-          </Col>
-        </Row>
       </SettingGroup>
       <SettingGroup>
         <SettingSubtitle style={{ marginTop: 0 }}>{t('settings.messages.input.title')}</SettingSubtitle>

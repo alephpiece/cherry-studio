@@ -158,7 +158,7 @@
       },
       "resend": "Resend",
       "save": "Save",
-      "settings.code.title": "Code Settings",
+      "settings.code.title": "Code Block Settings",
       "settings.code_editor": {
         "title": "Code Editor",
         "highlight_active_line": "Highlight active line",
