@@ -3,10 +3,10 @@
  * 例如：
  * - 'gpt-3.5-turbo-16k-0613' 转换为 'GPT-3.5-Turbo'
  * - 'qwen2:1.5b' 转换为 'QWEN2'。
- * @param id 模型 ID 字符串
- * @returns string 提取的组名
+ * @param {string} id 模型 ID 字符串
+ * @returns {string} 提取的组名
  */
-export const getDefaultGroupName = (id: string) => {
+export const getDefaultGroupName = (id: string): string => {
   if (id.includes('/')) {
     return id.split('/')[0]
   }
@@ -25,8 +25,8 @@ export const getDefaultGroupName = (id: string) => {
 
 /**
  * 用于获取 avatar 名字的辅助函数，会取出字符串的第一个字符，支持表情符号。
- * @param str 输入字符串
- * @returns string 第一个字符，或者返回空字符串
+ * @param {string} str 输入字符串
+ * @returns {string} 第一个字符，或者返回空字符串
  */
 export function firstLetter(str: string): string {
   const match = str?.match(/\p{L}\p{M}*|\p{Emoji_Presentation}|\p{Emoji}\uFE0F/u)
@@ -35,8 +35,8 @@ export function firstLetter(str: string): string {
 
 /**
  * 移除字符串开头的表情符号。
- * @param str 输入字符串
- * @returns string 移除开头表情符号后的字符串
+ * @param {string} str 输入字符串
+ * @returns {string} 移除开头表情符号后的字符串
  */
 export function removeLeadingEmoji(str: string): string {
   const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)+/u
@@ -45,8 +45,8 @@ export function removeLeadingEmoji(str: string): string {
 
 /**
  * 提取字符串开头的表情符号。
- * @param str 输入字符串
- * @returns string 开头的表情符号，如果没有则返回空字符串
+ * @param {string} str 输入字符串
+ * @returns {string} 开头的表情符号，如果没有则返回空字符串
  */
 export function getLeadingEmoji(str: string): string {
   const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)+/u
@@ -56,8 +56,8 @@ export function getLeadingEmoji(str: string): string {
 
 /**
  * 检查字符串是否为纯表情符号。
- * @param str 输入字符串
- * @returns boolean 如果字符串是纯表情符号则返回 true，否则返回 false
+ * @param {string} str 输入字符串
+ * @returns {boolean} 如果字符串是纯表情符号则返回 true，否则返回 false
  */
 export function isEmoji(str: string): boolean {
   if (str.startsWith('data:')) {
@@ -74,19 +74,19 @@ export function isEmoji(str: string): boolean {
 /**
  * 从话题名称中移除特殊字符：
  * - 替换换行符为空格。
- * @param str 输入字符串
- * @returns string 处理后的字符串
+ * @param {string} str 输入字符串
+ * @returns {string} 处理后的字符串
  */
-export function removeSpecialCharactersForTopicName(str: string) {
+export function removeSpecialCharactersForTopicName(str: string): string {
   return str.replace(/[\r\n]+/g, ' ').trim()
 }
 
 /**
  * 根据字符生成颜色代码，用于 avatar。
- * @param char 输入字符
- * @returns string 十六进制颜色字符串
+ * @param {string} char 输入字符
+ * @returns {string} 十六进制颜色字符串
  */
-export function generateColorFromChar(char: string) {
+export function generateColorFromChar(char: string): string {
   // 使用字符的Unicode值作为随机种子
   const seed = char.charCodeAt(0)
 
@@ -111,23 +111,23 @@ export function generateColorFromChar(char: string) {
 
 /**
  * 获取字符串的第一个字符。
- * @param str 输入字符串
- * @returns string 第一个字符，或者空字符串
+ * @param {string} str 输入字符串
+ * @returns {string} 第一个字符，或者空字符串
  */
-export function getFirstCharacter(str) {
-  if (str.length === 0) return ''
-
+export function getFirstCharacter(str: string): string {
   // 使用 for...of 循环来获取第一个字符
   for (const char of str) {
     return char
   }
+
+  return ''
 }
 
 /**
  * 用于简化文本。按照给定长度限制截断文本，考虑语义边界。
- * @param text 输入文本
- * @param maxLength 最大长度，默认为 50
- * @returns string 处理后的简短文本
+ * @param {string} text 输入文本
+ * @param {number} [maxLength=50] 最大长度，默认为 50
+ * @returns {string} 处理后的简短文本
  */
 export function getBriefInfo(text: string, maxLength: number = 50): string {
   // 去除空行
