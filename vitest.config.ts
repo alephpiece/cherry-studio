@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 import electronViteConfig from './electron.vite.config'
 
-const rendererConfig = electronViteConfig.renderer
+const rendererConfig = (electronViteConfig as any).renderer
 
 export default defineConfig({
   // 复用 renderer 插件和路径别名
@@ -17,7 +17,7 @@ export default defineConfig({
     include: [
       // 只测试渲染进程
       'src/renderer/**/*.{test,spec}.{ts,tsx}',
-      'src/renderer/**/__tests__/**/*.{ts,tsx}'
+      'src/renderer/**/__tests__/**/*.{test,spec}.{ts,tsx}'
     ],
     exclude: ['**/node_modules/**', '**/dist/**', '**/out/**', '**/build/**'],
     coverage: {
