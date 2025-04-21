@@ -8,7 +8,7 @@ const rendererConfig = (electronViteConfig as any).renderer
 export default defineConfig({
   test: {
     workspace: [
-      // 主进程配置
+      // 主进程单元测试配置
       {
         extends: true,
         plugins: mainConfig.plugins,
@@ -21,7 +21,7 @@ export default defineConfig({
           include: ['src/main/**/*.{test,spec}.{ts,tsx}', 'src/main/**/__tests__/**/*.{test,spec}.{ts,tsx}']
         }
       },
-      // 渲染进程配置
+      // 渲染进程单元测试配置
       {
         extends: true,
         plugins: rendererConfig.plugins,
@@ -31,6 +31,7 @@ export default defineConfig({
         test: {
           name: 'renderer',
           environment: 'jsdom',
+          setupFiles: ['./tests/setup.serializer.ts'],
           include: ['src/renderer/**/*.{test,spec}.{ts,tsx}', 'src/renderer/**/__tests__/**/*.{test,spec}.{ts,tsx}']
         }
       }
@@ -48,6 +49,7 @@ export default defineConfig({
         '**/out/**',
         '**/build/**',
         '**/coverage/**',
+        '**/tests/**',
         '**/.yarn/**',
         '**/.cursor/**',
         '**/.vscode/**',
@@ -57,9 +59,7 @@ export default defineConfig({
         '**/types/**',
         '**/__tests__/**',
         '**/*.{test,spec}.{ts,tsx}',
-        '**/*.config.{js,ts}',
-        '**/electron.vite.config.ts',
-        '**/vitest.config.ts'
+        '**/*.config.{js,ts}'
       ]
     },
     testTimeout: 20000,
