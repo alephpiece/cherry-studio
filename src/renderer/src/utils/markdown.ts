@@ -67,10 +67,10 @@ export const sanitizeSchema = {
 /**
  * 更彻底的查找方法，递归搜索所有子元素
  * @param {any} children 子元素
- * @returns {string | null} 找到的 citation 或 null
+ * @returns {string} 找到的 citation 或 ''
  */
-export const findCitationInChildren = (children: any): string | null => {
-  if (!children) return null
+export const findCitationInChildren = (children: any): string => {
+  if (!children) return ''
 
   // 直接搜索子元素
   for (const child of Array.isArray(children) ? children : [children]) {
@@ -85,7 +85,7 @@ export const findCitationInChildren = (children: any): string | null => {
     }
   }
 
-  return null
+  return ''
 }
 
 /**
