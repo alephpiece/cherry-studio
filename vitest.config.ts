@@ -2,23 +2,42 @@ import { defineConfig } from 'vitest/config'
 
 import electronViteConfig from './electron.vite.config'
 
+const mainConfig = (electronViteConfig as any).main
 const rendererConfig = (electronViteConfig as any).renderer
 
 export default defineConfig({
-  // 复用 renderer 插件和路径别名
-  plugins: rendererConfig.plugins,
-  resolve: {
-    alias: rendererConfig.resolve.alias
-  },
   test: {
-    environment: 'jsdom',
+    workspace: [
+      // 主进程配置
+      {
+        extends: true,
+        plugins: mainConfig.plugins,
+        resolve: {
+          alias: mainConfig.resolve.alias
+        },
+        test: {
+          name: 'main',
+          environment: 'node',
+          include: ['src/main/**/*.{test,spec}.{ts,tsx}', 'src/main/**/__tests__/**/*.{test,spec}.{ts,tsx}']
+        }
+      },
+      // 渲染进程配置
+      {
+        extends: true,
+        plugins: rendererConfig.plugins,
+        resolve: {
+          alias: rendererConfig.resolve.alias
+        },
+        test: {
+          name: 'renderer',
+          environment: 'jsdom',
+          include: ['src/renderer/**/*.{test,spec}.{ts,tsx}', 'src/renderer/**/__tests__/**/*.{test,spec}.{ts,tsx}']
+        }
+      }
+    ],
+    // 全局共享配置
     globals: true,
     setupFiles: [],
-    include: [
-      // 只测试渲染进程
-      'src/renderer/**/*.{test,spec}.{ts,tsx}',
-      'src/renderer/**/__tests__/**/*.{test,spec}.{ts,tsx}'
-    ],
     exclude: ['**/node_modules/**', '**/dist/**', '**/out/**', '**/build/**'],
     coverage: {
       provider: 'v8',
