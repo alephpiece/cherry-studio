@@ -57,40 +57,73 @@ describe('File Utils', () => {
       expect(getFileType('.jpeg')).toBe(FileTypes.IMAGE)
       expect(getFileType('.png')).toBe(FileTypes.IMAGE)
       expect(getFileType('.gif')).toBe(FileTypes.IMAGE)
+      expect(getFileType('.webp')).toBe(FileTypes.IMAGE)
+      expect(getFileType('.bmp')).toBe(FileTypes.IMAGE)
     })
 
     it('should return VIDEO for video extensions', () => {
       expect(getFileType('.mp4')).toBe(FileTypes.VIDEO)
       expect(getFileType('.avi')).toBe(FileTypes.VIDEO)
       expect(getFileType('.mov')).toBe(FileTypes.VIDEO)
+      expect(getFileType('.mkv')).toBe(FileTypes.VIDEO)
+      expect(getFileType('.flv')).toBe(FileTypes.VIDEO)
     })
 
     it('should return AUDIO for audio extensions', () => {
       expect(getFileType('.mp3')).toBe(FileTypes.AUDIO)
       expect(getFileType('.wav')).toBe(FileTypes.AUDIO)
       expect(getFileType('.ogg')).toBe(FileTypes.AUDIO)
+      expect(getFileType('.flac')).toBe(FileTypes.AUDIO)
+      expect(getFileType('.aac')).toBe(FileTypes.AUDIO)
     })
 
     it('should return TEXT for text extensions', () => {
       expect(getFileType('.txt')).toBe(FileTypes.TEXT)
       expect(getFileType('.md')).toBe(FileTypes.TEXT)
+      expect(getFileType('.html')).toBe(FileTypes.TEXT)
+      expect(getFileType('.json')).toBe(FileTypes.TEXT)
+      expect(getFileType('.js')).toBe(FileTypes.TEXT)
+      expect(getFileType('.ts')).toBe(FileTypes.TEXT)
+      expect(getFileType('.css')).toBe(FileTypes.TEXT)
+      expect(getFileType('.java')).toBe(FileTypes.TEXT)
+      expect(getFileType('.py')).toBe(FileTypes.TEXT)
     })
 
     it('should return DOCUMENT for document extensions', () => {
       expect(getFileType('.pdf')).toBe(FileTypes.DOCUMENT)
       expect(getFileType('.pptx')).toBe(FileTypes.DOCUMENT)
       expect(getFileType('.docx')).toBe(FileTypes.DOCUMENT)
+      expect(getFileType('.xlsx')).toBe(FileTypes.DOCUMENT)
+      expect(getFileType('.odt')).toBe(FileTypes.DOCUMENT)
     })
 
     it('should return OTHER for unknown extensions', () => {
       expect(getFileType('.unknown')).toBe(FileTypes.OTHER)
       expect(getFileType('')).toBe(FileTypes.OTHER)
+      expect(getFileType('.')).toBe(FileTypes.OTHER)
+      expect(getFileType('...')).toBe(FileTypes.OTHER)
+      expect(getFileType('.123')).toBe(FileTypes.OTHER)
     })
 
     it('should handle case-insensitive extensions', () => {
       expect(getFileType('.JPG')).toBe(FileTypes.IMAGE)
       expect(getFileType('.PDF')).toBe(FileTypes.DOCUMENT)
       expect(getFileType('.Mp3')).toBe(FileTypes.AUDIO)
+      expect(getFileType('.HtMl')).toBe(FileTypes.TEXT)
+      expect(getFileType('.Xlsx')).toBe(FileTypes.DOCUMENT)
+    })
+
+    it('should handle extensions without leading dot', () => {
+      expect(getFileType('jpg')).toBe(FileTypes.OTHER)
+      expect(getFileType('pdf')).toBe(FileTypes.OTHER)
+      expect(getFileType('mp3')).toBe(FileTypes.OTHER)
+    })
+
+    it('should handle extreme cases', () => {
+      expect(getFileType('.averylongfileextensionname')).toBe(FileTypes.OTHER)
+      expect(getFileType('.tar.gz')).toBe(FileTypes.OTHER)
+      expect(getFileType('.文件')).toBe(FileTypes.OTHER)
+      expect(getFileType('.файл')).toBe(FileTypes.OTHER)
     })
   })
 
