@@ -1,22 +1,7 @@
+import { type Message } from '@renderer/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getTitleFromString, messagesToMarkdown, messageToMarkdown, messageToMarkdownWithReasoning } from '../export'
-
-// 辅助函数：生成完整 Message 对象
-function createMessage(partial) {
-  return {
-    id: partial.id || 'id',
-    assistantId: partial.assistantId || 'a',
-    role: partial.role,
-    content: partial.content,
-    topicId: partial.topicId || 't',
-    createdAt: partial.createdAt || '2024-01-01',
-    updatedAt: partial.updatedAt || 0,
-    status: partial.status || 'success',
-    type: partial.type || 'text',
-    ...partial
-  }
-}
 
 describe('export', () => {
   describe('getTitleFromString', () => {
@@ -65,13 +50,13 @@ describe('export', () => {
     })
 
     it('should format user message', () => {
-      const msg = createMessage({ role: 'user', content: 'hello', id: '1' })
+      const msg = { role: 'user', content: 'hello', id: '1' } as Message
       expect(messageToMarkdown(msg)).toContain('### 🧑‍💻 User')
       expect(messageToMarkdown(msg)).toContain('hello')
     })
 
     it('should format assistant message', () => {
-      const msg = createMessage({ role: 'assistant', content: 'hi', id: '2' })
+      const msg = { role: 'assistant', content: 'hi', id: '2' } as Message
       expect(messageToMarkdown(msg)).toContain('### 🤖 Assistant')
       expect(messageToMarkdown(msg)).toContain('hi')
     })
@@ -89,18 +74,18 @@ describe('export', () => {
     })
 
     it('should include reasoning content in details', () => {
-      const msg = createMessage({ role: 'assistant', content: 'hi', reasoning_content: '思考内容', id: '5' })
+      const msg = { role: 'assistant', content: 'hi', reasoning_content: '思考内容', id: '5' } as Message
       expect(messageToMarkdownWithReasoning(msg)).toContain('<details')
       expect(messageToMarkdownWithReasoning(msg)).toContain('思考内容')
     })
 
     it('should handle <think> tag and newlines', () => {
-      const msg = createMessage({ role: 'assistant', content: 'hi', reasoning_content: '<think>\nA\nB', id: '6' })
+      const msg = { role: 'assistant', content: 'hi', reasoning_content: '<think>\nA\nB', id: '6' } as Message
       expect(messageToMarkdownWithReasoning(msg)).toContain('A<br>B')
     })
 
     it('should fallback if no reasoning_content', () => {
-      const msg = createMessage({ role: 'assistant', content: 'hi', id: '7' })
+      const msg = { role: 'assistant', content: 'hi', id: '7' } as Message
       expect(messageToMarkdownWithReasoning(msg)).toContain('hi')
     })
   })
@@ -115,8 +100,8 @@ describe('export', () => {
 
     it('should join multiple messages', () => {
       const msgs = [
-        createMessage({ role: 'user', content: 'a', id: '9' }),
-        createMessage({ role: 'assistant', content: 'b', id: '10' })
+        { role: 'user', content: 'a', id: '9' } as Message,
+        { role: 'assistant', content: 'b', id: '10' } as Message
       ]
       expect(messagesToMarkdown(msgs)).toContain('a')
       expect(messagesToMarkdown(msgs)).toContain('b')
@@ -128,7 +113,7 @@ describe('export', () => {
     })
 
     it('should handle single message', () => {
-      const msgs = [createMessage({ role: 'user', content: 'a', id: '13' })]
+      const msgs = [{ role: 'user', content: 'a', id: '13' } as Message]
       expect(messagesToMarkdown(msgs)).toContain('a')
     })
   })
