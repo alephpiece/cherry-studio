@@ -24,7 +24,7 @@ vi.mock('electron', () => ({
   }
 }))
 
-describe('File Utils', () => {
+describe('file', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
