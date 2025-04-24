@@ -28,21 +28,18 @@ function initAutoSync() {
     if (nutstoreAutoSync) {
       startNutstoreAutoSync()
     }
-  }, 2000)
+  }, 8000)
 }
 
-export async function initSentry() {
-  const appInfo = await window.api.getAppInfo()
-  if (appInfo.isPackaged) {
-    Sentry.init(
-      {
-        sendDefaultPii: true,
-        tracesSampleRate: 1.0,
-        integrations: [Sentry.browserTracingIntegration()]
-      },
-      reactInit as any
-    )
-  }
+export function initSentry() {
+  Sentry.init(
+    {
+      sendDefaultPii: true,
+      tracesSampleRate: 1.0,
+      integrations: [Sentry.browserTracingIntegration()]
+    },
+    reactInit as any
+  )
 }
 
 initSpinner()
