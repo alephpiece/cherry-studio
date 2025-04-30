@@ -34,20 +34,20 @@ const MessageGroupModelList: FC<MessageGroupModelListProps> = ({ messages, selec
 
       if (isCompact) {
         return (
-          <Tooltip key={message.id} title={`${asstTip} ${message.model?.name}`} mouseEnterDelay={0.2}>
+          <Tooltip key={message.id} title={`${asstTip} ${message.model?.name}`} mouseEnterDelay={0.5}>
             <AvatarWrapper
               className="avatar-wrapper"
               isSelected={message.id === selectMessageId}
               onClick={() => {
                 setSelectedMessage(message)
               }}>
-              <ModelAvatar model={message.model as Model} size={22} />
+              <ModelAvatar model={message.model as Model} size={20} />
             </AvatarWrapper>
           </Tooltip>
         )
       }
       return (
-        <Tooltip title={`${asstTip}`} mouseEnterDelay={0.2}>
+        <Tooltip title={`${asstTip}`} mouseEnterDelay={0.5}>
           <SegmentedLabel>
             <ModelAvatar model={message.model as Model} size={20} />
             <ModelName>{message.model?.name}</ModelName>
