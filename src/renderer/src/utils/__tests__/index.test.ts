@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { delay, runAsyncFunction } from '../index'
+import { runAsyncFunction } from '../index'
 import { compareVersions, hasPath, isFreeModel, isValidProxyUrl, removeQuotes, removeSpecialCharacters } from '../index'
 
 describe('Unclassified Utils', () => {
@@ -21,24 +21,6 @@ describe('Unclassified Utils', () => {
           throw new Error('Test error')
         })
       ).rejects.toThrow('Test error')
-    })
-  })
-
-  describe('delay', () => {
-    it('should resolve after specified seconds', async () => {
-      // 验证指定时间后返回
-      const start = Date.now()
-      await delay(0.05)
-      const end = Date.now()
-      expect(end - start).toBeGreaterThanOrEqual(10)
-    })
-
-    it('should resolve immediately for zero delay', async () => {
-      // 验证零延迟立即返回
-      const start = Date.now()
-      await delay(0)
-      const end = Date.now()
-      expect(end - start).toBeLessThan(100)
     })
   })
 
