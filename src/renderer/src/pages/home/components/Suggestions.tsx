@@ -2,8 +2,9 @@ import { useAssistant } from '@renderer/hooks/useAssistant'
 import { fetchSuggestions } from '@renderer/services/ApiService'
 import { getUserMessage } from '@renderer/services/MessagesService'
 import { useAppDispatch } from '@renderer/store'
-import { sendMessage } from '@renderer/store/messages'
-import { Message, Suggestion, Topic } from '@renderer/types'
+import { sendMessage } from '@renderer/store/thunk/messageThunk'
+import { Suggestion, Topic } from '@renderer/types'
+import type { Message } from '@renderer/types/newMessage'
 import { last } from 'lodash'
 import { FC, memo, useEffect, useState } from 'react'
 import BeatLoader from 'react-spinners/BeatLoader'
@@ -31,14 +32,13 @@ const Suggestions: FC<Props> = ({ topic, messages }) => {
 
     if (!topic) return
 
-    const userMessage = getUserMessage({
+    const { message: userMessage, blocks } = getUserMessage({
       assistant,
       topic,
-      type: 'text',
       content
     })
 
-    await dispatch(sendMessage(userMessage, assistant, topic))
+    await dispatch(sendMessage(userMessage, blocks, assistant, topic.id))
   }
 
   const suggestionsHandle = async () => {

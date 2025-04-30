@@ -27,19 +27,10 @@ import { estimateMessageUsage, estimateTextTokens as estimateTxtTokens } from '@
 import { translateText } from '@renderer/services/TranslateService'
 import WebSearchService from '@renderer/services/WebSearchService'
 import { useAppDispatch } from '@renderer/store'
-import { sendMessage as _sendMessage } from '@renderer/store/messages'
 import { setSearching } from '@renderer/store/runtime'
-import {
-  Assistant,
-  FileType,
-  KnowledgeBase,
-  KnowledgeItem,
-  MCPServer,
-  MentionedAssistant,
-  Message,
-  Model,
-  Topic
-} from '@renderer/types'
+import { sendMessage as _sendMessage } from '@renderer/store/thunk/messageThunk'
+import { Assistant, FileType, KnowledgeBase, KnowledgeItem, MentionedAssistant, Model, Topic } from '@renderer/types'
+import type { MessageInputBaseParams } from '@renderer/types/newMessage'
 import { classNames, delay, formatFileSize, getFileExtension } from '@renderer/utils'
 import { getFilesFromDropEvent } from '@renderer/utils/input'
 import { documentExts, imageExts, textExts } from '@shared/config/constant'
@@ -65,9 +56,9 @@ import {
   Upload,
   Zap
 } from 'lucide-react'
+// import { CompletionUsage } from 'openai/resources'
 import React, { CSSProperties, FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
 import NarrowLayout from '../Messages/NarrowLayout'
@@ -85,6 +76,7 @@ import NewContextButton from './NewContextButton'
 import QuickPhrasesButton, { QuickPhrasesButtonRef } from './QuickPhrasesButton'
 import SendMessageButton from './SendMessageButton'
 import TokenCount from './TokenCount'
+import WebSearchButton, { WebSearchButtonRef } from './WebSearchButton'
 
 interface Props {
   assistant: Assistant
@@ -98,7 +90,7 @@ let _files: FileType[] = []
 const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) => {
   const [text, setText] = useState(_text)
   const [inputFocus, setInputFocus] = useState(false)
-  const { assistant, model, setModel, updateAssistant } = useAssistant(_assistant.id)
+  const { assistant, model, updateAssistant } = useAssistant(_assistant.id)
   const { addTopic } = useTopics()
   const {
     targetLanguage,
@@ -129,7 +121,6 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
   const [selectedKnowledgeBases, setSelectedKnowledgeBases] = useState<KnowledgeBase[]>([])
   const [mentionModels, setMentionModels] = useState<Model[]>([])
   const [mentionedAssistants, setMentionedAssistants] = useState<MentionedAssistant[]>([])
-  const [enabledMCPs, setEnabledMCPs] = useState<MCPServer[]>(assistant.mcpServers || [])
   const [isDragging, setIsDragging] = useState(false)
   const [textareaHeight, setTextareaHeight] = useState<number>()
   const startDragY = useRef<number>(0)
@@ -137,14 +128,12 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
   const currentMessageId = useRef<string>('')
   const isVision = useMemo(() => isVisionModel(model), [model])
   const supportExts = useMemo(() => [...textExts, ...documentExts, ...(isVision ? imageExts : [])], [isVision])
-  const navigate = useNavigate()
   const { activedMcpServers } = useMCPServers()
   const { bases: knowledgeBases } = useKnowledgeBases()
 
   const quickPanel = useQuickPanel()
 
   const showKnowledgeIcon = useSidebarIconShow('knowledge')
-  // const showMCPToolsIcon = isFunctionCallingModel(model)
 
   const [tokenCount, setTokenCount] = useState(0)
 
@@ -154,6 +143,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
   const knowledgeBaseButtonRef = useRef<KnowledgeBaseButtonRef>(null)
   const mcpToolsButtonRef = useRef<MCPToolsButtonRef>(null)
   const attachmentButtonRef = useRef<AttachmentButtonRef>(null)
+  const webSearchButtonRef = useRef<WebSearchButtonRef>(null)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedEstimate = useCallback(
@@ -191,11 +181,6 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     }
   }, [textareaHeight])
 
-  // Reset to assistant knowledge mcp servers
-  useEffect(() => {
-    setEnabledMCPs(assistant.mcpServers || [])
-  }, [assistant.mcpServers])
-
   const sendMessage = useCallback(async () => {
     if (inputEmpty || loading) {
       return
@@ -204,45 +189,48 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       return
     }
 
+    console.log('[DEBUG] Starting to send message')
+
     EventEmitter.emit(EVENT_NAMES.SEND_MESSAGE)
 
     try {
       // Dispatch the sendMessage action with all options
       const uploadedFiles = await FileManager.uploadFiles(files)
-      const userMessage = getUserMessage({ assistant, topic, type: 'text', content: text })
 
+      const baseUserMessage: MessageInputBaseParams = { assistant, topic, content: text }
+
+      // getUserMessage()
       if (uploadedFiles) {
-        userMessage.files = uploadedFiles
+        baseUserMessage.files = uploadedFiles
       }
-
       const knowledgeBaseIds = selectedKnowledgeBases?.map((base) => base.id)
 
       if (knowledgeBaseIds) {
-        userMessage.knowledgeBaseIds = knowledgeBaseIds
+        baseUserMessage.knowledgeBaseIds = knowledgeBaseIds
       }
 
       if (mentionModels.length > 0 || mentionedAssistants.length > 0) {
-        userMessage.mentions = [
+        baseUserMessage.mentions = [
           ...mentionModels.map((model) => createMentionedAssistant(assistant, model)),
           ...mentionedAssistants
         ]
       }
 
-      if (!isEmpty(enabledMCPs) && !isEmpty(activedMcpServers)) {
-        userMessage.enabledMCPs = activedMcpServers.filter((server) => enabledMCPs?.some((s) => s.id === server.id))
+      if (!isEmpty(assistant.mcpServers) && !isEmpty(activedMcpServers)) {
+        baseUserMessage.enabledMCPs = activedMcpServers.filter((server) =>
+          assistant.mcpServers?.some((s) => s.id === server.id)
+        )
       }
 
-      userMessage.usage = await estimateMessageUsage(userMessage)
-      currentMessageId.current = userMessage.id
+      baseUserMessage.usage = await estimateMessageUsage(baseUserMessage)
 
-      dispatch(
-        _sendMessage(userMessage, assistant, topic, {
-          mentions: [
-            ...mentionModels.map((model) => createMentionedAssistant(assistant, model)),
-            ...mentionedAssistants
-          ]
-        })
-      )
+      const { message, blocks } = getUserMessage(baseUserMessage)
+
+      currentMessageId.current = message.id
+      console.log('[DEBUG] Created message and blocks:', message, blocks)
+      console.log('[DEBUG] Dispatching _sendMessage')
+      dispatch(_sendMessage(message, blocks, assistant, topic.id))
+      console.log('[DEBUG] _sendMessage dispatched')
 
       // Clear input
       setText('')
@@ -255,9 +243,9 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       console.error('Failed to send message:', error)
     }
   }, [
+    activedMcpServers,
     assistant,
     dispatch,
-    enabledMCPs,
     files,
     inputEmpty,
     loading,
@@ -266,8 +254,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     resizeTextArea,
     selectedKnowledgeBases,
     text,
-    topic,
-    activedMcpServers
+    topic
   ])
 
   const translate = useCallback(async () => {
@@ -420,6 +407,15 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
         }
       },
       {
+        label: t('chat.input.web_search'),
+        description: '',
+        icon: <Globe />,
+        isMenu: true,
+        action: () => {
+          webSearchButtonRef.current?.openQuickPanel()
+        }
+      },
+      {
         label: isVisionModel(model) ? t('chat.input.upload') : t('chat.input.upload.document'),
         description: '',
         icon: <Paperclip />,
@@ -554,19 +550,12 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       await db.topics.add({ id: topic.id, messages: [] })
       await addAssistantMessagesToTopic({ assistant: targetAssistant, topic })
 
-      // Clear previous state
-      // Reset to assistant default model
-      targetAssistant.defaultModel && setModel(targetAssistant.defaultModel)
-
-      // Reset to assistant knowledge mcp servers
-      !isEmpty(targetAssistant.mcpServers) && setEnabledMCPs(targetAssistant.mcpServers || [])
-
       addTopic(topic, targetAssistant.id)
       setActiveTopic(topic)
 
       setTimeout(() => EventEmitter.emit(EVENT_NAMES.SHOW_TOPIC_SIDEBAR), 0)
     },
-    [addTopic, assistant, setActiveTopic, setModel]
+    [addTopic, assistant, setActiveTopic]
   )
 
   const onPause = async () => {
@@ -756,11 +745,11 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
   useEffect(() => {
     const _setEstimateTokenCount = debounce(setEstimateTokenCount, 100, { leading: false, trailing: true })
     const unsubscribes = [
-      EventEmitter.on(EVENT_NAMES.EDIT_MESSAGE, (message: Message) => {
-        setText(message.content)
-        textareaRef.current?.focus()
-        setTimeout(() => resizeTextArea(), 0)
-      }),
+      // EventEmitter.on(EVENT_NAMES.EDIT_MESSAGE, (message: Message) => {
+      //   setText(message.content)
+      //   textareaRef.current?.focus()
+      //   setTimeout(() => resizeTextArea(), 0)
+      // }),
       EventEmitter.on(EVENT_NAMES.ESTIMATED_TOKEN_COUNT, ({ tokensCount, contextCount }) => {
         _setEstimateTokenCount(tokensCount)
         setContextCount({ current: contextCount.current, max: contextCount.max }) // 现在contextCount是一个对象而不是单个数值
@@ -830,59 +819,22 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     setSelectedKnowledgeBases(newKnowledgeBases ?? [])
   }
 
-  const toggelEnableMCP = (mcp: MCPServer) => {
-    setEnabledMCPs((prev) => {
-      const exists = prev.some((item) => item.id === mcp.id)
-      if (exists) {
-        return prev.filter((item) => item.id !== mcp.id)
-      } else {
-        return [...prev, mcp]
-      }
-    })
-  }
-
-  const showWebSearchEnableModal = () => {
-    window.modal.confirm({
-      title: t('chat.input.web_search.enable'),
-      content: t('chat.input.web_search.enable_content'),
-      centered: true,
-      okText: t('chat.input.web_search.button.ok'),
-      onOk: () => {
-        navigate('/settings/web-search')
-      }
-    })
-  }
-
-  const shouldShowEnableModal = () => {
-    // 网络搜索功能是否未启用
-    const webSearchNotEnabled = !WebSearchService.isWebSearchEnabled()
-    // 非网络搜索模型：仅当网络搜索功能未启用时显示启用提示
-    if (!isWebSearchModel(model)) {
-      return webSearchNotEnabled
-    }
-    // 网络搜索模型：当允许覆盖但网络搜索功能未启用时显示启用提示
-    return WebSearchService.isOverwriteEnabled() && webSearchNotEnabled
-  }
-
-  const onEnableWebSearch = () => {
-    if (shouldShowEnableModal()) {
-      showWebSearchEnableModal()
-      return
-    }
-
-    updateAssistant({ ...assistant, enableWebSearch: !assistant.enableWebSearch })
-  }
-
   const onEnableGenerateImage = () => {
     updateAssistant({ ...assistant, enableGenerateImage: !assistant.enableGenerateImage })
   }
 
   useEffect(() => {
-    if (!isWebSearchModel(model) && !WebSearchService.isWebSearchEnabled() && assistant.enableWebSearch) {
+    if (!isWebSearchModel(model) && assistant.enableWebSearch) {
       updateAssistant({ ...assistant, enableWebSearch: false })
+    }
+    if (assistant.webSearchProviderId && !WebSearchService.isWebSearchEnabled(assistant.webSearchProviderId)) {
+      updateAssistant({ ...assistant, webSearchProviderId: undefined })
     }
     if (!isGenerateImageModel(model) && assistant.enableGenerateImage) {
       updateAssistant({ ...assistant, enableGenerateImage: false })
+    }
+    if (isGenerateImageModel(model) && !assistant.enableGenerateImage && model.id !== 'gemini-2.0-flash-exp') {
+      updateAssistant({ ...assistant, enableGenerateImage: true })
     }
   }, [assistant, model, updateAssistant])
 
@@ -1032,14 +984,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
                 setFiles={setFiles}
                 ToolbarButton={ToolbarButton}
               />
-              <Tooltip placement="top" title={t('chat.input.web_search')} arrow>
-                <ToolbarButton type="text" onClick={onEnableWebSearch}>
-                  <Globe
-                    size={18}
-                    style={{ color: assistant.enableWebSearch ? 'var(--color-link)' : 'var(--color-icon)' }}
-                  />
-                </ToolbarButton>
-              </Tooltip>
+              <WebSearchButton ref={webSearchButtonRef} assistant={assistant} ToolbarButton={ToolbarButton} />
               {showKnowledgeIcon && (
                 <KnowledgeBaseButton
                   ref={knowledgeBaseButtonRef}
@@ -1050,13 +995,13 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
                 />
               )}
               <MCPToolsButton
+                assistant={assistant}
                 ref={mcpToolsButtonRef}
-                enabledMCPs={enabledMCPs}
-                toggelEnableMCP={toggelEnableMCP}
                 ToolbarButton={ToolbarButton}
                 setInputValue={setText}
                 resizeTextArea={resizeTextArea}
               />
+
               <GenerateImageButton
                 model={model}
                 assistant={assistant}

@@ -49,12 +49,16 @@ const addQueueEventListeners = (queue: PQueue, topicId: string) => {
  * @returns A PQueue instance for the topic
  */
 export const getTopicQueue = (topicId: string, options = {}): PQueue => {
+  console.log(`[DEBUG] getTopicQueue called for topic ${topicId}`)
   if (!requestQueues[topicId]) {
-    const queue = new PQueue(options)
+    console.log(`[DEBUG] Creating new queue for topic ${topicId}`)
+    requestQueues[topicId] = new PQueue(options)
     // Add event listeners to the new queue
-    addQueueEventListeners(queue, topicId)
-    requestQueues[topicId] = queue
+    addQueueEventListeners(requestQueues[topicId], topicId)
   } else {
+    console.log(
+      `[DEBUG] Using existing queue for topic ${topicId}, size: ${requestQueues[topicId].size}, pending: ${requestQueues[topicId].pending}`
+    )
     // Make sure the existing queue also has event listeners
     addQueueEventListeners(requestQueues[topicId], topicId)
   }
@@ -110,6 +114,7 @@ export const getTopicPendingRequestCount = (topicId: string): number => {
  * @param topicId The ID of the topic
  */
 export const waitForTopicQueue = async (topicId: string): Promise<void> => {
+  console.log('waitForTopicQueue', requestQueues[topicId])
   if (requestQueues[topicId]) {
     await requestQueues[topicId].onIdle()
   }

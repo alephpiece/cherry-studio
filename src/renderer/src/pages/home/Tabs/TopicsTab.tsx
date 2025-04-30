@@ -39,7 +39,7 @@ import { hasTopicPendingRequests } from '@renderer/utils/queue'
 import { Dropdown, MenuProps, Tooltip } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import dayjs from 'dayjs'
-import { FC, startTransition, useCallback, useMemo, useRef, useState } from 'react'
+import { FC, startTransition, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import styled from 'styled-components'
@@ -149,221 +149,225 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
 
   const exportMenuOptions = useSelector((state: RootState) => state.settings.exportMenuOptions)
 
-  const getTopicMenuItems = useCallback(
-    (topic: Topic) => {
-      const menus: MenuProps['items'] = [
-        {
-          label: t('chat.topics.auto_rename'),
-          key: 'auto-rename',
-          icon: <i className="iconfont icon-business-smart-assistant" style={{ fontSize: '14px' }} />,
-          async onClick() {
-            const messages = await TopicManager.getTopicMessages(topic.id)
-            if (messages.length >= 2) {
-              const summaryText = await fetchMessagesSummary({
-                messages,
-                assistant: selectedAssistant || assistant
-              })
-              if (summaryText) {
-                updateTopic({ ...topic, name: summaryText, isNameManuallyEdited: false })
-              }
-            }
-          }
-        },
-        {
-          label: t('chat.topics.edit.title'),
-          key: 'rename',
-          icon: <EditOutlined />,
-          async onClick() {
-            const name = await PromptPopup.show({
-              title: t('chat.topics.edit.title'),
-              message: '',
-              defaultValue: topic?.name || ''
+  const [_targetTopic, setTargetTopic] = useState<Topic | null>(null)
+  const targetTopic = useDeferredValue(_targetTopic)
+  const getTopicMenuItems = useMemo(() => {
+    const topic = targetTopic
+    if (!topic) return []
+
+    const menus: MenuProps['items'] = [
+      {
+        label: t('chat.topics.auto_rename'),
+        key: 'auto-rename',
+        icon: <i className="iconfont icon-business-smart-assistant" style={{ fontSize: '14px' }} />,
+        async onClick() {
+          const messages = await TopicManager.getTopicMessages(topic.id)
+          if (messages.length >= 2) {
+            const summaryText = await fetchMessagesSummary({
+              messages,
+              assistant: selectedAssistant || assistant
             })
-            if (name && topic?.name !== name) {
-              updateTopic({ ...topic, name, isNameManuallyEdited: true })
+            if (summaryText) {
+              updateTopic({ ...topic, name: summaryText, isNameManuallyEdited: false })
             }
           }
-        },
-        {
-          label: t('chat.topics.prompt'),
-          key: 'topic-prompt',
-          icon: <i className="iconfont icon-ai-model1" style={{ fontSize: '14px' }} />,
-          extra: (
-            <Tooltip title={t('chat.topics.prompt.tips')}>
-              <QuestionIcon />
-            </Tooltip>
-          ),
-          async onClick() {
-            const prompt = await PromptPopup.show({
-              title: t('chat.topics.prompt.edit.title'),
-              message: '',
-              defaultValue: topic?.prompt || '',
-              inputProps: {
-                rows: 8,
-                allowClear: true
-              }
-            })
-            prompt !== null && updateTopic({ ...topic, prompt: prompt.trim() })
-          }
-        },
-        {
-          label: topic.pinned ? t('chat.topics.unpinned') : t('chat.topics.pinned'),
-          key: 'pin',
-          icon: <PushpinOutlined />,
-          onClick() {
-            onPinTopic(topic)
-          }
-        },
-        {
-          label: t('chat.topics.clear.title'),
-          key: 'clear-messages',
-          icon: <ClearOutlined />,
-          async onClick() {
-            window.modal.confirm({
-              title: t('chat.input.clear.content'),
-              centered: true,
-              onOk: () => onClearMessages(topic)
-            })
-          }
-        },
-        {
-          label: t('chat.topics.copy.title'),
-          key: 'copy',
-          icon: <CopyIcon />,
-          children: [
-            {
-              label: t('chat.topics.copy.image'),
-              key: 'img',
-              onClick: () => EventEmitter.emit(EVENT_NAMES.COPY_TOPIC_IMAGE, topic)
-            },
-            {
-              label: t('chat.topics.copy.md'),
-              key: 'md',
-              onClick: () => copyTopicAsMarkdown(topic)
-            }
-          ]
-        },
-        {
-          label: t('chat.topics.export.title'),
-          key: 'export',
-          icon: <UploadOutlined />,
-          children: [
-            exportMenuOptions.image !== false && {
-              label: t('chat.topics.export.image'),
-              key: 'image',
-              onClick: () => EventEmitter.emit(EVENT_NAMES.EXPORT_TOPIC_IMAGE, topic)
-            },
-            exportMenuOptions.markdown !== false && {
-              label: t('chat.topics.export.md'),
-              key: 'markdown',
-              onClick: () => exportTopicAsMarkdown(topic)
-            },
-            exportMenuOptions.markdown_reason !== false && {
-              label: t('chat.topics.export.md.reason'),
-              key: 'markdown_reason',
-              onClick: () => exportTopicAsMarkdown(topic, true)
-            },
-            exportMenuOptions.docx !== false && {
-              label: t('chat.topics.export.word'),
-              key: 'word',
-              onClick: async () => {
-                const markdown = await topicToMarkdown(topic)
-                window.api.export.toWord(markdown, removeSpecialCharactersForFileName(topic.name))
-              }
-            },
-            exportMenuOptions.notion !== false && {
-              label: t('chat.topics.export.notion'),
-              key: 'notion',
-              onClick: async () => {
-                exportTopicToNotion(topic)
-              }
-            },
-            exportMenuOptions.yuque !== false && {
-              label: t('chat.topics.export.yuque'),
-              key: 'yuque',
-              onClick: async () => {
-                const markdown = await topicToMarkdown(topic)
-                exportMarkdownToYuque(topic.name, markdown)
-              }
-            },
-            exportMenuOptions.obsidian !== false && {
-              label: t('chat.topics.export.obsidian'),
-              key: 'obsidian',
-              onClick: async () => {
-                const markdown = await topicToMarkdown(topic)
-                await ObsidianExportPopup.show({ title: topic.name, markdown, processingMethod: '3' })
-              }
-            },
-            exportMenuOptions.joplin !== false && {
-              label: t('chat.topics.export.joplin'),
-              key: 'joplin',
-              onClick: async () => {
-                const markdown = await topicToMarkdown(topic)
-                exportMarkdownToJoplin(topic.name, markdown)
-              }
-            },
-            exportMenuOptions.siyuan !== false && {
-              label: t('chat.topics.export.siyuan'),
-              key: 'siyuan',
-              onClick: async () => {
-                const markdown = await topicToMarkdown(topic)
-                exportMarkdownToSiyuan(topic.name, markdown)
-              }
-            }
-          ].filter(Boolean) as ItemType<MenuItemType>[]
         }
-      ]
+      },
+      {
+        label: t('chat.topics.edit.title'),
+        key: 'rename',
+        icon: <EditOutlined />,
+        async onClick() {
+          const name = await PromptPopup.show({
+            title: t('chat.topics.edit.title'),
+            message: '',
+            defaultValue: topic?.name || ''
+          })
+          if (name && topic?.name !== name) {
+            updateTopic({ ...topic, name, isNameManuallyEdited: true })
+          }
+        }
+      },
+      {
+        label: t('chat.topics.prompt'),
+        key: 'topic-prompt',
+        icon: <i className="iconfont icon-ai-model1" style={{ fontSize: '14px' }} />,
+        extra: (
+          <Tooltip title={t('chat.topics.prompt.tips')}>
+            <QuestionIcon />
+          </Tooltip>
+        ),
+        async onClick() {
+          const prompt = await PromptPopup.show({
+            title: t('chat.topics.prompt.edit.title'),
+            message: '',
+            defaultValue: topic?.prompt || '',
+            inputProps: {
+              rows: 8,
+              allowClear: true
+            }
+          })
 
-      // 切换助手：助手可以没有话题，所以不需要检查助手关联的话题数量
-      if (assistants.length > 1) {
-        menus.push({
-          label: t('chat.topics.switch_assistant'),
-          key: 'switch-assistant',
-          icon: <RobotOutlined />,
-          children: assistants.map((a) => ({
-            label: a.name,
-            key: a.id,
-            disabled: a.id === topic.assistantId,
-            onClick: () => onSwitchAssistant(topic, a)
-          }))
-        })
+          prompt !== null && updateTopic({ ...topic, prompt: prompt.trim() })
+        }
+      },
+      {
+        label: topic.pinned ? t('chat.topics.unpinned') : t('chat.topics.pinned'),
+        key: 'pin',
+        icon: <PushpinOutlined />,
+        onClick() {
+          onPinTopic(topic)
+        }
+      },
+      {
+        label: t('chat.topics.clear.title'),
+        key: 'clear-messages',
+        icon: <ClearOutlined />,
+        async onClick() {
+          window.modal.confirm({
+            title: t('chat.input.clear.content'),
+            centered: true,
+            onOk: () => onClearMessages(topic)
+          })
+        }
+      },
+      {
+        label: t('chat.topics.copy.title'),
+        key: 'copy',
+        icon: <CopyIcon />,
+        children: [
+          {
+            label: t('chat.topics.copy.image'),
+            key: 'img',
+            onClick: () => EventEmitter.emit(EVENT_NAMES.COPY_TOPIC_IMAGE, topic)
+          },
+          {
+            label: t('chat.topics.copy.md'),
+            key: 'md',
+            onClick: () => copyTopicAsMarkdown(topic)
+          }
+        ]
+      },
+      {
+        label: t('chat.topics.export.title'),
+        key: 'export',
+        icon: <UploadOutlined />,
+        children: [
+          exportMenuOptions.image !== false && {
+            label: t('chat.topics.export.image'),
+            key: 'image',
+            onClick: () => EventEmitter.emit(EVENT_NAMES.EXPORT_TOPIC_IMAGE, topic)
+          },
+          exportMenuOptions.markdown !== false && {
+            label: t('chat.topics.export.md'),
+            key: 'markdown',
+            onClick: () => exportTopicAsMarkdown(topic)
+          },
+          exportMenuOptions.markdown_reason !== false && {
+            label: t('chat.topics.export.md.reason'),
+            key: 'markdown_reason',
+            onClick: () => exportTopicAsMarkdown(topic, true)
+          },
+          exportMenuOptions.docx !== false && {
+            label: t('chat.topics.export.word'),
+            key: 'word',
+            onClick: async () => {
+              const markdown = await topicToMarkdown(topic)
+              window.api.export.toWord(markdown, removeSpecialCharactersForFileName(topic.name))
+            }
+          },
+          exportMenuOptions.notion !== false && {
+            label: t('chat.topics.export.notion'),
+            key: 'notion',
+            onClick: async () => {
+              exportTopicToNotion(topic)
+            }
+          },
+          exportMenuOptions.yuque !== false && {
+            label: t('chat.topics.export.yuque'),
+            key: 'yuque',
+            onClick: async () => {
+              const markdown = await topicToMarkdown(topic)
+              exportMarkdownToYuque(topic.name, markdown)
+            }
+          },
+          exportMenuOptions.obsidian !== false && {
+            label: t('chat.topics.export.obsidian'),
+            key: 'obsidian',
+            onClick: async () => {
+              const markdown = await topicToMarkdown(topic)
+              await ObsidianExportPopup.show({ title: topic.name, markdown, processingMethod: '3' })
+            }
+          },
+          exportMenuOptions.joplin !== false && {
+            label: t('chat.topics.export.joplin'),
+            key: 'joplin',
+            onClick: async () => {
+              const markdown = await topicToMarkdown(topic)
+              exportMarkdownToJoplin(topic.name, markdown)
+            }
+          },
+          exportMenuOptions.siyuan !== false && {
+            label: t('chat.topics.export.siyuan'),
+            key: 'siyuan',
+            onClick: async () => {
+              const markdown = await topicToMarkdown(topic)
+              exportMarkdownToSiyuan(topic.name, markdown)
+            }
+          }
+        ].filter(Boolean) as ItemType<MenuItemType>[]
       }
-
-      if (topics.length > 1 && !topic.pinned) {
-        menus.push({ type: 'divider' })
-        menus.push({
-          label: t('common.delete'),
-          danger: true,
-          key: 'delete',
-          icon: <DeleteOutlined />,
-          onClick: () => onDeleteTopic(topic)
-        })
-      }
-
-      return menus
-    },
-    [
-      assistant,
-      assistants,
-      exportMenuOptions.docx,
-      exportMenuOptions.image,
-      exportMenuOptions.joplin,
-      exportMenuOptions.markdown,
-      exportMenuOptions.markdown_reason,
-      exportMenuOptions.notion,
-      exportMenuOptions.obsidian,
-      exportMenuOptions.siyuan,
-      exportMenuOptions.yuque,
-      onClearMessages,
-      onDeleteTopic,
-      onPinTopic,
-      onSwitchAssistant,
-      selectedAssistant,
-      t,
-      topics.length,
-      updateTopic
     ]
-  )
+
+    // 切换助手：助手可以没有话题，所以不需要检查助手关联的话题数量
+    if (assistants.length > 1) {
+      menus.push({
+        label: t('chat.topics.switch_assistant'),
+        key: 'switch-assistant',
+        icon: <RobotOutlined />,
+        children: assistants.map((a) => ({
+          label: a.name,
+          key: a.id,
+          disabled: a.id === topic.assistantId,
+          onClick: () => onSwitchAssistant(topic, a)
+        }))
+      })
+    }
+
+    if (topics.length > 1 && !topic.pinned) {
+      menus.push({ type: 'divider' })
+      menus.push({
+        label: t('common.delete'),
+        danger: true,
+        key: 'delete',
+        icon: <DeleteOutlined />,
+        onClick: () => onDeleteTopic(topic)
+      })
+    }
+
+    return menus
+  }, [
+    targetTopic,
+    t,
+    exportMenuOptions.image,
+    exportMenuOptions.markdown,
+    exportMenuOptions.markdown_reason,
+    exportMenuOptions.docx,
+    exportMenuOptions.notion,
+    exportMenuOptions.yuque,
+    exportMenuOptions.obsidian,
+    exportMenuOptions.joplin,
+    exportMenuOptions.siyuan,
+    assistants,
+    topics.length,
+    selectedAssistant,
+    assistant,
+    updateTopic,
+    onPinTopic,
+    onClearMessages,
+    onSwitchAssistant,
+    onDeleteTopic
+  ])
 
   const displayTopics = useMemo(() => {
     if (selectedAssistant) {
@@ -385,16 +389,17 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
   )
 
   return (
-    <Container right={topicPosition === 'right'} className="topics-tab">
-      <DragableList list={displayTopics} onUpdate={handleTopicsUpdate}>
-        {(topic) => {
-          const isActive = topic.id === activeTopic?.id
-          const topicName = topic.name.replace('`', '')
-          const topicPrompt = topic.prompt
-          const fullTopicPrompt = t('common.prompt') + ': ' + topicPrompt
-          return (
-            <Dropdown menu={{ items: getTopicMenuItems(topic) }} trigger={['contextMenu']} key={topic.id}>
+    <Dropdown menu={{ items: getTopicMenuItems }} trigger={['contextMenu']}>
+      <Container right={topicPosition === 'right'} className="topics-tab">
+        <DragableList list={displayTopics} onUpdate={handleTopicsUpdate}>
+          {(topic) => {
+            const isActive = topic.id === activeTopic?.id
+            const topicName = topic.name.replace('`', '')
+            const topicPrompt = topic.prompt
+            const fullTopicPrompt = t('common.prompt') + ': ' + topicPrompt
+            return (
               <TopicListItem
+                onContextMenu={() => setTargetTopic(topic)}
                 className={isActive ? 'active' : ''}
                 onClick={() => onSwitchTopic(topic)}
                 style={{ borderRadius }}>
@@ -442,12 +447,12 @@ const Topics: FC<Props> = ({ assistant, selectedAssistant }) => {
                   </Tooltip>
                 )}
               </TopicListItem>
-            </Dropdown>
-          )
-        }}
-      </DragableList>{' '}
-      <div style={{ minHeight: '10px' }}></div>
-    </Container>
+            )
+          }}
+        </DragableList>
+        <div style={{ minHeight: '10px' }}></div>
+      </Container>
+    </Dropdown>
   )
 }
 

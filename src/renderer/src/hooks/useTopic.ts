@@ -2,7 +2,7 @@ import db from '@renderer/databases'
 import i18n from '@renderer/i18n'
 import { deleteMessageFiles } from '@renderer/services/MessagesService'
 import store, { useAppDispatch, useAppSelector } from '@renderer/store'
-import { prepareTopicMessages } from '@renderer/store/messages'
+import { loadTopicMessagesThunk } from '@renderer/store/thunk/messageThunk'
 import {
   addTopic,
   removeAssistantTopicsThunk,
@@ -15,6 +15,7 @@ import {
   updateTopics
 } from '@renderer/store/topics'
 import { Assistant, Topic } from '@renderer/types'
+import { findMainTextBlocks } from '@renderer/utils/messageUtils/find'
 import { isEmpty } from 'lodash'
 import { useEffect } from 'react'
 
@@ -28,7 +29,7 @@ export function useActiveTopic() {
   const dispatch = useAppDispatch()
 
   useEffect(() => {
-    dispatch(prepareTopicMessages(topic))
+    dispatch(loadTopicMessagesThunk(topic.id))
   }, [topic, dispatch])
 
   return {
@@ -93,7 +94,12 @@ export const autoRenameTopic = async (assistant: Assistant, topicId: string) => 
     }
 
     if (!enableTopicNaming) {
-      const topicName = topic.messages[0]?.content.substring(0, 50)
+      const message = topic.messages[0]
+      const blocks = findMainTextBlocks(message)
+      const topicName = blocks
+        .map((block) => block.content)
+        .join('\n\n')
+        .substring(0, 50)
       if (topicName) {
         const data = { ...topic, name: topicName } as Topic
         store.dispatch(setActiveTopic(data))
