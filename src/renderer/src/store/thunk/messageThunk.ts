@@ -202,13 +202,12 @@ const saveUpdatedBlockToDB = async (
 }
 
 // --- Helper Function for Multi-Model Dispatch ---
-// 多模型创建和发送请求的逻辑，用于用户消息多模型发送和重发
+// 多模型创建和发送请求的逻辑，用于用户消息多模型/助手发送和重发
 const dispatchMultiModelResponses = async (
   dispatch: AppDispatch,
   getState: () => RootState,
   topicId: string,
   triggeringMessage: Message, // userMessage or messageToResend
-  assistant: Assistant,
   mentionedAssistants: MentionedAssistant[]
 ) => {
   console.log(
@@ -219,7 +218,7 @@ const dispatchMultiModelResponses = async (
 
   for (const mentioned of mentionedAssistants) {
     const assistantForThisMention = consolidateMentionedAssistant(mentioned)
-    const assistantMessage = createAssistantMessage(assistant.id, topicId, {
+    const assistantMessage = createAssistantMessage(mentioned.id, topicId, {
       askId: triggeringMessage.id,
       model: mentioned.model,
       modelId: mentioned.id
@@ -680,7 +679,7 @@ export const sendMessage =
 
       if (mentionedAssistants && mentionedAssistants.length > 0) {
         console.log(`[DEBUG] Multi-model send detected for ${mentionedAssistants.length} models.`)
-        await dispatchMultiModelResponses(dispatch, getState, topicId, userMessage, assistant, mentionedAssistants)
+        await dispatchMultiModelResponses(dispatch, getState, topicId, userMessage, mentionedAssistants)
       } else {
         console.log('[DEBUG] Single-model send.')
         const assistantMessage = createAssistantMessage(assistant.id, topicId, {
