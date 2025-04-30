@@ -47,7 +47,7 @@
     "test": "vitest run --silent",
     "test:main": "vitest run --project main",
     "test:renderer": "vitest run --project renderer",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --silent",
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
     "test:e2e": "yarn playwright test",

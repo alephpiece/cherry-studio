@@ -42,7 +42,7 @@ export default defineConfig({
     exclude: ['**/node_modules/**', '**/dist/**', '**/out/**', '**/build/**'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
+      reporter: ['text', 'json', 'html', 'lcov', 'text-summary'],
       exclude: [
         '**/node_modules/**',
         '**/dist/**',
