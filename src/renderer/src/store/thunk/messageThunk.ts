@@ -675,12 +675,12 @@ export const sendMessage =
       }
       console.log('[DEBUG] Saved user message successfully')
 
-      const mentionedModels = userMessage.mentions
+      const mentionedAssistants = userMessage.mentions
       const queue = getTopicQueue(topicId)
 
-      if (mentionedModels && mentionedModels.length > 0) {
-        console.log(`[DEBUG] Multi-model send detected for ${mentionedModels.length} models.`)
-        await dispatchMultiModelResponses(dispatch, getState, topicId, userMessage, assistant, mentionedModels)
+      if (mentionedAssistants && mentionedAssistants.length > 0) {
+        console.log(`[DEBUG] Multi-model send detected for ${mentionedAssistants.length} models.`)
+        await dispatchMultiModelResponses(dispatch, getState, topicId, userMessage, assistant, mentionedAssistants)
       } else {
         console.log('[DEBUG] Single-model send.')
         const assistantMessage = createAssistantMessage(assistant.id, topicId, {
