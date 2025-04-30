@@ -90,7 +90,7 @@ let _files: FileType[] = []
 const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) => {
   const [text, setText] = useState(_text)
   const [inputFocus, setInputFocus] = useState(false)
-  const { assistant, model, updateAssistant } = useAssistant(_assistant.id)
+  const { assistant, model, setModel, updateAssistant } = useAssistant(_assistant.id)
   const { addTopic } = useTopics()
   const {
     targetLanguage,
@@ -550,12 +550,16 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       await db.topics.add({ id: topic.id, messages: [] })
       await addAssistantMessagesToTopic({ assistant: targetAssistant, topic })
 
+      // Clear previous state
+      // Reset to assistant default model
+      assistant.defaultModel && setModel(assistant.defaultModel)
+
       addTopic(topic, targetAssistant.id)
       setActiveTopic(topic)
 
       setTimeout(() => EventEmitter.emit(EVENT_NAMES.SHOW_TOPIC_SIDEBAR), 0)
     },
-    [addTopic, assistant, setActiveTopic]
+    [addTopic, assistant, setActiveTopic, setModel]
   )
 
   const onPause = async () => {

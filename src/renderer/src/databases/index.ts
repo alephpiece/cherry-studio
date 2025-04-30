@@ -82,7 +82,7 @@ db.version(8)
     knowledge_notes: '&id, baseId, type, content, created_at, updated_at',
     translate_history: '&id, sourceText, targetText, sourceLanguage, targetLanguage, createdAt',
     quick_phrases: 'id',
-    message_blocks: 'id, messageId, file.id' // Correct syntax with comma separator
+    message_blocks: 'id, messageId, file.id'
   })
   .upgrade((tx) => upgradeToV8(tx))
 
