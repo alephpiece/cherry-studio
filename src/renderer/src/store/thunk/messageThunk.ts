@@ -201,9 +201,11 @@ const saveUpdatedBlockToDB = async (
   }
 }
 
-// --- Helper Function for Multi-Model Dispatch ---
-// 多模型创建和发送请求的逻辑，用于用户消息多模型/助手发送和重发
-const dispatchMultiModelResponses = async (
+/**
+ * 多模型/多助手创建、发送、重发请求的逻辑。
+ * 多模型响应是多助手响应的特例，即所有 MentionedAssistant 指向同一助手但使用不同模型。
+ */
+const dispatchMultiAssistantResponses = async (
   dispatch: AppDispatch,
   getState: () => RootState,
   topicId: string,
@@ -247,8 +249,6 @@ const dispatchMultiModelResponses = async (
     })
   }
 }
-
-// --- End Helper Function ---
 
 // Internal function extracted from sendMessage to handle fetching and processing assistant response
 const fetchAndProcessAssistantResponseImpl = async (
@@ -678,10 +678,12 @@ export const sendMessage =
       const queue = getTopicQueue(topicId)
 
       if (mentionedAssistants && mentionedAssistants.length > 0) {
-        console.log(`[DEBUG] Multi-model send detected for ${mentionedAssistants.length} models.`)
-        await dispatchMultiModelResponses(dispatch, getState, topicId, userMessage, mentionedAssistants)
+        console.log(
+          `[DEBUG] Multi-assistant/multi-model send detected for ${mentionedAssistants.length} assistants/models.`
+        )
+        await dispatchMultiAssistantResponses(dispatch, getState, topicId, userMessage, mentionedAssistants)
       } else {
-        console.log('[DEBUG] Single-model send.')
+        console.log('[DEBUG] Single-assistant send.')
         const assistantMessage = createAssistantMessage(assistant.id, topicId, {
           askId: userMessage.id,
           model: assistant.model
