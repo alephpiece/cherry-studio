@@ -173,10 +173,6 @@ export const compareVersions = (v1: string, v2: string): number => {
   return 0
 }
 
-export function isMiniWindow() {
-  return window.location.hash === '#/mini'
-}
-
 /**
  * 显示确认模态框。
  * @param {ModalFuncProps} params 模态框参数
