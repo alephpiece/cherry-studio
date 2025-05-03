@@ -12,7 +12,6 @@ export enum IpcChannel {
   App_SetTrayOnClose = 'app:set-tray-on-close',
   App_RestartTray = 'app:restart-tray',
   App_SetTheme = 'app:set-theme',
-  App_SetCustomCss = 'app:set-custom-css',
   App_SetAutoUpdate = 'app:set-auto-update',
 
   App_IsBinaryExist = 'app:is-binary-exist',
@@ -108,7 +107,7 @@ export enum IpcChannel {
   File_Download = 'file:download',
   File_Copy = 'file:copy',
   File_BinaryImage = 'file:binaryImage',
-
+  File_Base64File = 'file:base64File',
   Fs_Read = 'fs:read',
 
   Export_Word = 'export:word',
