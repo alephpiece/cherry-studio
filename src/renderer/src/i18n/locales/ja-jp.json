@@ -81,6 +81,17 @@
       "settings.reasoning_effort.medium": "普通の思考",
       "settings.reasoning_effort.default": "デフォルト",
       "settings.more": "アシスタント設定",
+      "settings.regular_phrases": {
+        "title": "定型プロンプト",
+        "add": "プロンプトを追加",
+        "edit": "プロンプトを編集",
+        "delete": "プロンプトを削除",
+        "deleteConfirm": "このプロンプトを削除してもよろしいですか？",
+        "titleLabel": "タイトル",
+        "titlePlaceholder": "タイトルを入力",
+        "contentLabel": "内容",
+        "contentPlaceholder": "フレーズの内容を入力してください。変数を使用することもできます。変数を使用する場合は、Tabキーを押して変数を選択し、変数を変更してください。例：\n私の名前は${name}です。"
+      },
       "settings.knowledge_base.recognition.tip": "アシスタントは大規模言語モデルの意図認識能力を使用して、ナレッジベースを参照する必要があるかどうかを判断します。この機能はモデルの能力に依存します",
       "settings.knowledge_base.recognition": "ナレッジベースの呼び出し",
       "settings.knowledge_base.recognition.off": "強制検索",
@@ -304,6 +315,7 @@
       "confirm": "確認",
       "copied": "コピーされました",
       "copy": "コピー",
+      "inspect": "検査",
       "cut": "切り取り",
       "default": "デフォルト",
       "delete": "削除",
@@ -619,7 +631,9 @@
       "success.siyuan.export": "思源ノートへのエクスポートに成功しました",
       "warn.yuque.exporting": "語雀にエクスポート中です。重複してエクスポートしないでください!",
       "warn.siyuan.exporting": "思源ノートにエクスポート中です。重複してエクスポートしないでください!",
-      "error.yuque.no_config": "語雀のAPIアドレスまたはトークンが設定されていません"
+      "error.yuque.no_config": "語雀のAPIアドレスまたはトークンが設定されていません",
+      "download.success": "ダウンロードに成功しました",
+      "download.failed": "ダウンロードに失敗しました"
     },
     "minapp": {
       "popup": {
@@ -716,7 +730,8 @@
         "text": "テキスト",
         "vision": "画像",
         "websearch": "ウェブ検索"
-      }
+      },
+      "rerank_model_not_support_provider": "現在、並べ替えモデルはこのプロバイダー ({{provider}}) をサポートしていません。"
     },
     "navbar": {
       "expand": "ダイアログを展開",
@@ -1338,6 +1353,7 @@
         "providerPlaceholder": "プロバイダー名",
         "advancedSettings": "詳細設定"
       },
+      "messages.prompt": "プロンプト表示",
       "messages.divider": "メッセージ間に区切り線を表示",
       "messages.grid_columns": "メッセージグリッドの表示列数",
       "messages.grid_popover_trigger": "グリッド詳細トリガー",
@@ -1580,7 +1596,10 @@
         "titlePlaceholder": "フレーズのタイトルを入力してください",
         "contentPlaceholder": "フレーズの内容を入力してください。変数を使用することもできます。変数を使用する場合は、Tabキーを押して変数を選択し、変数を変更してください。例：\n私の名前は${name}です。",
         "delete": "フレーズを削除",
-        "deleteConfirm": "削除後は復元できません。続行しますか？"
+        "deleteConfirm": "削除後は復元できません。続行しますか？",
+        "locationLabel": "追加場所",
+        "global": "グローバルクイックフレーズ",
+        "assistant": "アシスタントプロンプト"
       },
       "quickPanel": {
         "title": "クイックメニュー",

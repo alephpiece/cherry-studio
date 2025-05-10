@@ -81,6 +81,17 @@
       "settings.reasoning_effort.medium": "正常思考",
       "settings.reasoning_effort.default": "預設",
       "settings.more": "助手設定",
+      "settings.regular_phrases": {
+        "title": "常用短语",
+        "add": "添加短语",
+        "edit": "編輯短语",
+        "delete": "刪除短语",
+        "deleteConfirm": "確定要刪除這個短语嗎？",
+        "titleLabel": "標題",
+        "titlePlaceholder": "輸入標題",
+        "contentLabel": "內容",
+        "contentPlaceholder": "請輸入短語內容，支持使用變量，然後按Tab鍵可以快速定位到變量進行修改。比如：\n幫我規劃從${from}到${to}的行程，然後發送到${email}。"
+      },
       "settings.knowledge_base.recognition.tip": "智慧代理人將調用大語言模型的意圖識別能力，判斷是否需要調用知識庫進行回答，該功能將依賴模型的能力",
       "settings.knowledge_base.recognition": "調用知識庫",
       "settings.knowledge_base.recognition.off": "強制檢索",
@@ -304,6 +315,7 @@
       "confirm": "確認",
       "copied": "已複製",
       "copy": "複製",
+      "inspect": "檢查",
       "cut": "剪下",
       "default": "預設",
       "delete": "刪除",
@@ -619,7 +631,9 @@
       "error.siyuan.no_config": "未配置思源筆記API地址或令牌",
       "success.siyuan.export": "導出到思源筆記成功",
       "warn.yuque.exporting": "正在導出語雀，請勿重複請求導出！",
-      "warn.siyuan.exporting": "正在導出到思源筆記，請勿重複請求導出！"
+      "warn.siyuan.exporting": "正在導出到思源筆記，請勿重複請求導出！",
+      "download.success": "下載成功",
+      "download.failed": "下載失敗"
     },
     "minapp": {
       "popup": {
@@ -716,7 +730,8 @@
         "text": "文字",
         "vision": "視覺",
         "websearch": "網路搜尋"
-      }
+      },
+      "rerank_model_not_support_provider": "目前，重新排序模型不支援此提供者（{{provider}}）"
     },
     "navbar": {
       "expand": "伸縮對話框",
@@ -1339,6 +1354,7 @@
         "providerPlaceholder": "提供者名稱",
         "advancedSettings": "高級設定"
       },
+      "messages.prompt": "提示詞顯示",
       "messages.divider": "訊息間顯示分隔線",
       "messages.grid_columns": "訊息網格展示列數",
       "messages.grid_popover_trigger": "網格詳細資訊觸發",
@@ -1581,7 +1597,10 @@
         "titlePlaceholder": "請輸入短語標題",
         "contentPlaceholder": "請輸入短語內容，支持使用變量，然後按Tab鍵可以快速定位到變量進行修改。比如：\n幫我規劃從${from}到${to}的行程，然後發送到${email}。",
         "delete": "刪除短語",
-        "deleteConfirm": "刪除後無法復原，是否繼續？"
+        "deleteConfirm": "刪除後無法復原，是否繼續？",
+        "locationLabel": "添加位置",
+        "global": "全局快速短語",
+        "assistant": "助手提示詞"
       },
       "quickPanel": {
         "title": "快捷選單",
