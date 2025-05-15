@@ -76,10 +76,7 @@ const CodeEditor = ({ children, language, onSave, onChange, options }: Props) =>
         const scrollHeight = editorViewRef?.current?.scrollDOM?.scrollHeight
         return codeCollapsible && (scrollHeight ?? 0) > 350
       },
-      onClick: () => {
-        const newExpanded = !isExpanded
-        setIsExpanded(newExpanded)
-      }
+      onClick: () => setIsExpanded((prev) => !prev)
     })
 
     return () => removeTool(TOOL_SPECS.expand.id)
@@ -92,10 +89,7 @@ const CodeEditor = ({ children, language, onSave, onChange, options }: Props) =>
       icon: isUnwrapped ? <WrapIcon className="icon" /> : <UnWrapIcon className="icon" />,
       tooltip: isUnwrapped ? t('code_block.wrap.on') : t('code_block.wrap.off'),
       visible: () => codeWrappable,
-      onClick: () => {
-        const newUnwrapped = !isUnwrapped
-        setIsUnwrapped(newUnwrapped)
-      }
+      onClick: () => setIsUnwrapped((prev) => !prev)
     })
 
     return () => removeTool(TOOL_SPECS.wrap.id)
