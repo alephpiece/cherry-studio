@@ -82,7 +82,7 @@ const CodeEditor = ({ children, language, onSave, onChange, options }: Props) =>
       }
     })
 
-    return () => removeTool('expand')
+    return () => removeTool(TOOL_SPECS.expand.id)
   }, [codeCollapsible, isExpanded, registerTool, removeTool, t])
 
   // 自动换行工具
@@ -98,7 +98,7 @@ const CodeEditor = ({ children, language, onSave, onChange, options }: Props) =>
       }
     })
 
-    return () => removeTool('wrap')
+    return () => removeTool(TOOL_SPECS.wrap.id)
   }, [codeWrappable, isUnwrapped, registerTool, removeTool, t])
 
   const handleSave = useCallback(() => {
@@ -109,15 +109,13 @@ const CodeEditor = ({ children, language, onSave, onChange, options }: Props) =>
   // 保存按钮
   useEffect(() => {
     registerTool({
-      id: 'save',
-      type: 'core',
+      ...TOOL_SPECS.save,
       icon: <SaveIcon className="icon" />,
       tooltip: t('code_block.edit.save'),
-      onClick: handleSave,
-      order: 3
+      onClick: handleSave
     })
 
-    return () => removeTool('save')
+    return () => removeTool(TOOL_SPECS.save.id)
   }, [handleSave, registerTool, removeTool, t])
 
   // 流式响应过程中计算 changes 来更新 EditorView

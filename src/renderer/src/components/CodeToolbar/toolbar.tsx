@@ -92,6 +92,7 @@ const ToolWrapper = styled.div`
   height: 24px;
   border-radius: 4px;
   cursor: pointer;
+  user-select: none;
   transition: all 0.2s ease;
   color: var(--color-text-3);
 
