@@ -40,6 +40,7 @@ const CodeEditor = ({ children, language, onSave, onChange, options }: Props) =>
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
   const initialContent = useRef(children?.trimEnd() ?? '')
   const [langExtension, setLangExtension] = useState<Extension[]>([])
+  const [editorReady, setEditorReady] = useState(false)
   const editorViewRef = useRef<EditorView | null>(null)
   const { t } = useTranslation()
 
@@ -80,7 +81,7 @@ const CodeEditor = ({ children, language, onSave, onChange, options }: Props) =>
     })
 
     return () => removeTool(TOOL_SPECS.expand.id)
-  }, [codeCollapsible, isExpanded, registerTool, removeTool, t])
+  }, [codeCollapsible, isExpanded, registerTool, removeTool, t, editorReady])
 
   // 自动换行工具
   useEffect(() => {
@@ -170,7 +171,10 @@ const CodeEditor = ({ children, language, onSave, onChange, options }: Props) =>
       // @ts-ignore 强制使用，见 react-codemirror 的 Example.tsx
       theme={activeCmTheme}
       extensions={enabledExtensions}
-      onCreateEditor={(view: EditorView) => (editorViewRef.current = view)}
+      onCreateEditor={(view: EditorView) => {
+        editorViewRef.current = view
+        setEditorReady(true)
+      }}
       onChange={(value, viewUpdate) => {
         if (onChange && viewUpdate.docChanged) onChange(value)
       }}
