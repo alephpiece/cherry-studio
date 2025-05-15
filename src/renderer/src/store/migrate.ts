@@ -1324,6 +1324,22 @@ const migrateConfig = {
   },
   '101': (state: RootState) => {
     try {
+      if (state.shortcuts) {
+        state.shortcuts.shortcuts.push({
+          key: 'exit_fullscreen',
+          shortcut: ['Escape'],
+          editable: false,
+          enabled: true,
+          system: true
+        })
+      }
+      return state
+    } catch (error) {
+      return state
+    }
+  },
+  '102': (state: RootState) => {
+    try {
       state.settings.codeExecution = settingsInitialState.codeExecution
       state.settings.codeEditor = settingsInitialState.codeEditor
       state.settings.codePreview = settingsInitialState.codePreview
