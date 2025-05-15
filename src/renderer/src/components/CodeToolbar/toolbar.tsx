@@ -1,7 +1,7 @@
 import { HStack } from '@renderer/components/Layout'
 import { Tooltip } from 'antd'
 import { EllipsisVertical } from 'lucide-react'
-import React, { memo, useState } from 'react'
+import React, { memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -34,20 +34,25 @@ export const CodeToolbar: React.FC = memo(() => {
   const coreTools = visibleTools.filter((tool) => tool.type === 'core')
   const quickTools = visibleTools.filter((tool) => tool.type === 'quick')
 
+  // 点击了 more 按钮或者只有一个快捷工具时
+  const quickToolButtons = useMemo(() => {
+    if (quickTools.length === 1 || (quickTools.length > 1 && showQuickTools)) {
+      return quickTools.map((tool) => <CodeToolButton key={tool.id} tool={tool} />)
+    }
+
+    return null
+  }, [quickTools, showQuickTools])
+
   if (visibleTools.length === 0) {
     return null
   }
 
-  const hasQuickTools = quickTools.length > 0
-
   return (
     <StickyWrapper>
       <ToolbarWrapper className="code-toolbar">
-        {/* 当有快捷工具且点击了More按钮时显示快捷工具 */}
-        {hasQuickTools && showQuickTools && quickTools.map((tool) => <CodeToolButton key={tool.id} tool={tool} />)}
-
-        {/* 当有快捷工具时显示More按钮 */}
-        {hasQuickTools && (
+        {/* 有多个快捷工具时通过 more 按钮展示 */}
+        {quickToolButtons}
+        {quickTools.length > 1 && (
           <Tooltip title={t('code_block.more')} mouseEnterDelay={0.5}>
             <ToolWrapper onClick={() => setShowQuickTools(!showQuickTools)} className={showQuickTools ? 'active' : ''}>
               <EllipsisVertical className="icon" />

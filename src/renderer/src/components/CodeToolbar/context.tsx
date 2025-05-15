@@ -34,7 +34,7 @@ export const CodeToolbarProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const registerTool = useCallback((tool: CodeTool) => {
     setTools((prev) => {
       const filtered = prev.filter((t) => t.id !== tool.id)
-      return [...filtered, tool].sort((a, b) => (b.order || 0) - (a.order || 0))
+      return [...filtered, tool].sort((a, b) => b.order - a.order)
     })
   }, [])
 

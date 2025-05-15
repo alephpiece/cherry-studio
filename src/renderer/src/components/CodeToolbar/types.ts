@@ -1,4 +1,13 @@
 /**
+ * 代码块工具基本信息
+ */
+export interface CodeToolSpec {
+  id: string
+  type: 'core' | 'quick'
+  order: number
+}
+
+/**
  * 代码块工具定义接口
  * @param id 唯一标识符
  * @param type 工具类型
@@ -8,14 +17,11 @@
  * @param onClick 点击动作
  * @param order 显示顺序，越小越靠右
  */
-export interface CodeTool {
-  id: string
-  type: 'core' | 'quick'
+export interface CodeTool extends CodeToolSpec {
   icon: React.ReactNode
   tooltip: string
   visible?: (ctx?: CodeToolContext) => boolean
   onClick: (ctx?: CodeToolContext) => void
-  order?: number
 }
 
 /**

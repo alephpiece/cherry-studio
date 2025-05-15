@@ -4,6 +4,7 @@ import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { DownloadPngIcon, DownloadSvgIcon } from '../Icons/DownloadIcons'
+import { TOOL_SPECS } from './constants'
 import { useCodeToolbar } from './context'
 
 // 预编译正则表达式用于查询位置
@@ -294,77 +295,65 @@ export const usePreviewTools = ({ handleZoom, handleCopyImage, handleDownload }:
   }, [])
 
   useEffect(() => {
-    const ids = toolIds()
-
     // 根据提供的功能有选择性地注册工具
     if (handleZoom) {
       // 放大工具
       registerTool({
-        id: ids.zoomIn,
-        type: 'quick',
+        ...TOOL_SPECS['zoom-in'],
         icon: <ZoomIn className="icon" />,
         tooltip: t('code_block.preview.zoom_in'),
-        onClick: () => handleZoom(0.1),
-        order: 34
+        onClick: () => handleZoom(0.1)
       })
 
       // 缩小工具
       registerTool({
-        id: ids.zoomOut,
-        type: 'quick',
+        ...TOOL_SPECS['zoom-out'],
         icon: <ZoomOut className="icon" />,
         tooltip: t('code_block.preview.zoom_out'),
-        onClick: () => handleZoom(-0.1),
-        order: 33
+        onClick: () => handleZoom(-0.1)
       })
     }
 
     if (handleCopyImage) {
       // 复制图片工具
       registerTool({
-        id: ids.copyImage,
-        type: 'quick',
+        ...TOOL_SPECS['copy-image'],
         icon: <FileImage className="icon" />,
         tooltip: t('code_block.preview.copy.image'),
-        onClick: handleCopyImage,
-        order: 32
+        onClick: handleCopyImage
       })
     }
 
     if (handleDownload) {
       // 下载 SVG 工具
       registerTool({
-        id: ids.downloadSvg,
-        type: 'quick',
+        ...TOOL_SPECS['download-svg'],
         icon: <DownloadSvgIcon />,
         tooltip: t('code_block.download.svg'),
-        onClick: () => handleDownload('svg'),
-        order: 31
+        onClick: () => handleDownload('svg')
       })
 
       // 下载 PNG 工具
       registerTool({
-        id: ids.downloadPng,
-        type: 'quick',
+        ...TOOL_SPECS['download-png'],
         icon: <DownloadPngIcon />,
         tooltip: t('code_block.download.png'),
-        onClick: () => handleDownload('png'),
-        order: 30
+        onClick: () => handleDownload('png')
       })
     }
 
     // 清理函数
     return () => {
       if (handleZoom) {
-        removeTool(ids.zoomIn)
-        removeTool(ids.zoomOut)
+        removeTool(TOOL_SPECS['zoom-in'].id)
+        removeTool(TOOL_SPECS['zoom-out'].id)
       }
       if (handleCopyImage) {
-        removeTool(ids.copyImage)
+        removeTool(TOOL_SPECS['copy-image'].id)
       }
       if (handleDownload) {
-        removeTool(ids.downloadSvg)
-        removeTool(ids.downloadPng)
+        removeTool(TOOL_SPECS['download-svg'].id)
+        removeTool(TOOL_SPECS['download-png'].id)
       }
     }
   }, [handleCopyImage, handleDownload, handleZoom, registerTool, removeTool, t, toolIds])

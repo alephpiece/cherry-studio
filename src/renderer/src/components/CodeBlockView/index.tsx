@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons'
 import CodeEditor from '@renderer/components/CodeEditor'
-import { CodeToolbar, CodeToolContext, useCodeToolbar } from '@renderer/components/CodeToolbar'
+import { CodeToolbar, CodeToolContext, TOOL_SPECS, useCodeToolbar } from '@renderer/components/CodeToolbar'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { pyodideService } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
@@ -125,26 +125,22 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
   useEffect(() => {
     // 复制按钮
     registerTool({
-      id: 'copy',
-      type: 'core',
+      ...TOOL_SPECS.copy,
       icon: <Copy className="icon" />,
       tooltip: t('code_block.copy.source'),
-      onClick: handleCopySource,
-      order: 0
+      onClick: handleCopySource
     })
 
     // 下载按钮
     registerTool({
-      id: 'download',
-      type: 'core',
+      ...TOOL_SPECS.download,
       icon: <Download className="icon" />,
       tooltip: t('code_block.download.source'),
-      onClick: handleDownloadSource,
-      order: 1
+      onClick: handleDownloadSource
     })
     return () => {
-      removeTool('copy')
-      removeTool('download')
+      removeTool(TOOL_SPECS.copy.id)
+      removeTool(TOOL_SPECS.download.id)
     }
   }, [handleCopySource, handleDownloadSource, registerTool, removeTool, t])
 
@@ -152,29 +148,25 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
   useEffect(() => {
     if (!hasSpecialView || viewMode === 'split') return
 
+    const viewSourceToolSpec = codeEditor.enabled ? TOOL_SPECS.edit : TOOL_SPECS['view-source']
+
     if (codeEditor.enabled) {
       registerTool({
-        id: 'edit',
-        type: 'core',
+        ...viewSourceToolSpec,
         icon: viewMode === 'source' ? <Eye className="icon" /> : <SquarePen className="icon" />,
         tooltip: viewMode === 'source' ? t('code_block.preview') : t('code_block.edit'),
-        onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source'),
-        order: 2
+        onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source')
       })
     } else {
       registerTool({
-        id: 'view-source',
-        type: 'core',
+        ...viewSourceToolSpec,
         icon: viewMode === 'source' ? <Eye className="icon" /> : <CodeXml className="icon" />,
         tooltip: viewMode === 'source' ? t('code_block.preview') : t('code_block.preview.source'),
-        onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source'),
-        order: 2
+        onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source')
       })
     }
 
-    return () => {
-      removeTool(codeEditor.enabled ? 'edit' : 'view-source')
-    }
+    return () => removeTool(viewSourceToolSpec.id)
   }, [codeEditor.enabled, hasSpecialView, viewMode, registerTool, removeTool, t])
 
   // 特殊视图的分屏按钮
@@ -182,15 +174,13 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
     if (!hasSpecialView) return
 
     registerTool({
-      id: 'split-view-horizontal',
-      type: 'quick',
+      ...TOOL_SPECS['split-view'],
       icon: viewMode === 'split' ? <Square className="icon" /> : <SquareSplitHorizontal className="icon" />,
       tooltip: viewMode === 'split' ? t('code_block.split.restore') : t('code_block.split'),
-      onClick: () => setViewMode(viewMode === 'split' ? 'special' : 'split'),
-      order: 5
+      onClick: () => setViewMode(viewMode === 'split' ? 'special' : 'split')
     })
 
-    return () => removeTool('split-view-horizontal')
+    return () => removeTool(TOOL_SPECS['split-view'].id)
   }, [hasSpecialView, viewMode, registerTool, removeTool, t])
 
   // 运行按钮
@@ -198,15 +188,13 @@ const CodeBlockView: React.FC<Props> = ({ children, language, onSave }) => {
     if (!isExecutable) return
 
     registerTool({
-      id: 'run',
-      type: 'quick',
+      ...TOOL_SPECS.run,
       icon: isRunning ? <LoadingOutlined /> : <CirclePlay className="icon" />,
       tooltip: t('code_block.run'),
-      onClick: (ctx) => !isRunning && handleRunScript(ctx),
-      order: 10
+      onClick: (ctx) => !isRunning && handleRunScript(ctx)
     })
 
-    return () => isExecutable && removeTool('run')
+    return () => isExecutable && removeTool(TOOL_SPECS.run.id)
   }, [isExecutable, isRunning, handleRunScript, registerTool, removeTool, t])
 
   // 源代码视图组件

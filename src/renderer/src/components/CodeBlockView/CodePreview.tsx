@@ -1,4 +1,4 @@
-import { useCodeToolbar } from '@renderer/components/CodeToolbar'
+import { TOOL_SPECS, useCodeToolbar } from '@renderer/components/CodeToolbar'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { uuid } from '@renderer/utils'
@@ -40,16 +40,14 @@ const CodePreview = ({ children, language }: CodePreviewProps) => {
   // 展开/折叠工具
   useEffect(() => {
     registerTool({
-      id: 'expand',
-      type: 'quick',
+      ...TOOL_SPECS.expand,
       icon: isExpanded ? <ChevronsDownUp className="icon" /> : <ChevronsUpDown className="icon" />,
       tooltip: isExpanded ? t('code_block.collapse') : t('code_block.expand'),
       visible: () => {
         const scrollHeight = codeContentRef.current?.scrollHeight
         return codeCollapsible && (scrollHeight ?? 0) > 350
       },
-      onClick: () => setIsExpanded(!isExpanded),
-      order: 1
+      onClick: () => setIsExpanded(!isExpanded)
     })
 
     return () => removeTool('expand')
@@ -58,13 +56,11 @@ const CodePreview = ({ children, language }: CodePreviewProps) => {
   // 自动换行工具
   useEffect(() => {
     registerTool({
-      id: 'wrap',
-      type: 'quick',
+      ...TOOL_SPECS.wrap,
       icon: isUnwrapped ? <WrapIcon className="icon" /> : <UnWrapIcon className="icon" />,
       tooltip: isUnwrapped ? t('code_block.wrap.on') : t('code_block.wrap.off'),
       visible: () => codeWrappable,
-      onClick: () => setIsUnwrapped(!isUnwrapped),
-      order: 0
+      onClick: () => setIsUnwrapped(!isUnwrapped)
     })
 
     return () => removeTool('wrap')
