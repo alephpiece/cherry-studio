@@ -171,7 +171,7 @@ const PlantUmlPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) =>
 
   return (
     <div ref={containerRef}>
-      <PlantUMLServerImage format="svg" diagram={children} className="plantuml-preview" />
+      <PlantUMLServerImage format="svg" diagram={children} className="plantuml-preview special-preview" />
     </div>
   )
 }

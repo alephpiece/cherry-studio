@@ -55,7 +55,7 @@ const SvgPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => {
     handleDownload
   })
 
-  return <div ref={svgContainerRef} className="svg-preview" />
+  return <div ref={svgContainerRef} className="svg-preview special-preview" />
 }
 
 export default memo(SvgPreview)
