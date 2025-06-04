@@ -5,6 +5,7 @@ import { Flex } from 'antd'
 import React, { memo, startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 
+import PreviewError from './PreviewError'
 import { BasicPreviewProps } from './types'
 
 const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => {
@@ -75,7 +76,7 @@ const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => 
 
   return (
     <Flex vertical>
-      {(mermaidError || error) && <StyledError>{mermaidError || error}</StyledError>}
+      {(mermaidError || error) && <PreviewError>{mermaidError || error}</PreviewError>}
       <StyledMermaid ref={mermaidRef} className="mermaid" />
     </Flex>
   )
@@ -83,16 +84,6 @@ const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => 
 
 const StyledMermaid = styled.div`
   overflow: auto;
-`
-
-const StyledError = styled.div`
-  overflow: auto;
-  padding: 16px;
-  color: #ff4d4f;
-  border: 1px solid #ff4d4f;
-  border-radius: 4px;
-  word-wrap: break-word;
-  white-space: pre-wrap;
 `
 
 export default memo(MermaidPreview)

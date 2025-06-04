@@ -5,6 +5,7 @@ import { debounce } from 'lodash'
 import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 
+import PreviewError from './PreviewError'
 import { BasicPreviewProps } from './types'
 
 // 懒加载 viz 实例
@@ -115,7 +116,7 @@ const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) =>
   return (
     <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
       <Flex vertical style={{ minHeight: isLoading ? '2rem' : 'auto' }}>
-        {error && <StyledError>{error}</StyledError>}
+        {error && <PreviewError>{error}</PreviewError>}
         <StyledGraphviz ref={graphvizRef} className="graphviz special-preview" />
       </Flex>
     </Spin>
@@ -124,16 +125,6 @@ const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) =>
 
 const StyledGraphviz = styled.div`
   overflow: auto;
-`
-
-const StyledError = styled.div`
-  overflow: auto;
-  padding: 16px;
-  color: #ff4d4f;
-  border: 1px solid #ff4d4f;
-  border-radius: 4px;
-  word-wrap: break-word;
-  white-space: pre-wrap;
 `
 
 export default memo(GraphvizPreview)
