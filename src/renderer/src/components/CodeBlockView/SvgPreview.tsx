@@ -1,15 +1,12 @@
-import { CodeTool, usePreviewToolHandlers, usePreviewTools } from '@renderer/components/CodeToolbar'
+import { usePreviewToolHandlers, usePreviewTools } from '@renderer/components/CodeToolbar'
 import { memo, useEffect, useRef } from 'react'
 
-interface Props {
-  children: string
-  setTools?: (value: React.SetStateAction<CodeTool[]>) => void
-}
+import { BasicPreviewProps } from './types'
 
 /**
  * 使用 Shadow DOM 渲染 SVG
  */
-const SvgPreview: React.FC<Props> = ({ children, setTools }) => {
+const SvgPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => {
   const svgContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
