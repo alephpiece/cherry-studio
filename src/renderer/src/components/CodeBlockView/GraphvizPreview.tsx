@@ -1,5 +1,6 @@
 import { usePreviewToolHandlers, usePreviewTools } from '@renderer/components/CodeToolbar'
 import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
+import { AsyncInitializer } from '@renderer/utils/asyncInitializer'
 import { Flex, Spin } from 'antd'
 import { debounce } from 'lodash'
 import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -8,29 +9,11 @@ import styled from 'styled-components'
 import PreviewError from './PreviewError'
 import { BasicPreviewProps } from './types'
 
-// 懒加载 viz 实例
-let vizInstance: any = null
-let vizLoading = false
-let vizLoadPromise: Promise<any> | null = null
-
-const loadViz = async () => {
-  if (vizInstance) return vizInstance
-  if (vizLoading && vizLoadPromise) return vizLoadPromise
-
-  vizLoading = true
-  vizLoadPromise = import('@viz-js/viz')
-    .then(async (module) => {
-      vizInstance = await module.instance()
-      vizLoading = false
-      return vizInstance
-    })
-    .catch((error) => {
-      vizLoading = false
-      throw error
-    })
-
-  return vizLoadPromise
-}
+// 管理 viz 实例
+const vizInitializer = new AsyncInitializer(async () => {
+  const module = await import('@viz-js/viz')
+  return await module.instance()
+})
 
 /** 预览 Graphviz 图表
  * 通过防抖渲染提供比较统一的体验，减少闪烁。
@@ -38,8 +21,7 @@ const loadViz = async () => {
 const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => {
   const graphvizRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isLoadingViz, setIsLoadingViz] = useState(false)
-  const [isRendering, setIsRendering] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   // 使用通用图像工具
   const { handleZoom, handleCopyImage, handleDownload } = usePreviewToolHandlers(graphvizRef, {
@@ -61,16 +43,9 @@ const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) =>
     if (!content || !graphvizRef.current) return
 
     try {
-      setIsRendering(true)
+      setIsLoading(true)
 
-      // 首次加载时显示加载状态
-      if (!vizInstance) {
-        setIsLoadingViz(true)
-      }
-
-      const viz = await loadViz()
-      setIsLoadingViz(false)
-
+      const viz = await vizInitializer.get()
       const svgElement = viz.renderSVGElement(content)
 
       // 清空容器并添加新的 SVG
@@ -81,9 +56,8 @@ const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) =>
       setError(null)
     } catch (error) {
       setError((error as Error).message || 'DOT syntax error or rendering failed')
-      setIsLoadingViz(false)
     } finally {
-      setIsRendering(false)
+      setIsLoading(false)
     }
   }, [])
 
@@ -99,19 +73,17 @@ const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) =>
   // 触发渲染
   useEffect(() => {
     if (children) {
-      setIsRendering(true)
+      setIsLoading(true)
       debouncedRender(children)
     } else {
       debouncedRender.cancel()
-      setIsRendering(false)
+      setIsLoading(false)
     }
 
     return () => {
       debouncedRender.cancel()
     }
   }, [children, debouncedRender])
-
-  const isLoading = isLoadingViz || isRendering
 
   return (
     <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
