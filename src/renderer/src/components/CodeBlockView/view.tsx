@@ -248,8 +248,8 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
 })
 
 const CodeBlockWrapper = styled.div<{ $isInSpecialView: boolean }>`
-  /* FIXME: 在 bubble style 中撑开一些宽度*/
   position: relative;
+  width: 100%;
 
   .code-toolbar {
     background-color: ${(props) => (props.$isInSpecialView ? 'transparent' : 'var(--color-background-mute)')};
@@ -284,12 +284,9 @@ const CodeHeader = styled.div<{ $isInSpecialView: boolean }>`
 
 const SplitViewWrapper = styled.div`
   display: flex;
-  width: 100%;
 
   > * {
-    flex: 1 1 0;
-    width: 0;
-    min-width: 0;
-    max-width: 100%;
+    flex: 1 1 auto;
+    width: 100%;
   }
 `
