@@ -34,6 +34,8 @@ import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import styled from 'styled-components'
 
+import { MessageActionButton } from './MessageActionButton'
+
 interface Props {
   message: Message
   assistant: Assistant
@@ -336,23 +338,23 @@ const MessageMenubar: FC<Props> = (props) => {
     <MenusBar className={`menubar ${isLastMessage && 'show'}`}>
       {message.role === 'user' && (
         <Tooltip title={t('common.regenerate')} mouseEnterDelay={0.8}>
-          <ActionButton className="message-action-button" onClick={() => handleResendUserMessage()}>
+          <MessageActionButton onClick={() => handleResendUserMessage()}>
             <SyncOutlined />
-          </ActionButton>
+          </MessageActionButton>
         </Tooltip>
       )}
       {message.role === 'user' && (
         <Tooltip title={t('common.edit')} mouseEnterDelay={0.8}>
-          <ActionButton className="message-action-button" onClick={onEdit}>
+          <MessageActionButton onClick={onEdit}>
             <EditOutlined />
-          </ActionButton>
+          </MessageActionButton>
         </Tooltip>
       )}
       <Tooltip title={t('common.copy')} mouseEnterDelay={0.8}>
-        <ActionButton className="message-action-button" onClick={onCopy}>
+        <MessageActionButton onClick={onCopy}>
           {!copied && <Copy size={16} />}
           {copied && <CheckOutlined style={{ color: 'var(--color-primary)' }} />}
-        </ActionButton>
+        </MessageActionButton>
       </Tooltip>
       {isAssistantMessage && (
         <Popconfirm
@@ -366,17 +368,17 @@ const MessageMenubar: FC<Props> = (props) => {
             mouseEnterDelay={0.8}
             open={showRegenerateTooltip}
             onOpenChange={setShowRegenerateTooltip}>
-            <ActionButton className="message-action-button">
+            <MessageActionButton>
               <RefreshCw size={16} />
-            </ActionButton>
+            </MessageActionButton>
           </Tooltip>
         </Popconfirm>
       )}
       {isAssistantMessage && (
         <Tooltip title={t('message.mention.title')} mouseEnterDelay={0.8}>
-          <ActionButton className="message-action-button" onClick={onMentionModel}>
+          <MessageActionButton onClick={onMentionModel}>
             <AtSign size={16} />
-          </ActionButton>
+          </MessageActionButton>
         </Tooltip>
       )}
       {!isUserMessage && (
@@ -439,22 +441,22 @@ const MessageMenubar: FC<Props> = (props) => {
           trigger={['click']}
           placement="topRight"
           arrow>
-          <Tooltip title={t('chat.translate')} mouseEnterDelay={1.2}>
-            <ActionButton className="message-action-button" onClick={(e) => e.stopPropagation()}>
+          <Tooltip title={t('chat.translate')} mouseEnterDelay={0.8}>
+            <MessageActionButton onClick={(e) => e.stopPropagation()}>
               <Languages size={16} />
-            </ActionButton>
+            </MessageActionButton>
           </Tooltip>
         </Dropdown>
       )}
       {isAssistantMessage && isGrouped && (
         <Tooltip title={t('chat.message.useful')} mouseEnterDelay={0.8}>
-          <ActionButton className="message-action-button" onClick={onUseful}>
+          <MessageActionButton onClick={onUseful}>
             {message.useful ? (
               <ThumbsUp size={17.5} fill="var(--color-primary)" strokeWidth={0} />
             ) : (
               <ThumbsUp size={16} />
             )}
-          </ActionButton>
+          </MessageActionButton>
         </Tooltip>
       )}
       <Popconfirm
@@ -463,15 +465,15 @@ const MessageMenubar: FC<Props> = (props) => {
         icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
         onOpenChange={(open) => open && setShowDeleteTooltip(false)}
         onConfirm={() => deleteMessage(message.id)}>
-        <ActionButton className="message-action-button" onClick={(e) => e.stopPropagation()}>
-          <Tooltip
-            title={t('common.delete')}
-            mouseEnterDelay={1}
-            open={showDeleteTooltip}
-            onOpenChange={setShowDeleteTooltip}>
+        <Tooltip
+          title={t('common.delete')}
+          mouseEnterDelay={0.8}
+          open={showDeleteTooltip}
+          onOpenChange={setShowDeleteTooltip}>
+          <MessageActionButton onClick={(e) => e.stopPropagation()}>
             <Trash size={16} />
-          </Tooltip>
-        </ActionButton>
+          </MessageActionButton>
+        </Tooltip>
       </Popconfirm>
       {!isUserMessage && (
         <Dropdown
@@ -479,9 +481,9 @@ const MessageMenubar: FC<Props> = (props) => {
           trigger={['click']}
           placement="topRight"
           arrow>
-          <ActionButton className="message-action-button" onClick={(e) => e.stopPropagation()}>
+          <MessageActionButton onClick={(e) => e.stopPropagation()}>
             <Menu size={19} />
-          </ActionButton>
+          </MessageActionButton>
         </Dropdown>
       )}
     </MenusBar>
@@ -493,37 +495,7 @@ const MenusBar = styled.div`
   flex-direction: row;
   justify-content: flex-end;
   align-items: center;
-  gap: 6px;
-`
-
-const ActionButton = styled.div`
-  cursor: pointer;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  width: 30px;
-  height: 30px;
-  transition: all 0.2s ease;
-  &:hover {
-    background-color: var(--color-background-mute);
-    .anticon {
-      color: var(--color-text-1);
-    }
-  }
-  .anticon,
-  .iconfont {
-    cursor: pointer;
-    font-size: 14px;
-    color: var(--color-icon);
-  }
-  &:hover {
-    color: var(--color-text-1);
-  }
-  .icon-at {
-    font-size: 16px;
-  }
+  gap: 3px;
 `
 
 // const ReSendButton = styled(Button)`
