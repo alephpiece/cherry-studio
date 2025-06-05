@@ -9,6 +9,7 @@ import { useMinapps } from '@renderer/hooks/useMinapps'
 import useNavBackgroundColor from '@renderer/hooks/useNavBackgroundColor'
 import { modelGenerating, useRuntime } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
+import i18n from '@renderer/i18n'
 import { ThemeMode } from '@renderer/types'
 import { isEmoji } from '@renderer/utils'
 import type { MenuProps } from 'antd'
@@ -32,10 +33,9 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
-import DragableList from '../DragableList'
+import { DraggableVirtualList } from '../DraggableList'
 import MinAppIcon from '../Icons/MinAppIcon'
 import UserPopup from '../Popups/UserPopup'
-import i18n from '@renderer/i18n'
 
 const Sidebar: FC = () => {
   const { hideMinappPopup, openMinapp } = useMinappPopup()
@@ -67,9 +67,7 @@ const Sidebar: FC = () => {
     openMinapp({
       id: docsId,
       name: t('docs.title'),
-      url: isChinese
-        ? 'https://docs.cherry-ai.com/'
-        : 'https://docs.cherry-ai.com/cherry-studio-wen-dang/en-us',
+      url: isChinese ? 'https://docs.cherry-ai.com/' : 'https://docs.cherry-ai.com/cherry-studio-wen-dang/en-us',
       logo: AppLogo
     })
   }
@@ -290,7 +288,7 @@ const PinnedApps: FC = () => {
   const { openMinappKeepAlive } = useMinappPopup()
 
   return (
-    <DragableList list={pinned} onUpdate={updatePinnedMinapps} listStyle={{ marginBottom: 5 }}>
+    <DraggableVirtualList list={pinned} onUpdate={updatePinnedMinapps} listStyle={{ marginBottom: 5 }}>
       {(app) => {
         const menuItems: MenuProps['items'] = [
           {
@@ -318,7 +316,7 @@ const PinnedApps: FC = () => {
           </Tooltip>
         )
       }}
-    </DragableList>
+    </DraggableVirtualList>
   )
 }
 

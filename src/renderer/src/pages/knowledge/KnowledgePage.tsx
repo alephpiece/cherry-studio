@@ -1,6 +1,6 @@
 import { DeleteOutlined, EditOutlined, SettingOutlined } from '@ant-design/icons'
 import { Navbar, NavbarCenter } from '@renderer/components/app/Navbar'
-import DragableList from '@renderer/components/DragableList'
+import { DraggableVirtualList } from '@renderer/components/DraggableList'
 import ListItem from '@renderer/components/ListItem'
 import PromptPopup from '@renderer/components/Popups/PromptPopup'
 import Scrollbar from '@renderer/components/Scrollbar'
@@ -98,7 +98,7 @@ const KnowledgePage: FC = () => {
       <ContentContainer id="content-container">
         <SideNav>
           <ScrollContainer>
-            <DragableList
+            <DraggableVirtualList
               list={bases}
               onUpdate={updateKnowledgeBases}
               style={{ marginBottom: 0, paddingBottom: isDragging ? 50 : 0 }}
@@ -116,7 +116,7 @@ const KnowledgePage: FC = () => {
                   </div>
                 </Dropdown>
               )}
-            </DragableList>
+            </DraggableVirtualList>
             {!isDragging && (
               <AddKnowledgeItem onClick={handleAddKnowledge}>
                 <AddKnowledgeName>

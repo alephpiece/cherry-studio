@@ -1,5 +1,5 @@
 import { MenuOutlined } from '@ant-design/icons'
-import DragableList from '@renderer/components/DragableList'
+import { DraggableVirtualList } from '@renderer/components/DraggableList'
 import { Box, HStack } from '@renderer/components/Layout'
 import { TopView } from '@renderer/components/TopView'
 import { useAgents } from '@renderer/hooks/useAgents'
@@ -43,7 +43,7 @@ const PopupContainer: React.FC = () => {
       centered>
       <Container>
         {agents.length > 0 && (
-          <DragableList list={agents} onUpdate={updateAgents}>
+          <DraggableVirtualList list={agents} onUpdate={updateAgents}>
             {(item) => (
               <AgentItem>
                 <Box mr={8}>
@@ -54,7 +54,7 @@ const PopupContainer: React.FC = () => {
                 </HStack>
               </AgentItem>
             )}
-          </DragableList>
+          </DraggableVirtualList>
         )}
         {agents.length === 0 && <Empty description="" />}
       </Container>

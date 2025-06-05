@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons'
-import DragableList from '@renderer/components/DragableList'
+import { DraggableVirtualList } from '@renderer/components/DraggableList'
 import Scrollbar from '@renderer/components/Scrollbar'
 import { useAgents } from '@renderer/hooks/useAgents'
 import { useAssistants } from '@renderer/hooks/useAssistant'
@@ -93,7 +93,7 @@ const Assistants: FC<AssistantsTabProps> = ({
 
   return (
     <Container className="assistants-tab" ref={containerRef}>
-      <DragableList
+      <DraggableVirtualList
         list={assistants}
         onUpdate={updateAssistants}
         style={{ paddingBottom: dragging ? '34px' : 0 }}
@@ -113,7 +113,7 @@ const Assistants: FC<AssistantsTabProps> = ({
             handleSortByChange={handleSortByChange}
           />
         )}
-      </DragableList>
+      </DraggableVirtualList>
       {!dragging && (
         <AssistantAddItem onClick={onCreateAssistant}>
           <AssistantName>

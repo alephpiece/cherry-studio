@@ -3,7 +3,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-import DragableList from '../DragableList'
+import { DraggableVirtualList } from '../DraggableList'
 
 // mock @hello-pangea/dnd 组件
 vi.mock('@hello-pangea/dnd', () => {
@@ -49,7 +49,7 @@ declare global {
   }
 }
 
-describe('DragableList', () => {
+describe('DraggableVirtualList', () => {
   describe('rendering', () => {
     it('should render all list items', () => {
       const list = [
@@ -58,9 +58,9 @@ describe('DragableList', () => {
         { id: 'c', name: 'C' }
       ]
       render(
-        <DragableList list={list} onUpdate={() => {}}>
+        <DraggableVirtualList list={list} onUpdate={() => {}}>
           {(item) => <div data-testid="item">{item.name}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
       const items = screen.getAllByTestId('item')
       expect(items.length).toBe(3)
@@ -74,9 +74,9 @@ describe('DragableList', () => {
       const style = { background: 'red' }
       const listStyle = { color: 'blue' }
       render(
-        <DragableList list={list} style={style} listStyle={listStyle} onUpdate={() => {}}>
+        <DraggableVirtualList list={list} style={style} listStyle={listStyle} onUpdate={() => {}}>
           {(item) => <div data-testid="item">{item.name}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
       // 检查 style 是否传递到外层容器
       const virtualList = screen.getByTestId('virtual-list')
@@ -85,9 +85,9 @@ describe('DragableList', () => {
 
     it('should render nothing when list is empty', () => {
       render(
-        <DragableList list={[]} onUpdate={() => {}}>
+        <DraggableVirtualList list={[]} onUpdate={() => {}}>
           {(item) => <div data-testid="item">{item.name}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
       // 虚拟列表存在但无内容
       const items = screen.queryAllByTestId('item')
@@ -106,9 +106,9 @@ describe('DragableList', () => {
       const onUpdate = vi.fn()
 
       render(
-        <DragableList list={list} onUpdate={onUpdate}>
+        <DraggableVirtualList list={list} onUpdate={onUpdate}>
           {(item) => <div data-testid="item">{item.name}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
 
       // 直接调用 window.triggerOnDragEnd 模拟拖拽结束
@@ -128,9 +128,9 @@ describe('DragableList', () => {
       const onDragEnd = vi.fn()
 
       render(
-        <DragableList list={list} onUpdate={() => {}} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+        <DraggableVirtualList list={list} onUpdate={() => {}} onDragStart={onDragStart} onDragEnd={onDragEnd}>
           {(item) => <div data-testid="item">{item.name}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
 
       // 先手动调用 onDragStart
@@ -150,9 +150,9 @@ describe('DragableList', () => {
       const onUpdate = vi.fn()
 
       render(
-        <DragableList list={list} onUpdate={onUpdate}>
+        <DraggableVirtualList list={list} onUpdate={onUpdate}>
           {(item) => <div data-testid="item">{item.name}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
 
       // 模拟拖拽到自身
@@ -168,9 +168,9 @@ describe('DragableList', () => {
       const onUpdate = vi.fn()
 
       render(
-        <DragableList list={list} onUpdate={onUpdate}>
+        <DraggableVirtualList list={list} onUpdate={onUpdate}>
           {(item) => <div data-testid="item">{item.name}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
 
       // 拖拽自身
@@ -188,9 +188,9 @@ describe('DragableList', () => {
       // 不传 onDragStart/onDragEnd
       expect(() => {
         render(
-          <DragableList list={list} onUpdate={() => {}}>
+          <DraggableVirtualList list={list} onUpdate={() => {}}>
             {(item) => <div data-testid="item">{item.name}</div>}
-          </DragableList>
+          </DraggableVirtualList>
         )
         window.triggerOnDragEnd({ source: { index: 0 }, destination: { index: 1 } }, {})
       }).not.toThrow()
@@ -201,9 +201,9 @@ describe('DragableList', () => {
       const onUpdate = vi.fn()
 
       render(
-        <DragableList list={list} onUpdate={onUpdate}>
+        <DraggableVirtualList list={list} onUpdate={onUpdate}>
           {(item) => <div data-testid="item">{item}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
 
       // 拖拽第0项到第2项
@@ -222,9 +222,9 @@ describe('DragableList', () => {
       ]
 
       render(
-        <DragableList list={list} onUpdate={() => {}}>
+        <DraggableVirtualList list={list} onUpdate={() => {}}>
           {(item) => <div data-testid="item">{item.name}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
 
       // placeholder 应该在初始渲染时就存在
@@ -240,9 +240,9 @@ describe('DragableList', () => {
       ]
       const onUpdate = vi.fn()
       render(
-        <DragableList list={list} onUpdate={onUpdate}>
+        <DraggableVirtualList list={list} onUpdate={onUpdate}>
           {(item) => <div data-testid="item">{item.name}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
 
       // 拖拽第2项到第0项
@@ -272,9 +272,9 @@ describe('DragableList', () => {
         { id: 'c', name: 'C' }
       ]
       const { container } = render(
-        <DragableList list={list} onUpdate={() => {}}>
+        <DraggableVirtualList list={list} onUpdate={() => {}}>
           {(item) => <div data-testid="item">{item.name}</div>}
-        </DragableList>
+        </DraggableVirtualList>
       )
       expect(container).toMatchSnapshot()
     })

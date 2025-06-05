@@ -8,7 +8,7 @@ import {
   QuestionCircleOutlined,
   UploadOutlined
 } from '@ant-design/icons'
-import DragableList from '@renderer/components/DragableList'
+import { DraggableVirtualList } from '@renderer/components/DraggableList'
 import CopyIcon from '@renderer/components/Icons/CopyIcon'
 import ObsidianExportPopup from '@renderer/components/Popups/ObsidianExportPopup'
 import PromptPopup from '@renderer/components/Popups/PromptPopup'
@@ -397,7 +397,7 @@ const Topics: FC<Props> = ({ assistant: _assistant, activeTopic, setActiveTopic 
   return (
     <Dropdown menu={{ items: getTopicMenuItems }} trigger={['contextMenu']}>
       <Container className="topics-tab">
-        <DragableList list={sortedTopics} onUpdate={updateTopics}>
+        <DraggableVirtualList list={sortedTopics} onUpdate={updateTopics}>
           {(topic) => {
             const isActive = topic.id === activeTopic?.id
             const topicName = topic.name.replace('`', '')
@@ -461,7 +461,7 @@ const Topics: FC<Props> = ({ assistant: _assistant, activeTopic, setActiveTopic 
               </TopicListItem>
             )
           }}
-        </DragableList>
+        </DraggableVirtualList>
         <div style={{ minHeight: '10px' }}></div>
       </Container>
     </Dropdown>
