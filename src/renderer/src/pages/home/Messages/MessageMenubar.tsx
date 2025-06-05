@@ -35,6 +35,7 @@ import { useSelector } from 'react-redux'
 import styled from 'styled-components'
 
 import { MessageActionButton } from './MessageActionButton'
+import MessageMetricsButton from './MessageMetricsButton'
 
 interface Props {
   message: Message
@@ -43,14 +44,14 @@ interface Props {
   model?: Model
   index?: number
   isGrouped?: boolean
-  isLastMessage: boolean
+  alwaysShow?: boolean
   isAssistantMessage: boolean
   messageContainerRef: React.RefObject<HTMLDivElement>
   setModel: (model: Model) => void
 }
 
 const MessageMenubar: FC<Props> = (props) => {
-  const { message, index, isGrouped, isLastMessage, isAssistantMessage, assistant, topic, model, messageContainerRef } =
+  const { message, index, isGrouped, alwaysShow, isAssistantMessage, assistant, topic, model, messageContainerRef } =
     props
   const { t } = useTranslation()
   const { toggleMultiSelectMode } = useChatContext(props.topic)
@@ -335,7 +336,7 @@ const MessageMenubar: FC<Props> = (props) => {
   }, [message])
 
   return (
-    <MenusBar className={`menubar ${isLastMessage && 'show'}`}>
+    <MenusBar className={`menubar ${alwaysShow && 'show'}`}>
       {message.role === 'user' && (
         <Tooltip title={t('common.regenerate')} mouseEnterDelay={0.8}>
           <MessageActionButton onClick={() => handleResendUserMessage()}>
@@ -486,6 +487,7 @@ const MessageMenubar: FC<Props> = (props) => {
           </MessageActionButton>
         </Dropdown>
       )}
+      <MessageMetricsButton message={message} />
     </MenusBar>
   )
 }
