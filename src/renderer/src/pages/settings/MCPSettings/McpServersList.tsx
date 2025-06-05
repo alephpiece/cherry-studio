@@ -1,11 +1,11 @@
 import { EditOutlined } from '@ant-design/icons'
 import { nanoid } from '@reduxjs/toolkit'
-import { DraggableVirtualList } from '@renderer/components/DraggableList'
+import { DraggableList } from '@renderer/components/DraggableList'
 import Scrollbar from '@renderer/components/Scrollbar'
 import { useMCPServers } from '@renderer/hooks/useMCPServers'
 import { MCPServer } from '@renderer/types'
 import { formatMcpError } from '@renderer/utils/error'
-import { Button, Dropdown, Empty, Switch, Tag } from 'antd'
+import { Button, Dropdown, Empty, Switch, Tag, Tooltip } from 'antd'
 import { MonitorCheck, Plus, RefreshCw, Settings2, SquareArrowOutUpRight } from 'lucide-react'
 import { FC, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -117,13 +117,15 @@ const McpServersList: FC = () => {
           </Button>
         </ButtonGroup>
       </ListHeader>
-      <DraggableVirtualList style={{ width: '100%' }} list={mcpServers} onUpdate={updateMcpServers}>
+      <DraggableList style={{ width: '100%' }} list={mcpServers} onUpdate={updateMcpServers} grid={true}>
         {(server: MCPServer) => (
           <ServerCard key={server.id} onClick={() => navigate(`/settings/mcp/settings`, { state: { server } })}>
             <ServerHeader>
               <ServerName>
                 {server.logoUrl && <ServerLogo src={server.logoUrl} alt={`${server.name} logo`} />}
-                <ServerNameText>{server.name}</ServerNameText>
+                <Tooltip title={server.name} placement="top" mouseEnterDelay={0.5}>
+                  <ServerNameText>{server.name}</ServerNameText>
+                </Tooltip>
                 {server.providerUrl && (
                   <Button
                     size="small"
@@ -152,7 +154,9 @@ const McpServersList: FC = () => {
                 />
               </StatusIndicator>
             </ServerHeader>
-            <ServerDescription>{server.description}</ServerDescription>
+            <Tooltip title={server.description} placement="bottom" mouseEnterDelay={0.5}>
+              <ServerDescription>{server.description}</ServerDescription>
+            </Tooltip>
             <ServerFooter>
               <Tag color="processing" style={{ borderRadius: 20, margin: 0, fontWeight: 500 }}>
                 {t(`settings.mcp.types.${server.type || 'stdio'}`)}
@@ -171,7 +175,7 @@ const McpServersList: FC = () => {
             </ServerFooter>
           </ServerCard>
         )}
-      </DraggableVirtualList>
+      </DraggableList>
       {mcpServers.length === 0 && (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -222,8 +226,9 @@ const ServerCard = styled.div`
   padding: 10px 16px;
   transition: all 0.2s ease;
   background-color: var(--color-background);
-  margin-bottom: 5px;
-  height: 125px;
+  margin-bottom: 0;
+  height: 150px;
+  width: 100%;
   cursor: pointer;
 
   &:hover {
@@ -262,8 +267,13 @@ const ServerName = styled.div`
 `
 
 const ServerNameText = styled.span`
+  flex: 1;
   font-size: 15px;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 `
 
 const StatusIndicator = styled.div`
@@ -282,7 +292,7 @@ const ServerDescription = styled.div`
   -webkit-box-orient: vertical;
   width: 100%;
   word-break: break-word;
-  height: 50px;
+  height: 75px;
 `
 
 const ServerFooter = styled.div`
