@@ -98,7 +98,10 @@ const MessageItem: FC<Props> = ({
   const isAssistantMessage = message.role === 'assistant'
   const showMenubar = !hideMenuBar && !isStreaming && !message.status.includes('ing') && !isEditing
 
-  const isFooterInside = useMemo(() => isBubbleStyle && isAssistantMessage, [isBubbleStyle, isAssistantMessage])
+  const isFooterInside = useMemo(
+    () => !isBubbleStyle || (isBubbleStyle && isAssistantMessage),
+    [isBubbleStyle, isAssistantMessage]
+  )
 
   const messageBorder = showMessageDivider && isFooterInside ? undefined : 'none'
   const messageBackground = getMessageBackground(isBubbleStyle, isAssistantMessage)
@@ -127,7 +130,8 @@ const MessageItem: FC<Props> = ({
         <MessageFooter
           className="MessageFooter"
           style={{
-            border: messageBorder
+            border: messageBorder,
+            justifyContent: isBubbleStyle ? 'flex-end' : 'flex-start'
           }}>
           <MessageMenubar
             message={message}
@@ -260,11 +264,9 @@ const MessageFooter = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: flex-end;
-  padding: 2px 0;
+  padding: 2px 0 0 0;
   margin-top: 2px;
   border-top: 1px dotted var(--color-border);
-  gap: 20px;
 `
 
 const NewContextMessage = styled.div`
