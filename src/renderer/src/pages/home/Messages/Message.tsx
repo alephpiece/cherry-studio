@@ -99,8 +99,8 @@ const MessageItem: FC<Props> = ({
   const showMenubar = !hideMenuBar && !isStreaming && !message.status.includes('ing') && !isEditing
 
   const isFooterInside = useMemo(
-    () => !isBubbleStyle || (isBubbleStyle && isAssistantMessage),
-    [isBubbleStyle, isAssistantMessage]
+    () => !isBubbleStyle || (isBubbleStyle && isLastMessage && isAssistantMessage),
+    [isBubbleStyle, isLastMessage, isAssistantMessage]
   )
 
   const messageBorder = showMessageDivider && isFooterInside ? undefined : 'none'
@@ -265,7 +265,6 @@ const MessageFooter = styled.div`
   flex-direction: row;
   align-items: center;
   padding: 2px 0 0 0;
-  margin-top: 2px;
   border-top: 1px dotted var(--color-border);
 `
 
