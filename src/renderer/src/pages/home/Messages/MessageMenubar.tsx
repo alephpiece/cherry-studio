@@ -385,6 +385,10 @@ const MessageMenubar: FC<Props> = (props) => {
       {!isUserMessage && (
         <Dropdown
           menu={{
+            style: {
+              maxHeight: 250,
+              overflowY: 'auto'
+            },
             items: [
               ...TranslateLanguageOptions.map((item) => ({
                 label: item.emoji + ' ' + item.label,
@@ -440,7 +444,7 @@ const MessageMenubar: FC<Props> = (props) => {
             onClick: (e) => e.domEvent.stopPropagation()
           }}
           trigger={['click']}
-          placement="topRight"
+          placement="top"
           arrow>
           <Tooltip title={t('chat.translate')} mouseEnterDelay={0.8}>
             <MessageActionButton onClick={(e) => e.stopPropagation()}>
