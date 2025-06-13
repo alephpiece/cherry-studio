@@ -54,90 +54,110 @@ export async function captureDiv(divRef: React.RefObject<HTMLDivElement>) {
  * @returns Promise<HTMLCanvasElement | undefined> 捕获的画布对象，如果失败则返回 undefined
  */
 export const captureScrollableDiv = async (divRef: React.RefObject<HTMLDivElement | null>) => {
-  if (divRef.current) {
-    try {
-      const div = divRef.current
+  if (!divRef.current) return Promise.resolve(undefined)
 
-      // Save original styles
-      const originalStyle = {
-        height: div.style.height,
-        maxHeight: div.style.maxHeight,
-        overflow: div.style.overflow,
-        position: div.style.position
-      }
+  const div = divRef.current
 
-      const originalScrollTop = div.scrollTop
-
-      // Modify styles to show full content
-      div.style.height = 'auto'
-      div.style.maxHeight = 'none'
-      div.style.overflow = 'visible'
-      div.style.position = 'static'
-
-      // calculate the size of the div
-      const totalWidth = div.scrollWidth
-      const totalHeight = div.scrollHeight
-
-      // check if the size of the div is too large
-      const MAX_ALLOWED_DIMENSION = 32767 // the maximum allowed pixel size
-      if (totalHeight > MAX_ALLOWED_DIMENSION || totalWidth > MAX_ALLOWED_DIMENSION) {
-        // restore the original styles
-        div.style.height = originalStyle.height
-        div.style.maxHeight = originalStyle.maxHeight
-        div.style.overflow = originalStyle.overflow
-        div.style.position = originalStyle.position
-
-        // restore the original scroll position
-        setTimeout(() => {
-          div.scrollTop = originalScrollTop
-        }, 0)
-
-        window.message.error({
-          content: i18n.t('message.error.dimension_too_large'),
-          key: 'export-error'
-        })
-        return Promise.reject()
-      }
-
-      const canvas = await new Promise<HTMLCanvasElement>((resolve, reject) => {
-        htmlToImage
-          .toCanvas(div, {
-            backgroundColor: getComputedStyle(div).getPropertyValue('--color-background'),
-            cacheBust: true,
-            pixelRatio: window.devicePixelRatio,
-            skipAutoScale: true,
-            canvasWidth: div.scrollWidth,
-            canvasHeight: div.scrollHeight,
-            style: {
-              backgroundColor: getComputedStyle(div).backgroundColor,
-              color: getComputedStyle(div).color
-            }
-          })
-          .then((canvas) => resolve(canvas))
-          .catch((error) => reject(error))
-      })
-
-      // Restore original styles
-      div.style.height = originalStyle.height
-      div.style.maxHeight = originalStyle.maxHeight
-      div.style.overflow = originalStyle.overflow
-      div.style.position = originalStyle.position
-
-      const imageData = canvas
-
-      // Restore original scroll position
-      setTimeout(() => {
-        div.scrollTop = originalScrollTop
-      }, 0)
-
-      return imageData
-    } catch (error) {
-      console.error('Error capturing scrollable div:', error)
-      throw error
-    }
+  // Save original styles
+  const originalStyle = {
+    height: div.style.height,
+    maxHeight: div.style.maxHeight,
+    overflow: div.style.overflow,
+    position: div.style.position
   }
 
-  return Promise.resolve(undefined)
+  const originalScrollTop = div.scrollTop
+
+  // Modify styles to show full content
+  div.style.height = 'auto'
+  div.style.maxHeight = 'none'
+  div.style.overflow = 'visible'
+  div.style.position = 'static'
+
+  // calculate the size of the div
+  const totalWidth = div.scrollWidth
+  const totalHeight = div.scrollHeight
+
+  // check if the size of the div is too large
+  const MAX_ALLOWED_DIMENSION = 32767 // the maximum allowed pixel size
+  if (totalHeight > MAX_ALLOWED_DIMENSION || totalWidth > MAX_ALLOWED_DIMENSION) {
+    // restore the original styles
+    div.style.height = originalStyle.height
+    div.style.maxHeight = originalStyle.maxHeight
+    div.style.overflow = originalStyle.overflow
+    div.style.position = originalStyle.position
+
+    // restore the original scroll position
+    setTimeout(() => {
+      div.scrollTop = originalScrollTop
+    }, 0)
+
+    window.message.error({
+      content: i18n.t('message.error.dimension_too_large'),
+      key: 'export-error'
+    })
+    return Promise.reject()
+  }
+
+  // 创建临时样式表来隐藏滚动条
+  const tempStyleSheet = document.createElement('style')
+  tempStyleSheet.textContent = `
+    #${div.id}, #${div.id} * {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    #${div.id}::-webkit-scrollbar, #${div.id} *::-webkit-scrollbar {
+      display: none !important;
+    }
+  `
+
+  // 确保元素有 ID
+  const originalId = div.id
+  if (!div.id) {
+    div.id = `capture-target-${Date.now()}`
+  }
+
+  try {
+    document.head.appendChild(tempStyleSheet)
+
+    const canvas = await htmlToImage.toCanvas(div, {
+      backgroundColor: getComputedStyle(div).getPropertyValue('--color-background'),
+      cacheBust: true,
+      pixelRatio: window.devicePixelRatio,
+      skipAutoScale: true,
+      canvasWidth: div.scrollWidth,
+      canvasHeight: div.scrollHeight,
+      style: {
+        backgroundColor: getComputedStyle(div).backgroundColor,
+        color: getComputedStyle(div).color
+      }
+    })
+
+    // Restore original styles
+    div.style.height = originalStyle.height
+    div.style.maxHeight = originalStyle.maxHeight
+    div.style.overflow = originalStyle.overflow
+    div.style.position = originalStyle.position
+
+    // Restore original scroll position
+    setTimeout(() => {
+      div.scrollTop = originalScrollTop
+    }, 0)
+
+    return canvas
+  } catch (error) {
+    console.error('Error capturing scrollable div:', error)
+    throw error
+  } finally {
+    // 恢复原始ID
+    if (!originalId) {
+      div.removeAttribute('id')
+    }
+    // 清理临时样式表
+    if (tempStyleSheet && tempStyleSheet.parentNode) {
+      tempStyleSheet.parentNode.removeChild(tempStyleSheet)
+    }
+  }
 }
 
 /**
