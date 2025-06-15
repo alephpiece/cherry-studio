@@ -749,6 +749,11 @@ const fetchAndProcessAssistantResponseImpl = async (
 
         saveUpdatesToDB(assistantMsgId, topicId, messageErrorUpdate, [])
 
+        // 以最后的助手消息结束观察本次对话
+        if (traceProvider) {
+          await traceProvider.stopObservation(assistantMsgId)
+        }
+
         EventEmitter.emit(EVENT_NAMES.MESSAGE_COMPLETE, {
           id: assistantMsgId,
           topicId,

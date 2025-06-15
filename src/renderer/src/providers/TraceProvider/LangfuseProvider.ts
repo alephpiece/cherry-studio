@@ -5,6 +5,7 @@ import { BaseObservationSpec, BaseTraceSpec, LangfuseSettings, TraceProviderType
 import {
   findFileBlocks,
   findImageBlocks,
+  getErrorContent,
   getMainTextContent,
   getThinkingContent
 } from '@renderer/utils/messageUtils/find'
@@ -26,6 +27,7 @@ type LangfuseMessage = {
 type LangfuseResponse = {
   output: {
     content: string
+    thinking?: string
   }
   modelParameters?: Record<string, any>
   usage?: {
@@ -36,6 +38,8 @@ type LangfuseResponse = {
   startTime?: Date
   completionStartTime?: Date
   metadata?: Record<string, any>
+  level?: 'DEFAULT' | 'ERROR'
+  statusMessage?: string
 }
 
 export default class LangfuseProvider extends BaseTraceProvider {
@@ -89,9 +93,6 @@ export default class LangfuseProvider extends BaseTraceProvider {
 
     const formattedResponse = await this.formatResponse(response)
 
-    console.log('Raw response', response)
-    console.log('formattedResponse', formattedResponse)
-
     this.generation.end({
       ...formattedResponse
     })
@@ -123,6 +124,17 @@ export default class LangfuseProvider extends BaseTraceProvider {
    * 将响应Message转换为自定义格式
    */
   protected async formatResponse(response: Message): Promise<LangfuseResponse> {
+    if (response.status === 'error') {
+      const errorContent = getErrorContent(response)
+      return {
+        output: {
+          content: errorContent
+        },
+        level: 'ERROR',
+        statusMessage: errorContent
+      }
+    }
+
     const mainText = getMainTextContent(response)
     const thinking = getThinkingContent(response)
 
@@ -130,6 +142,11 @@ export default class LangfuseProvider extends BaseTraceProvider {
       output: {
         content: mainText
       }
+    }
+
+    // 添加思考内容
+    if (thinking) {
+      result.output.thinking = thinking
     }
 
     // 获取消息关联的助手
@@ -159,11 +176,6 @@ export default class LangfuseProvider extends BaseTraceProvider {
       result.metadata.model = response.model
       result.metadata.assistant_id = response.assistantId
       result.metadata.created_at = response.createdAt
-    }
-
-    // 添加思考内容到metadata
-    if (thinking) {
-      result.metadata.thinking = thinking
     }
 
     // 集成额外性能指标

@@ -16,7 +16,7 @@ export default class TraceProvider {
     try {
       return this.sdk.createTrace(contextMessages, spec)
     } catch (error) {
-      Logger.error('Error creating trace:', error)
+      Logger.warn('Failed to create trace:', error)
       return Promise.resolve()
     }
   }
@@ -25,7 +25,7 @@ export default class TraceProvider {
     try {
       return this.sdk.startObservation(contextMessages, spec)
     } catch (error) {
-      Logger.error('Error starting observation:', error)
+      Logger.warn('Failed to start observation:', error)
       return Promise.resolve()
     }
   }
@@ -34,7 +34,7 @@ export default class TraceProvider {
     try {
       return this.sdk.stopObservation(messageId)
     } catch (error) {
-      Logger.error('Error stopping observation:', error)
+      Logger.warn('Failed to stop observation:', error)
       return Promise.resolve()
     }
   }
@@ -43,7 +43,7 @@ export default class TraceProvider {
     try {
       return this.sdk.close()
     } catch (error) {
-      Logger.error('Error closing trace provider:', error)
+      Logger.warn('Failed to close trace provider:', error)
       return Promise.resolve()
     }
   }
