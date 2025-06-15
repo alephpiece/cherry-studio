@@ -1744,8 +1744,7 @@
         "langfuse": {
           "base_url": "Base URL",
           "secret_key": "Secret Key",
-          "public_key": "Public Key",
-          "trace_name": "Trace Name"
+          "public_key": "Public Key"
         }
       },
       "tray.onclose": "Minimize to Tray on Close",

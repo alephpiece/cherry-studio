@@ -1732,8 +1732,7 @@
         "langfuse": {
           "base_url": "Базовый URL",
           "secret_key": "Секретный ключ",
-          "public_key": "Публичный ключ",
-          "trace_name": "Имя трека"
+          "public_key": "Публичный ключ"
         }
       },
       "tray.onclose": "Свернуть в трей при закрытии",

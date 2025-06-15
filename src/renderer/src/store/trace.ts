@@ -11,7 +11,6 @@ const initialState: TraceState = {
   enabled: false,
   provider: 'langfuse',
   langfuse: {
-    traceName: 'CherryStudio',
     baseUrl: 'https://cloud.langfuse.com',
     publicKey: '',
     secretKey: ''

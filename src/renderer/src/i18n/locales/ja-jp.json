@@ -1732,8 +1732,7 @@
         "langfuse": {
           "base_url": "ベースURL",
           "secret_key": "シークレットキー",
-          "public_key": "公開キー",
-          "trace_name": "トレース名"
+          "public_key": "公開キー"
         }
       },
       "tray.onclose": "閉じるときにトレイに最小化",

@@ -12,19 +12,12 @@ import { SettingSubtitle, SettingTitle } from '..'
 const LangfuseSettings: FC = () => {
   const { t } = useTranslation()
   const { langfuse, updateLangfuse } = useTrace()
-  const traceName = useDeferredValue(langfuse.traceName)
   const baseUrl = useDeferredValue(langfuse.baseUrl)
   const publicKey = useDeferredValue(langfuse.publicKey)
   const secretKey = useDeferredValue(langfuse.secretKey)
 
   const providerConfig = TRACE_PROVIDER_CONFIG.langfuse
   const officialWebsite = providerConfig?.websites?.official
-
-  const updateTraceName = (value: string) => {
-    if (value !== langfuse.traceName) {
-      updateLangfuse({ traceName: value })
-    }
-  }
 
   const updateBaseUrl = (value: string) => {
     if (value !== langfuse.baseUrl) {
@@ -91,16 +84,6 @@ const LangfuseSettings: FC = () => {
           placeholder={t('settings.trace.langfuse.base_url')}
           onChange={(e) => updateBaseUrl(e.target.value)}
           onBlur={() => updateBaseUrl(baseUrl)}
-        />
-      </>
-      <>
-        <SettingSubtitle style={{ marginTop: 5, marginBottom: 10 }}>
-          {t('settings.trace.langfuse.trace_name')}
-        </SettingSubtitle>
-        <Input
-          value={traceName}
-          placeholder={t('settings.trace.langfuse.trace_name')}
-          onChange={(e) => updateTraceName(e.target.value)}
         />
       </>
     </>

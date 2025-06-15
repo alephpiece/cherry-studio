@@ -1735,8 +1735,7 @@
         "langfuse": {
           "base_url": "地址",
           "secret_key": "密鑰",
-          "public_key": "公鑰",
-          "trace_name": "追踪名稱"
+          "public_key": "公鑰"
         }
       },
       "tray.onclose": "關閉時最小化到系统匣",
