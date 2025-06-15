@@ -198,7 +198,10 @@ export const getFileContent = (message: Message): FileType[] => {
  */
 export const getErrorContent = (message: Message): string => {
   const errorBlocks = findErrorBlocks(message)
-  return errorBlocks.map((block) => block.error?.message).join('\n\n')
+  return errorBlocks
+    .map((block) => block.error?.message)
+    .filter((msg): msg is string => typeof msg === 'string')
+    .join('\n\n')
 }
 
 /**

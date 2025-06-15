@@ -91,6 +91,10 @@ export default class LangfuseProvider extends BaseTraceProvider {
     // 获取消息的最新状态
     const response = store.getState().messages.entities[messageId]
 
+    if (!response) {
+      throw new Error(`[Langfuse] Message with id ${messageId} not found`)
+    }
+
     const formattedResponse = await this.formatResponse(response)
 
     this.generation.end({

@@ -1,5 +1,6 @@
 import TraceProvider from '@renderer/providers/TraceProvider'
 import store from '@renderer/store'
+import Logger from 'electron-log/renderer'
 
 export class TraceService {
   /**
@@ -24,7 +25,7 @@ export class TraceService {
     try {
       return new TraceProvider(providerType)
     } catch (error) {
-      console.error('Failed to create trace provider:', error)
+      Logger.error('Failed to create trace provider:', error)
       return null
     }
   }

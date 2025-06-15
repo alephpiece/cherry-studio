@@ -12,39 +12,27 @@ export default class TraceProvider {
     this.sdk = TraceProviderFactory.create(provider)
   }
 
-  public createTrace(contextMessages?: Message[], spec?: BaseTraceSpec): Promise<void> {
-    try {
-      return this.sdk.createTrace(contextMessages, spec)
-    } catch (error) {
+  public async createTrace(contextMessages?: Message[], spec?: BaseTraceSpec): Promise<void> {
+    await this.sdk.createTrace(contextMessages, spec).catch((error) => {
       Logger.warn('Failed to create trace:', error)
-      return Promise.resolve()
-    }
+    })
   }
 
-  public startObservation(contextMessages: Message[], spec?: BaseObservationSpec): Promise<void> {
-    try {
-      return this.sdk.startObservation(contextMessages, spec)
-    } catch (error) {
+  public async startObservation(contextMessages: Message[], spec?: BaseObservationSpec): Promise<void> {
+    await this.sdk.startObservation(contextMessages, spec).catch((error) => {
       Logger.warn('Failed to start observation:', error)
-      return Promise.resolve()
-    }
+    })
   }
 
-  public stopObservation(messageId: string): Promise<void> {
-    try {
-      return this.sdk.stopObservation(messageId)
-    } catch (error) {
+  public async stopObservation(messageId: string): Promise<void> {
+    await this.sdk.stopObservation(messageId).catch((error) => {
       Logger.warn('Failed to stop observation:', error)
-      return Promise.resolve()
-    }
+    })
   }
 
-  public close(): Promise<void> {
-    try {
-      return this.sdk.close()
-    } catch (error) {
+  public async close(): Promise<void> {
+    await this.sdk.close().catch((error) => {
       Logger.warn('Failed to close trace provider:', error)
-      return Promise.resolve()
-    }
+    })
   }
 }
