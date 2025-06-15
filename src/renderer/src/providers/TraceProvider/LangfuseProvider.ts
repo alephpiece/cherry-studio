@@ -27,18 +27,14 @@ type LangfuseResponse = {
   output: {
     content: string
   }
-  thinking?: string
+  modelParameters?: Record<string, any>
   usage?: {
     completionTokens?: number
     promptTokens?: number
     totalTokens?: number
   }
-  metrics?: {
-    time_to_first_token_ms?: number
-    completion_time_ms?: number
-    thinking_time_ms?: number
-    tokens_per_second?: number
-  }
+  startTime?: Date
+  completionStartTime?: Date
   metadata?: Record<string, any>
 }
 
@@ -88,6 +84,7 @@ export default class LangfuseProvider extends BaseTraceProvider {
       throw new Error('Cannot stop observation before it is started')
     }
 
+    // 获取消息的最新状态
     const response = store.getState().messages.entities[messageId]
 
     const formattedResponse = await this.formatResponse(response)
@@ -135,12 +132,17 @@ export default class LangfuseProvider extends BaseTraceProvider {
       }
     }
 
-    // 添加思考内容（如果有）
-    if (thinking) {
-      result.thinking = thinking
+    // 获取消息关联的助手
+    const assistant = store.getState().assistants.assistants.find((a) => a.id === response.assistantId)
+
+    // 更新助手相关信息
+    if (assistant?.settings) {
+      result.modelParameters = {
+        ...assistant.settings
+      }
     }
 
-    // 添加token使用信息（如果有）
+    // 添加token使用信息
     if (response.usage) {
       result.usage = {
         promptTokens: response.usage.prompt_tokens,
@@ -149,48 +151,54 @@ export default class LangfuseProvider extends BaseTraceProvider {
       }
     }
 
-    // 添加其他元数据
+    // 初始化metadata对象
+    result.metadata = {}
+
+    // 添加基础元数据
     if (response.model) {
-      result.metadata = {
-        model: response.model,
-        assistant_id: response.assistantId,
-        created_at: response.createdAt
-      }
+      result.metadata.model = response.model
+      result.metadata.assistant_id = response.assistantId
+      result.metadata.created_at = response.createdAt
     }
 
-    // 集成性能指标
-    if (response.metrics) {
-      const performance: LangfuseResponse['metrics'] = {}
+    // 添加思考内容到metadata
+    if (thinking) {
+      result.metadata.thinking = thinking
+    }
 
+    // 集成额外性能指标
+    if (response.metrics) {
       // 首个token时间
-      if (response.metrics.time_first_token_millsec && response.metrics.time_first_token_millsec > 0) {
-        performance.time_to_first_token_ms = response.metrics.time_first_token_millsec
+      const ttft = response.metrics.time_first_token_millsec
+      if (ttft && ttft > 0) {
+        result.metadata.time_to_first_token_ms = ttft
+
+        // 计算 completionStartTime
+        // FIXME: 这样处理之后，得到的 TTFT 和实际的可能有偏差
+        const startTimeString = response.updatedAt ?? response.createdAt
+        if (startTimeString) {
+          const startTime = new Date(startTimeString)
+          result.startTime = startTime
+          result.completionStartTime = new Date(startTime.getTime() + ttft)
+        }
       }
 
       // 完成时间
-      if (response.metrics.time_completion_millsec && response.metrics.time_completion_millsec > 0) {
-        performance.completion_time_ms = response.metrics.time_completion_millsec
+      const completionTime = response.metrics.time_completion_millsec
+      if (completionTime && completionTime > 0) {
+        result.metadata.completion_time_ms = completionTime
       }
 
       // 思考时间
-      if (response.metrics.time_thinking_millsec && response.metrics.time_thinking_millsec > 0) {
-        performance.thinking_time_ms = response.metrics.time_thinking_millsec
+      const thinkingTime = response.metrics.time_thinking_millsec
+      if (thinkingTime && thinkingTime > 0) {
+        result.metadata.thinking_time_ms = thinkingTime
       }
 
       // 计算tokens per second - 使用metrics中的completion_tokens或usage中的completion_tokens
       const completionTokens = response.metrics.completion_tokens || response.usage?.completion_tokens
-      if (
-        completionTokens &&
-        completionTokens > 0 &&
-        response.metrics.time_completion_millsec &&
-        response.metrics.time_completion_millsec > 0
-      ) {
-        performance.tokens_per_second = Math.round(completionTokens / (response.metrics.time_completion_millsec / 1000))
-      }
-
-      // 只有当有性能数据时才添加performance字段
-      if (Object.keys(performance).length > 0) {
-        result.metrics = performance
+      if (completionTokens && completionTokens > 0 && completionTime && completionTime > 0) {
+        result.metadata.tokens_per_second = Math.round(completionTokens / (completionTime / 1000))
       }
     }
 
