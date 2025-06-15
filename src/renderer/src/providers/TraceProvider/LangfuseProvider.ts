@@ -13,20 +13,22 @@ import { Langfuse, LangfuseGenerationClient, LangfuseTraceClient } from 'langfus
 
 import BaseTraceProvider from './BaseTraceProvider'
 
+type LangfuseMessageContent =
+  | string
+  | Array<{
+      type: 'text' | 'image_url'
+      text?: string
+      image_url?: { url: string }
+    }>
+
 type LangfuseMessage = {
   role: 'user' | 'assistant' | 'system'
-  content:
-    | string
-    | Array<{
-        type: 'text' | 'image_url'
-        text?: string
-        image_url?: { url: string }
-      }>
+  content: LangfuseMessageContent
 }
 
 type LangfuseResponse = {
   output: {
-    content: string
+    content: LangfuseMessageContent
     thinking?: string
   }
   modelParameters?: Record<string, any>
@@ -139,16 +141,16 @@ export default class LangfuseProvider extends BaseTraceProvider {
       }
     }
 
-    const mainText = getMainTextContent(response)
-    const thinking = getThinkingContent(response)
+    const mainContent = await this.formatMessage(response)
 
     const result: LangfuseResponse = {
       output: {
-        content: mainText
+        content: mainContent.content
       }
     }
 
     // 添加思考内容
+    const thinking = getThinkingContent(response)
     if (thinking) {
       result.output.thinking = thinking
     }
@@ -223,6 +225,7 @@ export default class LangfuseProvider extends BaseTraceProvider {
 
   /**
    * 将单个Message转换为自定义Langfuse消息格式
+   * FIXME: 要和实际发送内容保持一致，考虑复用
    */
   private async formatMessage(message: Message): Promise<LangfuseMessage> {
     const content = getMainTextContent(message)
