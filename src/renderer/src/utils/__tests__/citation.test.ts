@@ -1,8 +1,17 @@
 import { GroundingSupport } from '@google/genai'
 import { Citation, WebSearchSource } from '@renderer/types'
+import type { CitationMessageBlock, MessageBlock } from '@renderer/types/newMessage'
+import { MessageBlockType } from '@renderer/types/newMessage'
 import { describe, expect, it, vi } from 'vitest'
 
-import { generateCitationTag, mapCitationMarksToTags, normalizeCitationMarks, withCitationTags } from '../citation'
+import {
+  determineCitationSource,
+  generateCitationTag,
+  getCitationSource,
+  mapCitationMarksToTags,
+  normalizeCitationMarks,
+  withCitationTags
+} from '../citation'
 
 // Mock dependencies
 vi.mock('@renderer/utils/formats', () => ({
@@ -23,6 +32,108 @@ vi.mock('@renderer/utils/formats', () => ({
 
 describe('citation', () => {
   const createCitationMap = (citations: Citation[]) => new Map(citations.map((c) => [c.number, c]))
+
+  // Helper function to create mock citation blocks
+  const createCitationBlock = (source?: WebSearchSource): CitationMessageBlock => ({
+    id: 'test-citation-block',
+    messageId: 'test-message',
+    type: MessageBlockType.CITATION,
+    createdAt: '2025-01-01T00:00:00Z',
+    status: 'success' as any,
+    response: source ? { source, results: [] } : undefined
+  })
+
+  const createNonCitationBlock = (): MessageBlock =>
+    ({
+      id: 'test-main-block',
+      messageId: 'test-message',
+      type: MessageBlockType.MAIN_TEXT,
+      createdAt: '2025-01-01T00:00:00Z',
+      status: 'success' as any,
+      content: 'test content'
+    }) as MessageBlock
+
+  describe('getCitationSource', () => {
+    it('should return source from valid citation block', () => {
+      const block = createCitationBlock(WebSearchSource.GEMINI)
+      const result = getCitationSource(block)
+      expect(result).toBe(WebSearchSource.GEMINI)
+    })
+
+    it('should return undefined for citation block without response', () => {
+      const block = createCitationBlock()
+      const result = getCitationSource(block)
+      expect(result).toBeUndefined()
+    })
+
+    it('should return undefined for non-citation block', () => {
+      const block = createNonCitationBlock()
+      const result = getCitationSource(block)
+      expect(result).toBeUndefined()
+    })
+
+    it('should return undefined for undefined block', () => {
+      const result = getCitationSource(undefined)
+      expect(result).toBeUndefined()
+    })
+  })
+
+  describe('determineCitationSource', () => {
+    it('should prioritize source from citation block', () => {
+      const citationBlock = createCitationBlock(WebSearchSource.GEMINI)
+      const citationReferences = [{ citationBlockId: 'block1', citationBlockSource: WebSearchSource.OPENAI }]
+
+      const result = determineCitationSource(citationReferences, citationBlock)
+      expect(result).toBe(WebSearchSource.GEMINI)
+    })
+
+    it('should fallback to citation references when block has no source', () => {
+      const citationBlock = createCitationBlock() // no source
+      const citationReferences = [{ citationBlockId: 'block1', citationBlockSource: WebSearchSource.OPENAI }]
+
+      const result = determineCitationSource(citationReferences, citationBlock)
+      expect(result).toBe(WebSearchSource.OPENAI)
+    })
+
+    it('should find first valid source in citation references', () => {
+      const citationReferences = [
+        { citationBlockId: 'block1' }, // no source
+        { citationBlockId: 'block2', citationBlockSource: WebSearchSource.GEMINI },
+        { citationBlockId: 'block3', citationBlockSource: WebSearchSource.GEMINI }
+      ]
+
+      const result = determineCitationSource(citationReferences)
+      expect(result).toBe(WebSearchSource.GEMINI)
+    })
+
+    it('should return undefined when no sources available', () => {
+      const citationReferences = [
+        { citationBlockId: 'block1' }, // no source
+        { citationBlockId: 'block2' } // no source
+      ]
+
+      const result = determineCitationSource(citationReferences)
+      expect(result).toBeUndefined()
+    })
+
+    it('should return undefined for empty citation references', () => {
+      const result = determineCitationSource([])
+      expect(result).toBeUndefined()
+    })
+
+    it('should return undefined for undefined citation references', () => {
+      const result = determineCitationSource(undefined)
+      expect(result).toBeUndefined()
+    })
+
+    it('should handle non-citation block gracefully', () => {
+      const nonCitationBlock = createNonCitationBlock()
+      const citationReferences = [{ citationBlockId: 'block1', citationBlockSource: WebSearchSource.OPENAI }]
+
+      const result = determineCitationSource(citationReferences, nonCitationBlock)
+      expect(result).toBe(WebSearchSource.OPENAI)
+    })
+  })
 
   describe('withCitationTags', () => {
     it('should process citations with default source type', () => {

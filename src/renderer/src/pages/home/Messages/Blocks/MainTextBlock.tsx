@@ -1,10 +1,10 @@
 import { useSettings } from '@renderer/hooks/useSettings'
 import { getModelUniqId } from '@renderer/services/ModelService'
 import type { RootState } from '@renderer/store'
-import { selectFormattedCitationsByBlockId } from '@renderer/store/messageBlock'
+import { messageBlocksSelectors, selectFormattedCitationsByBlockId } from '@renderer/store/messageBlock'
 import { type Model } from '@renderer/types'
 import type { MainTextMessageBlock, Message } from '@renderer/types/newMessage'
-import { withCitationTags } from '@renderer/utils/citation'
+import { determineCitationSource, withCitationTags } from '@renderer/utils/citation'
 import { Flex } from 'antd'
 import React, { useMemo } from 'react'
 import { useSelector } from 'react-redux'
@@ -27,16 +27,21 @@ const MainTextBlock: React.FC<Props> = ({ block, citationBlockId, role, mentions
 
   const rawCitations = useSelector((state: RootState) => selectFormattedCitationsByBlockId(state, citationBlockId))
 
+  // 获取实际的 CitationBlock
+  const citationBlock = useSelector((state: RootState) =>
+    citationBlockId ? messageBlocksSelectors.selectById(state, citationBlockId) : undefined
+  )
+
   const processedContent = useMemo(() => {
     if (!block.citationReferences?.length || !citationBlockId || rawCitations.length === 0) {
       return block.content
     }
 
-    // Handles websearch and knowledgebase citations
-    const sourceType = block.citationReferences[0].citationBlockSource
+    // 确定最适合的 source
+    const sourceType = determineCitationSource(block.citationReferences, citationBlock)
 
     return withCitationTags(block.content, rawCitations, sourceType)
-  }, [block.content, block.citationReferences, citationBlockId, rawCitations])
+  }, [block.content, block.citationReferences, citationBlockId, rawCitations, citationBlock])
 
   const ignoreToolUse = useMemo(() => {
     return processedContent.replace(toolUseRegex, '')

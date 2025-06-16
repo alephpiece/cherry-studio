@@ -1,7 +1,45 @@
 import { GroundingSupport } from '@google/genai'
 import { Citation, WebSearchSource } from '@renderer/types'
+import type { CitationMessageBlock, MessageBlock } from '@renderer/types/newMessage'
+import { MessageBlockType } from '@renderer/types/newMessage'
 
 import { cleanMarkdownContent, encodeHTML } from './formats'
+
+/**
+ * 从 CitationMessageBlock 获取 WebSearchSource
+ * @returns WebSearchSource 或 undefined
+ */
+export function getCitationSource(citationBlock: MessageBlock | undefined): WebSearchSource | undefined {
+  if (!citationBlock || citationBlock.type !== MessageBlockType.CITATION) {
+    return undefined
+  }
+
+  const block = citationBlock as CitationMessageBlock
+  return block.response?.source
+}
+
+/**
+ * 从多个 citationReference 中获取最适合的 source
+ * @returns 最适合的 WebSearchSource
+ */
+export function determineCitationSource(
+  citationReferences: Array<{ citationBlockId?: string; citationBlockSource?: WebSearchSource }> | undefined,
+  citationBlock?: MessageBlock
+): WebSearchSource | undefined {
+  // 优先从实际的 CitationBlock 获取 source
+  const sourceFromBlock = getCitationSource(citationBlock)
+  if (sourceFromBlock) {
+    return sourceFromBlock
+  }
+
+  // 回退到从 citationReferences 获取第一个有效的 source
+  if (citationReferences?.length) {
+    const validReference = citationReferences.find((ref) => ref.citationBlockSource)
+    return validReference?.citationBlockSource
+  }
+
+  return undefined
+}
 
 /**
  * 把文本内容中的引用标记转换为完整的引用标签

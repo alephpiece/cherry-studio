@@ -56,6 +56,17 @@ vi.mock('@renderer/utils/citation', () => ({
       return `${content} [processed-citations]`
     }
     return content
+  }),
+  determineCitationSource: vi.fn((citationReferences: any[], citationBlock?: any) => {
+    // Mock implementation that returns the first valid source from citationReferences
+    if (citationBlock?.response?.source) {
+      return citationBlock.response.source
+    }
+    if (citationReferences?.length) {
+      const validReference = citationReferences.find((ref) => ref.citationBlockSource)
+      return validReference?.citationBlockSource
+    }
+    return undefined
   })
 }))
 
@@ -78,6 +89,7 @@ describe('MainTextBlock', () => {
   // Get references to mocked modules
   let mockGetModelUniqId: any
   let mockWithCitationTags: any
+  let mockDetermineCitationSource: any
 
   // Create a mock store for Provider
   const mockStore = configureStore({
@@ -91,9 +103,10 @@ describe('MainTextBlock', () => {
 
     // Get the mocked functions
     const { getModelUniqId } = await import('@renderer/services/ModelService')
-    const { withCitationTags } = await import('@renderer/utils/citation')
+    const { withCitationTags, determineCitationSource } = await import('@renderer/utils/citation')
     mockGetModelUniqId = getModelUniqId as any
     mockWithCitationTags = withCitationTags as any
+    mockDetermineCitationSource = determineCitationSource as any
 
     // Default mock implementations
     mockUseSettings.mockReturnValue({ renderInputMessageAsMarkdown: false })
@@ -299,13 +312,23 @@ text after`,
         citationReferences: [{ citationBlockSource: 'DEFAULT' as any }]
       })
       const mockCitations = [{ id: '1', content: 'Citation content', number: 1 }]
-      mockUseSelector.mockReturnValue(mockCitations)
+
+      // Mock the useSelector calls - first call for citations, second call for citationBlock
+      mockUseSelector
+        .mockReturnValueOnce(mockCitations) // selectFormattedCitationsByBlockId
+        .mockReturnValueOnce(undefined) // messageBlocksSelectors.selectById
 
       renderMainTextBlock({
         block,
         role: 'assistant',
         citationBlockId: 'test-citations'
       })
+
+      // Verify determineCitationSource was called with correct parameters
+      expect(mockDetermineCitationSource).toHaveBeenCalledWith(
+        block.citationReferences,
+        undefined // citationBlock from selector (mocked as undefined)
+      )
 
       // Verify citation processing was called with correct parameters
       expect(mockWithCitationTags).toHaveBeenCalledWith('Content to process', mockCitations, 'DEFAULT')
@@ -342,7 +365,11 @@ text after`,
         }
       ]
 
-      mockUseSelector.mockReturnValue(mockCitations)
+      // Mock the useSelector calls - first call for citations, second call for citationBlock
+      mockUseSelector
+        .mockReturnValueOnce(mockCitations) // selectFormattedCitationsByBlockId
+        .mockReturnValueOnce(undefined) // messageBlocksSelectors.selectById
+
       renderMainTextBlock({
         block,
         role: 'assistant',
@@ -352,6 +379,12 @@ text after`,
       // Verify citation integration works
       expect(mockUseSelector).toHaveBeenCalled()
       expect(getRenderedMarkdown()).toBeInTheDocument()
+
+      // Verify determineCitationSource was called
+      expect(mockDetermineCitationSource).toHaveBeenCalledWith(
+        block.citationReferences,
+        undefined // citationBlock from selector
+      )
 
       // Verify withCitationTags was called with correct parameters
       expect(mockWithCitationTags).toHaveBeenCalledWith(
