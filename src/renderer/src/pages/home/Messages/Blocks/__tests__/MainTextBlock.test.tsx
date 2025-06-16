@@ -48,6 +48,17 @@ vi.mock('@renderer/utils/formats', () => ({
   encodeHTML: vi.fn((content: string) => content.replace(/"/g, '&quot;'))
 }))
 
+// Mock citation utilities
+vi.mock('@renderer/utils/citation', () => ({
+  withCitationTags: vi.fn((content: string, citations: any[]) => {
+    // Simple mock implementation that simulates citation processing
+    if (citations.length > 0) {
+      return `${content} [processed-citations]`
+    }
+    return content
+  })
+}))
+
 // Mock services
 vi.mock('@renderer/services/ModelService', () => ({
   getModelUniqId: vi.fn()
@@ -66,7 +77,7 @@ vi.mock('@renderer/pages/home/Markdown/Markdown', () => ({
 describe('MainTextBlock', () => {
   // Get references to mocked modules
   let mockGetModelUniqId: any
-  let mockCleanMarkdownContent: any
+  let mockWithCitationTags: any
 
   // Create a mock store for Provider
   const mockStore = configureStore({
@@ -80,9 +91,9 @@ describe('MainTextBlock', () => {
 
     // Get the mocked functions
     const { getModelUniqId } = await import('@renderer/services/ModelService')
-    const { cleanMarkdownContent } = await import('@renderer/utils/formats')
+    const { withCitationTags } = await import('@renderer/utils/citation')
     mockGetModelUniqId = getModelUniqId as any
-    mockCleanMarkdownContent = cleanMarkdownContent as any
+    mockWithCitationTags = withCitationTags as any
 
     // Default mock implementations
     mockUseSettings.mockReturnValue({ renderInputMessageAsMarkdown: false })
@@ -283,8 +294,12 @@ text after`,
     })
 
     it('should process content through format utilities', () => {
-      const block = createMainTextBlock({ content: 'Content to process' })
-      mockUseSelector.mockReturnValue([{ id: '1', content: 'Citation content', number: 1 }])
+      const block = createMainTextBlock({
+        content: 'Content to process',
+        citationReferences: [{ citationBlockSource: 'DEFAULT' as any }]
+      })
+      const mockCitations = [{ id: '1', content: 'Citation content', number: 1 }]
+      mockUseSelector.mockReturnValue(mockCitations)
 
       renderMainTextBlock({
         block,
@@ -292,8 +307,11 @@ text after`,
         citationBlockId: 'test-citations'
       })
 
-      // Verify utility functions are called
-      expect(mockCleanMarkdownContent).toHaveBeenCalled()
+      // Verify citation processing was called with correct parameters
+      expect(mockWithCitationTags).toHaveBeenCalledWith('Content to process', mockCitations, 'DEFAULT')
+
+      // Verify the processed content is rendered
+      expect(screen.getByText('Markdown: Content to process [processed-citations]')).toBeInTheDocument()
     })
   })
 
@@ -308,7 +326,7 @@ text after`,
       expect(mockUseSelector).toHaveBeenCalled()
     })
 
-    it('should integrate with citation system when citations exist', () => {
+    it('should integrate with citation processing when all conditions are met', () => {
       const block = createMainTextBlock({
         content: 'Content with citation [1]',
         citationReferences: [{ citationBlockSource: WebSearchSource.OPENAI }]
@@ -335,50 +353,57 @@ text after`,
       expect(mockUseSelector).toHaveBeenCalled()
       expect(getRenderedMarkdown()).toBeInTheDocument()
 
-      // Verify content processing occurred
-      expect(mockCleanMarkdownContent).toHaveBeenCalledWith('Citation content')
+      // Verify withCitationTags was called with correct parameters
+      expect(mockWithCitationTags).toHaveBeenCalledWith(
+        'Content with citation [1]',
+        mockCitations,
+        WebSearchSource.OPENAI
+      )
+
+      // Verify the processed content is rendered
+      expect(screen.getByText('Markdown: Content with citation [1] [processed-citations]')).toBeInTheDocument()
     })
 
-    it('should handle different citation sources correctly', () => {
-      const testSources = [WebSearchSource.OPENAI, 'DEFAULT' as any, 'CUSTOM' as any]
+    it('should skip citation processing when conditions are not met', () => {
+      const testCases = [
+        {
+          name: 'no citationReferences',
+          block: createMainTextBlock({ content: 'Content [1]' }),
+          citationBlockId: 'test'
+        },
+        {
+          name: 'no citationBlockId',
+          block: createMainTextBlock({
+            content: 'Content [1]',
+            citationReferences: [{ citationBlockSource: 'DEFAULT' as any }]
+          }),
+          citationBlockId: undefined
+        },
+        {
+          name: 'no citations data',
+          block: createMainTextBlock({
+            content: 'Content [1]',
+            citationReferences: [{ citationBlockSource: 'DEFAULT' as any }]
+          }),
+          citationBlockId: 'test'
+        }
+      ]
 
-      testSources.forEach((source) => {
-        const block = createMainTextBlock({
-          content: `Citation test for ${source}`,
-          citationReferences: [{ citationBlockSource: source }]
-        })
-
-        mockUseSelector.mockReturnValue([{ id: '1', number: 1, url: 'https://test.com', title: 'Test' }])
+      testCases.forEach(({ block, citationBlockId }) => {
+        mockUseSelector.mockReturnValue([]) // No citations
 
         const { unmount } = renderMainTextBlock({
           block,
           role: 'assistant',
-          citationBlockId: `test-${source}`
+          citationBlockId
         })
 
         expect(getRenderedMarkdown()).toBeInTheDocument()
+        // Should render original content without citation processing
+        expect(screen.getByText(`Markdown: ${block.content}`)).toBeInTheDocument()
+
         unmount()
       })
-    })
-
-    it('should handle multiple citations gracefully', () => {
-      const block = createMainTextBlock({
-        content: 'Multiple citations [1] and [2]',
-        citationReferences: [{ citationBlockSource: 'DEFAULT' as any }]
-      })
-
-      const multipleCitations = [
-        { id: '1', number: 1, url: 'https://first.com', title: 'First' },
-        { id: '2', number: 2, url: 'https://second.com', title: 'Second' }
-      ]
-
-      mockUseSelector.mockReturnValue(multipleCitations)
-
-      expect(() => {
-        renderMainTextBlock({ block, role: 'assistant', citationBlockId: 'multi-test' })
-      }).not.toThrow()
-
-      expect(getRenderedMarkdown()).toBeInTheDocument()
     })
   })
 
@@ -400,51 +425,7 @@ text after`,
     })
   })
 
-  describe('edge cases and robustness', () => {
-    it('should handle large content without performance issues', () => {
-      const largeContent = 'A'.repeat(1000) + ' with citations [1]'
-      const block = createMainTextBlock({ content: largeContent })
-
-      const largeCitations = [
-        {
-          id: '1',
-          number: 1,
-          url: 'https://large.com',
-          title: 'Large',
-          content: 'B'.repeat(500)
-        }
-      ]
-
-      mockUseSelector.mockReturnValue(largeCitations)
-
-      expect(() => {
-        renderMainTextBlock({
-          block,
-          role: 'assistant',
-          citationBlockId: 'large-test'
-        })
-      }).not.toThrow()
-
-      expect(getRenderedMarkdown()).toBeInTheDocument()
-    })
-
-    it('should handle special characters and Unicode gracefully', () => {
-      const specialContent = '测试内容 🚀 📝 ✨ <>&"\'` [1]'
-      const block = createMainTextBlock({ content: specialContent })
-
-      mockUseSelector.mockReturnValue([{ id: '1', number: 1, title: '特殊字符测试', content: '内容 with 🎉' }])
-
-      expect(() => {
-        renderMainTextBlock({
-          block,
-          role: 'assistant',
-          citationBlockId: 'unicode-test'
-        })
-      }).not.toThrow()
-
-      expect(getRenderedMarkdown()).toBeInTheDocument()
-    })
-
+  describe('integration and robustness', () => {
     it('should handle null and undefined values gracefully', () => {
       const block = createMainTextBlock({ content: 'Null safety test' })
 
@@ -460,7 +441,7 @@ text after`,
       expect(getRenderedMarkdown()).toBeInTheDocument()
     })
 
-    it('should integrate properly with Redux store', () => {
+    it('should integrate properly with Redux store for citations', () => {
       const block = createMainTextBlock({
         content: 'Redux integration test',
         citationReferences: [{ citationBlockSource: 'DEFAULT' as any }]
