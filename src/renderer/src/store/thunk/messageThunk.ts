@@ -900,6 +900,11 @@ const fetchAndProcessAssistantResponseImpl = async (
       callbacks.onError?.(error)
       throw error
     }
+  } finally {
+    // 无论如何，关闭 traceProvider
+    if (traceProvider) {
+      await traceProvider.close()
+    }
   }
 }
 

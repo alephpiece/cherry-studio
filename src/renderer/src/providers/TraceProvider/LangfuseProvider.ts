@@ -197,7 +197,7 @@ export default class LangfuseProvider extends BaseTraceProvider {
         output: { status: 'deleted' }
       })
     } else {
-      const formattedResponse = await this.formatMessageBlock(block)
+      const formattedResponse = this.formatMessageBlock(block)
       span.end({
         name: block.type,
         ...formattedResponse
@@ -207,7 +207,34 @@ export default class LangfuseProvider extends BaseTraceProvider {
     trace.observations.delete(spec.id)
   }
 
+  /**
+   * 关闭 langfuse 之前先检查还有没有未完成的 traces 和 observations。
+   * 如果还有，只能假设它们不会正常结束了。
+   */
   public async close(): Promise<void> {
+    const response = {
+      output: { content: null },
+      level: 'ERROR' as const,
+      statusMessage:
+        'This trace or observation was not finished properly and was force closed during provider shutdown.'
+    }
+
+    for (const [traceId, trace] of this.traces) {
+      // 清理 observations
+      for (const [observationId, span] of trace.observations) {
+        span.end({ name: 'block-incomplete', ...response })
+        console.debug(`[Langfuse] Force closed observation ${observationId}`)
+      }
+      trace.observations.clear()
+
+      // 清理 trace 和 generation
+      trace.generation.end({ name: 'generation-incomplete', ...response })
+      trace.client.update({ name: 'message-incomplete', ...response })
+      console.debug(`[Langfuse] Force closed trace ${traceId}`)
+    }
+
+    this.traces.clear()
+
     return await this.langfuse.shutdownAsync()
   }
 
