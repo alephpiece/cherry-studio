@@ -183,7 +183,7 @@
       "input.new.context": "コンテキストをクリア {{Command}}",
       "input.new_topic": "新しいトピック {{Command}}",
       "input.pause": "一時停止",
-      "input.placeholder": "ここにメッセージを入力...",
+      "input.placeholder": "ここにメッセージを入力し、{{key}} を押して送信...",
       "input.send": "送信",
       "input.settings": "設定",
       "input.topics": " トピック ",
@@ -1102,7 +1102,8 @@
           "obsidian": "Obsidianにエクスポート",
           "siyuan": "思源ノートにエクスポート",
           "joplin": "Joplinにエクスポート",
-          "docx": "Wordとしてエクスポート"
+          "docx": "Wordとしてエクスポート",
+          "plain_text": "プレーンテキストとしてコピー"
         },
         "joplin": {
           "check": {
@@ -1883,7 +1884,8 @@
         "model_desc": "翻訳サービスで使用されるモデル",
         "bidirectional": "双方向翻訳設定",
         "bidirectional_tip": "有効にすると、ソース言語と目標言語間の双方向翻訳のみがサポートされます",
-        "scroll_sync": "スクロール同期設定"
+        "scroll_sync": "スクロール同期設定",
+        "preview": "Markdown プレビュー"
       },
       "title": "翻訳",
       "tooltip.newline": "改行",

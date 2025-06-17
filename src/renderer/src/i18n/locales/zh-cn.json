@@ -183,7 +183,7 @@
       "input.new.context": "清除上下文 {{Command}}",
       "input.new_topic": "新话题 {{Command}}",
       "input.pause": "暂停",
-      "input.placeholder": "在这里输入消息...",
+      "input.placeholder": "在这里输入消息，按 {{key}} 发送...",
       "input.translating": "翻译中...",
       "input.send": "发送",
       "input.settings": "设置",
@@ -1104,7 +1104,8 @@
           "obsidian": "导出到Obsidian",
           "siyuan": "导出到思源笔记",
           "joplin": "导出到Joplin",
-          "docx": "导出为Word"
+          "docx": "导出为Word",
+          "plain_text": "复制为纯文本"
         },
         "joplin": {
           "check": {
@@ -1886,7 +1887,8 @@
         "model_desc": "翻译服务使用的模型",
         "bidirectional": "双向翻译设置",
         "bidirectional_tip": "开启后，仅支持在源语言和目标语言之间进行双向翻译",
-        "scroll_sync": "滚动同步设置"
+        "scroll_sync": "滚动同步设置",
+        "preview": "Markdown 预览"
       },
       "title": "翻译",
       "tooltip.newline": "换行",

@@ -183,7 +183,7 @@
       "input.new.context": "清除上下文 {{Command}}",
       "input.new_topic": "新話題 {{Command}}",
       "input.pause": "暫停",
-      "input.placeholder": "在此輸入您的訊息...",
+      "input.placeholder": "在此輸入您的訊息，按 {{key}} 傳送...",
       "input.send": "傳送",
       "input.settings": "設定",
       "input.topics": " 話題 ",
@@ -1104,7 +1104,8 @@
           "obsidian": "匯出到Obsidian",
           "siyuan": "匯出到思源筆記",
           "joplin": "匯出到Joplin",
-          "docx": "匯出為Word"
+          "docx": "匯出為Word",
+          "plain_text": "複製為純文本"
         },
         "joplin": {
           "check": {
@@ -1883,7 +1884,8 @@
         "model_desc": "翻譯服務使用的模型",
         "bidirectional": "雙向翻譯設定",
         "bidirectional_tip": "開啟後，僅支援在源語言和目標語言之間進行雙向翻譯",
-        "scroll_sync": "滾動同步設定"
+        "scroll_sync": "滾動同步設定",
+        "preview": "Markdown 預覽"
       },
       "title": "翻譯",
       "tooltip.newline": "換行",
