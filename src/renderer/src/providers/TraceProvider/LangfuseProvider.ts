@@ -55,6 +55,9 @@ type LangfuseResponse = {
     thinking?: string
     [key: string]: any
   }
+  input?: {
+    [key: string]: any
+  }
   modelParameters?: Record<string, any>
   usage?: {
     completionTokens?: number
@@ -116,7 +119,7 @@ export default class LangfuseProvider extends BaseTraceProvider {
       client,
       model: spec?.model ?? '',
       generation: client.generation({
-        name: spec?.name ?? 'cherry-studio-message',
+        name: spec?.name ?? 'message',
         input: formattedMessages,
         model: spec?.model ?? ''
       }),
@@ -196,6 +199,7 @@ export default class LangfuseProvider extends BaseTraceProvider {
     } else {
       const formattedResponse = await this.formatMessageBlock(block)
       span.end({
+        name: block.type,
         ...formattedResponse
       })
     }
@@ -384,7 +388,6 @@ export default class LangfuseProvider extends BaseTraceProvider {
 
   private formatMessageBlock(block: MessageBlock): LangfuseResponse {
     const result: any = {
-      name: block.type,
       level: block.status === MessageBlockStatus.ERROR ? 'ERROR' : 'DEFAULT',
       output: {
         content: '' // 默认内容，会在下面的switch中覆盖
@@ -440,12 +443,17 @@ export default class LangfuseProvider extends BaseTraceProvider {
 
       case MessageBlockType.TOOL: {
         const toolBlock = block as ToolMessageBlock
-        result.output = {
-          content: toolBlock.content,
-          arguments: toolBlock.arguments
+        if (typeof toolBlock.content === 'object') {
+          result.output = { ...toolBlock.content }
+        } else {
+          result.output = { content: toolBlock.content }
         }
-        result.metadata.toolId = toolBlock.toolId
-        result.metadata.toolName = toolBlock.toolName
+        result.input = {
+          toolId: toolBlock.toolId,
+          toolName: toolBlock.toolName,
+          ...(toolBlock.arguments ?? {}),
+          ...(toolBlock.metadata?.rawMcpToolResponse?.arguments ?? {})
+        }
         result.metadata.success = toolBlock.status === MessageBlockStatus.SUCCESS
         result.metadata.responseType = typeof toolBlock.content
         break

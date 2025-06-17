@@ -391,9 +391,13 @@ const fetchAndProcessAssistantResponseImpl = async (
       }
 
       // 开始追踪当前消息块
+      await startBlockObservation(newBlock.id)
+    }
+
+    const startBlockObservation = async (blockId: string) => {
       if (traceProvider) {
         await traceProvider.startObservation({
-          id: newBlock.id,
+          id: blockId,
           parentId: assistantMsgId
         })
       }
@@ -487,7 +491,6 @@ const fetchAndProcessAssistantResponseImpl = async (
           cancelThrottledBlockUpdate(mainTextBlockId)
           dispatch(updateOneBlock({ id: mainTextBlockId, changes }))
           saveUpdatedBlockToDB(mainTextBlockId, assistantMsgId, topicId, getState)
-          mainTextBlockId = null
         } else {
           console.warn(
             `[onTextComplete] Received text.complete but last block was not MAIN_TEXT (was ${lastBlockType}) or lastBlockId  is null.`
@@ -503,6 +506,7 @@ const fetchAndProcessAssistantResponseImpl = async (
         }
 
         await stopBlockObservation(mainTextBlockId)
+        mainTextBlockId = null
       },
       onThinkingChunk: async (text, thinking_millsec) => {
         accumulatedThinking += text
@@ -603,13 +607,15 @@ const fetchAndProcessAssistantResponseImpl = async (
           cancelThrottledBlockUpdate(existingBlockId)
           dispatch(updateOneBlock({ id: existingBlockId, changes }))
           saveUpdatedBlockToDB(existingBlockId, assistantMsgId, topicId, getState)
+
+          // 先尝试重新启动，避免 stop 先于 start
+          await startBlockObservation(existingBlockId)
+          await stopBlockObservation(existingBlockId)
         } else {
           console.warn(
             `[onToolCallComplete] Received unhandled tool status: ${toolResponse.status} for ID: ${toolResponse.id}`
           )
         }
-
-        await stopBlockObservation(toolBlockId)
       },
       onExternalToolInProgress: async () => {
         const citationBlock = createCitationBlock(assistantMsgId, {}, { status: MessageBlockStatus.PROCESSING })
