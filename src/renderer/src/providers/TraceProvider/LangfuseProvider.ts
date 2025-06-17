@@ -1,7 +1,29 @@
 import store from '@renderer/store'
+import { messageBlocksSelectors } from '@renderer/store/messageBlock'
 import { Message } from '@renderer/types'
 import { FileTypes } from '@renderer/types'
-import { BaseObservationSpec, BaseTraceSpec, LangfuseSettings, TraceProviderType } from '@renderer/types/trace'
+import {
+  CitationMessageBlock,
+  CodeMessageBlock,
+  ErrorMessageBlock,
+  FileMessageBlock,
+  ImageMessageBlock,
+  MainTextMessageBlock,
+  MessageBlock,
+  MessageBlockStatus,
+  MessageBlockType,
+  ThinkingMessageBlock,
+  ToolMessageBlock,
+  TranslationMessageBlock
+} from '@renderer/types/newMessage'
+import {
+  LangfuseSettings,
+  MessageTraceStartSpec as MessageTraceStartSpec,
+  MessageTraceStopSpec as MessageTraceStopSpec,
+  ObservationStartSpec as ObservationStartSpec,
+  ObservationStopSpec as ObservationStopSpec,
+  TraceProviderType
+} from '@renderer/types/trace'
 import {
   findFileBlocks,
   findImageBlocks,
@@ -9,17 +31,18 @@ import {
   getMainTextContent,
   getThinkingContent
 } from '@renderer/utils/messageUtils/find'
-import { Langfuse, LangfuseGenerationClient, LangfuseTraceClient } from 'langfuse'
+import { Langfuse, LangfuseGenerationClient, LangfuseSpanClient, LangfuseTraceClient } from 'langfuse'
 
 import BaseTraceProvider from './BaseTraceProvider'
 
 type LangfuseMessageContent =
-  | string
   | Array<{
       type: 'text' | 'image_url'
       text?: string
       image_url?: { url: string }
     }>
+  | string
+  | object
 
 type LangfuseMessage = {
   role: 'user' | 'assistant' | 'system'
@@ -30,6 +53,7 @@ type LangfuseResponse = {
   output: {
     content: LangfuseMessageContent
     thinking?: string
+    [key: string]: any
   }
   modelParameters?: Record<string, any>
   usage?: {
@@ -40,15 +64,26 @@ type LangfuseResponse = {
   startTime?: Date
   completionStartTime?: Date
   metadata?: Record<string, any>
+  name?: string
   level?: 'DEFAULT' | 'ERROR'
   statusMessage?: string
 }
 
+type TraceData = {
+  client: LangfuseTraceClient
+  model: string
+  generation: LangfuseGenerationClient
+  observations: Map<string, LangfuseSpanClient>
+}
+
+/**
+ * Trace 用于追踪单条消息，和其中一个 generation 同步。
+ * Trace 内的 observations 用于追踪消息块（或者消息的不同阶段）。
+ */
 export default class LangfuseProvider extends BaseTraceProvider {
   protected langfuse: Langfuse
   protected settings: LangfuseSettings
-  protected trace: LangfuseTraceClient | null = null
-  protected generation: LangfuseGenerationClient | null = null
+  protected traces: Map<string, TraceData> = new Map()
 
   constructor(provider: TraceProviderType) {
     super(provider)
@@ -61,51 +96,111 @@ export default class LangfuseProvider extends BaseTraceProvider {
     })
   }
 
-  public async createTrace(contextMessages?: Message[], spec?: BaseTraceSpec): Promise<void> {
-    const formattedMessages = await this.formatContext(contextMessages ?? [])
-
-    this.trace = this.langfuse.trace({
-      name: spec?.name ?? 'CherryStudio.Message',
-      input: formattedMessages,
-      ...spec
-    })
-  }
-
-  public async startObservation(contextMessages: Message[], spec?: BaseObservationSpec): Promise<void> {
-    if (!this.trace) {
-      throw new Error('Cannot start observation before trace is created')
+  public async startTrace(spec: MessageTraceStartSpec): Promise<void> {
+    if (this.traces.has(spec.id)) {
+      throw new Error(`[Langfuse] Trace with id ${spec.id} already exists, skipping...`)
     }
 
-    const formattedMessages = await this.formatContext(contextMessages)
+    const formattedMessages = await this.formatContext(spec?.messages ?? [])
 
-    this.generation = this.trace.generation({
-      name: 'chat-completion',
+    // 创建 trace
+    const client = this.langfuse.trace({
+      name: spec?.name ?? 'CherryStudio.Message',
       input: formattedMessages,
-      ...spec
+      sessionId: spec?.sessionId,
+      tags: spec?.tags,
+      version: spec?.version
     })
+
+    const trace = {
+      client,
+      model: spec?.model ?? '',
+      generation: client.generation({
+        name: spec?.name ?? 'cherry-studio-message',
+        input: formattedMessages,
+        model: spec?.model ?? ''
+      }),
+      observations: new Map()
+    }
+
+    this.traces.set(spec.id, trace)
   }
 
-  public async stopObservation(messageId: string): Promise<void> {
-    if (!this.generation) {
-      throw new Error('Cannot stop observation before it is started')
+  public async stopTrace(spec: MessageTraceStopSpec): Promise<void> {
+    const trace = this.traces.get(spec.id)
+    if (!trace) {
+      throw new Error(`[Langfuse] Cannot stop trace before it is started, id: ${spec.id}`)
     }
 
     // 获取消息的最新状态
-    const response = store.getState().messages.entities[messageId]
-
-    if (!response) {
-      throw new Error(`[Langfuse] Message with id ${messageId} not found`)
+    const message = store.getState().messages.entities[spec.id]
+    if (!message) {
+      throw new Error(`[Langfuse] Failed to stop trace ${spec.id} because message with id ${spec.id} not found`)
     }
 
-    const formattedResponse = await this.formatResponse(response)
+    const formattedResponse = await this.formatResponse(message)
 
-    this.generation.end({
+    trace.generation.end({
       ...formattedResponse
     })
 
-    this.trace?.update({
+    trace.client.update({
       ...formattedResponse
     })
+
+    this.traces.delete(spec.id)
+  }
+
+  public async startObservation(spec: ObservationStartSpec): Promise<void> {
+    const trace = this.traces.get(spec?.parentId ?? '')
+    if (!trace) {
+      throw new Error(`[Langfuse] Cannot start observation before trace is created, traceId: ${spec?.parentId}`)
+    }
+
+    if (trace.observations.has(spec.id)) {
+      throw new Error(`[Langfuse] Observation with id ${spec.id} already exists, skipping...`)
+    }
+
+    // 获取消息块的最新状态
+    const block = messageBlocksSelectors.selectById(store.getState(), spec.id)
+    if (!block) {
+      throw new Error(`[Langfuse] Failed to start observation ${spec.id} because block with id ${spec.id} not found`)
+    }
+
+    const span = trace.client.span({
+      id: spec.id,
+      name: block.type
+    })
+
+    trace.observations.set(spec.id, span)
+  }
+
+  public async stopObservation(spec: ObservationStopSpec): Promise<void> {
+    const trace = this.traces.get(spec.parentId)
+    if (!trace) {
+      throw new Error(`[Langfuse] Cannot stop observation before it is started, id: ${spec.parentId}`)
+    }
+
+    const span = trace.observations.get(spec.id)
+    if (!span) {
+      throw new Error(`[Langfuse] Observation ${spec.id} not found`)
+    }
+
+    // 获取消息块的最新状态
+    const block = messageBlocksSelectors.selectById(store.getState(), spec.id)
+    if (!block) {
+      span.end({
+        name: 'block-deleted',
+        output: { status: 'deleted' }
+      })
+    } else {
+      const formattedResponse = await this.formatMessageBlock(block)
+      span.end({
+        ...formattedResponse
+      })
+    }
+
+    trace.observations.delete(spec.id)
   }
 
   public async close(): Promise<void> {
@@ -285,5 +380,139 @@ export default class LangfuseProvider extends BaseTraceProvider {
       role: message.role === 'system' ? 'user' : message.role,
       content: parts
     }
+  }
+
+  private formatMessageBlock(block: MessageBlock): LangfuseResponse {
+    const result: any = {
+      name: block.type,
+      level: block.status === MessageBlockStatus.ERROR ? 'ERROR' : 'DEFAULT',
+      output: {
+        content: '' // 默认内容，会在下面的switch中覆盖
+      },
+      metadata: {
+        status: block.status,
+        ...(block.metadata || {})
+      }
+    }
+
+    if (block.model) {
+      result.metadata.model = {
+        id: block.model.id,
+        name: block.model.name
+      }
+    }
+
+    switch (block.type) {
+      case MessageBlockType.MAIN_TEXT: {
+        const mainBlock = block as MainTextMessageBlock
+        result.output = { content: mainBlock.content }
+        result.metadata.citationsCount = mainBlock.citationReferences?.length || 0
+        result.metadata.hasKnowledgeBase = !!mainBlock.knowledgeBaseIds?.length
+        result.metadata.knowledgeBaseIds = mainBlock.knowledgeBaseIds || []
+        break
+      }
+
+      case MessageBlockType.THINKING: {
+        const thinkingBlock = block as ThinkingMessageBlock
+        result.output = { content: thinkingBlock.content }
+        if (thinkingBlock.thinking_millsec !== undefined) {
+          result.metadata.thinking_millsec = thinkingBlock.thinking_millsec
+        }
+        break
+      }
+
+      case MessageBlockType.TRANSLATION: {
+        const translationBlock = block as TranslationMessageBlock
+        result.output = { content: translationBlock.content }
+        result.metadata.sourceLanguage = translationBlock.sourceLanguage
+        result.metadata.targetLanguage = translationBlock.targetLanguage
+        result.metadata.sourceBlockId = translationBlock.sourceBlockId
+        break
+      }
+
+      case MessageBlockType.CODE: {
+        const codeBlock = block as CodeMessageBlock
+        result.output = { content: codeBlock.content }
+        result.metadata.language = codeBlock.language
+        result.metadata.linesCount = codeBlock.content?.split('\n').length || 0
+        break
+      }
+
+      case MessageBlockType.TOOL: {
+        const toolBlock = block as ToolMessageBlock
+        result.output = {
+          content: toolBlock.content,
+          arguments: toolBlock.arguments
+        }
+        result.metadata.toolId = toolBlock.toolId
+        result.metadata.toolName = toolBlock.toolName
+        result.metadata.success = toolBlock.status === MessageBlockStatus.SUCCESS
+        result.metadata.responseType = typeof toolBlock.content
+        break
+      }
+
+      case MessageBlockType.IMAGE: {
+        const imageBlock = block as ImageMessageBlock
+        result.output = {
+          url: imageBlock.url,
+          file: imageBlock.file
+            ? {
+                name: imageBlock.file.origin_name,
+                type: imageBlock.file.type,
+                size: imageBlock.file.size
+              }
+            : null
+        }
+        result.metadata.hasUrl = !!imageBlock.url
+        result.metadata.hasFile = !!imageBlock.file
+        result.metadata.generationSuccess = !!(imageBlock.url || imageBlock.file)
+        result.metadata.prompt = imageBlock.metadata?.prompt
+        break
+      }
+
+      case MessageBlockType.CITATION: {
+        const citationBlock = block as CitationMessageBlock
+        result.output = {
+          searchResults: citationBlock.response?.results || [],
+          knowledgeReferences: citationBlock.knowledge || []
+        }
+        // 安全地获取搜索结果数量
+        const searchResults = citationBlock.response?.results
+        result.metadata.searchResultsCount = Array.isArray(searchResults) ? searchResults.length : 0
+        result.metadata.knowledgeReferencesCount = citationBlock.knowledge?.length || 0
+        // 安全地获取查询和来源信息
+        result.metadata.searchQuery = (citationBlock.response as any)?.query
+        result.metadata.searchSource = citationBlock.response?.source
+        break
+      }
+
+      case MessageBlockType.FILE: {
+        const fileBlock = block as FileMessageBlock
+        result.output = {
+          fileName: fileBlock.file.origin_name,
+          fileType: fileBlock.file.type,
+          fileSize: fileBlock.file.size
+        }
+        result.metadata.fileName = fileBlock.file.origin_name
+        result.metadata.fileType = fileBlock.file.type
+        result.metadata.fileSize = fileBlock.file.size
+        result.metadata.fileExtension = fileBlock.file.ext
+        break
+      }
+
+      case MessageBlockType.ERROR: {
+        const errorBlock = block as ErrorMessageBlock
+        result.output = { content: errorBlock.error || 'Unknown error' }
+        result.metadata.errorType = errorBlock.error?.name || 'unknown'
+        result.metadata.hasStackTrace = !!errorBlock.error?.stack
+        break
+      }
+
+      default:
+        result.output = { content: (block as any).content || '' }
+        break
+    }
+
+    return result
   }
 }

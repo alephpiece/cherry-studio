@@ -1,5 +1,10 @@
-import { Message } from '@renderer/types'
-import { BaseObservationSpec, BaseTraceSpec, TraceProviderType } from '@renderer/types/trace'
+import {
+  MessageTraceStartSpec,
+  MessageTraceStopSpec,
+  ObservationStartSpec,
+  ObservationStopSpec,
+  TraceProviderType
+} from '@renderer/types/trace'
 
 export default abstract class BaseTraceProvider {
   protected provider: TraceProviderType
@@ -8,8 +13,9 @@ export default abstract class BaseTraceProvider {
     this.provider = provider
   }
 
-  abstract createTrace(contextMessages?: Message[], spec?: BaseTraceSpec): Promise<void>
-  abstract startObservation(contextMessages: Message[], spec?: BaseObservationSpec): Promise<void>
-  abstract stopObservation(messageId: string): Promise<void>
+  abstract startTrace(spec: MessageTraceStartSpec): Promise<void>
+  abstract stopTrace(spec: MessageTraceStopSpec): Promise<void>
+  abstract startObservation(spec: ObservationStartSpec): Promise<void>
+  abstract stopObservation(spec: ObservationStopSpec): Promise<void>
   abstract close(): Promise<void>
 }
