@@ -162,16 +162,12 @@ describe('Markdown', () => {
   describe('rendering', () => {
     it('should render markdown content with correct structure', () => {
       const block = createMainTextBlock({ content: 'Test content' })
-      const { container } = render(<Markdown block={block} />)
+      render(<Markdown block={block} />)
 
-      // Check that the outer container has the markdown class
-      const markdownContainer = container.querySelector('.markdown')
-      expect(markdownContainer).toBeInTheDocument()
-
-      // Check that the markdown content is rendered inside
-      const markdownContent = screen.getByTestId('markdown-content')
-      expect(markdownContent).toBeInTheDocument()
-      expect(markdownContent).toHaveTextContent('Test content')
+      const markdown = screen.getByTestId('markdown-content')
+      expect(markdown).toBeInTheDocument()
+      expect(markdown).toHaveClass('markdown')
+      expect(markdown).toHaveTextContent('Test content')
     })
 
     it('should handle empty content gracefully', () => {

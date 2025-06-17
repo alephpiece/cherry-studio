@@ -41,10 +41,11 @@ const MarkdownEditor: FC<MarkdownEditorProps> = ({
   return (
     <EditorContainer style={{ height }}>
       <InputArea value={inputValue} onChange={handleChange} placeholder={placeholder} autoFocus={autoFocus} />
-      <PreviewArea className="markdown">
+      <PreviewArea>
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkCjkFriendly, remarkMath]}
-          rehypePlugins={[rehypeRaw, rehypeKatex]}>
+          rehypePlugins={[rehypeRaw, rehypeKatex]}
+          className="markdown">
           {inputValue || t('settings.provider.notes.markdown_editor_default_value')}
         </ReactMarkdown>
       </PreviewArea>
