@@ -337,10 +337,14 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
 
   public buildSdkMessages(
     currentReqMessages: OpenAISdkMessageParam[],
-    output: string,
+    output: string | undefined,
     toolResults: OpenAISdkMessageParam[],
     toolCalls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[]
   ): OpenAISdkMessageParam[] {
+    if (!output && toolCalls.length === 0) {
+      return [...currentReqMessages, ...toolResults]
+    }
+
     const assistantMessage: OpenAISdkMessageParam = {
       role: 'assistant',
       content: output,
@@ -420,7 +424,7 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
         })
 
         if (this.useSystemPromptForTools) {
-          systemMessage.content = await buildSystemPrompt(systemMessage.content || '', mcpTools)
+          systemMessage.content = await buildSystemPrompt(systemMessage.content || '', mcpTools, assistant)
         }
 
         // 3. 处理用户消息
