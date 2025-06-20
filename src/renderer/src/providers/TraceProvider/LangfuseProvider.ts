@@ -135,6 +135,8 @@ export default class LangfuseProvider extends BaseTraceProvider {
       throw new Error(`[Langfuse] Cannot stop trace before it is started, id: ${spec.id}`)
     }
 
+    this.traces.delete(spec.id)
+
     // 获取消息的最新状态
     const message = store.getState().messages.entities[spec.id]
     if (!message) {
@@ -150,8 +152,6 @@ export default class LangfuseProvider extends BaseTraceProvider {
     trace.client.update({
       ...formattedResponse
     })
-
-    this.traces.delete(spec.id)
   }
 
   public async startObservation(spec: ObservationStartSpec): Promise<void> {
@@ -189,6 +189,8 @@ export default class LangfuseProvider extends BaseTraceProvider {
       throw new Error(`[Langfuse] Observation ${spec.id} not found`)
     }
 
+    trace.observations.delete(spec.id)
+
     // 获取消息块的最新状态
     const block = messageBlocksSelectors.selectById(store.getState(), spec.id)
     if (!block) {
@@ -203,8 +205,6 @@ export default class LangfuseProvider extends BaseTraceProvider {
         ...formattedResponse
       })
     }
-
-    trace.observations.delete(spec.id)
   }
 
   /**

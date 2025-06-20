@@ -24,31 +24,31 @@ export default class TraceProvider {
    * @param spec 追踪配置
    */
   public async startTrace(spec: MessageTraceStartSpec): Promise<void> {
-    await this.sdk.startTrace(spec).catch((error) => {
+    this.sdk.startTrace(spec).catch((error) => {
       Logger.warn('Failed to create trace:', error)
     })
   }
 
   public async stopTrace(spec: MessageTraceStopSpec): Promise<void> {
-    await this.sdk.stopTrace(spec).catch((error) => {
+    this.sdk.stopTrace(spec).catch((error) => {
       Logger.warn('Failed to stop trace:', error)
     })
   }
 
   public async startObservation(spec: ObservationStartSpec): Promise<void> {
-    await this.sdk.startObservation(spec).catch((error) => {
+    this.sdk.startObservation(spec).catch((error) => {
       Logger.warn('Failed to start observation:', error)
     })
   }
 
   public async stopObservation(spec: ObservationStopSpec): Promise<void> {
-    await this.sdk.stopObservation(spec).catch((error) => {
+    this.sdk.stopObservation(spec).catch((error) => {
       Logger.warn('Failed to stop observation:', error)
     })
   }
 
   public async close(): Promise<void> {
-    await this.sdk.close().catch((error) => {
+    this.sdk.close().catch((error) => {
       Logger.warn('Failed to close trace provider:', error)
     })
   }
