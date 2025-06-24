@@ -1,5 +1,6 @@
 import { isOpenAIProvider } from '@renderer/aiCore/clients/ApiClientFactory'
 import OpenAIAlert from '@renderer/components/Alert/OpenAIAlert'
+import ApiKeyList from '@renderer/components/ApiKeyList/list'
 import { StreamlineGoodHealthAndWellBeing } from '@renderer/components/Icons/SVGIcon'
 import { HStack } from '@renderer/components/Layout'
 import { isRerankModel } from '@renderer/config/models'
@@ -28,7 +29,6 @@ import {
   SettingSubtitle,
   SettingTitle
 } from '..'
-import ApiKeyList from './ApiKeyList'
 import DMXAPISettings from './DMXAPISettings'
 import GithubCopilotSettings from './GithubCopilotSettings'
 import GPUStackSettings from './GPUStackSettings'

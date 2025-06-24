@@ -1,4 +1,5 @@
 import { ExportOutlined } from '@ant-design/icons'
+import ApiKeyList from '@renderer/components/ApiKeyList/list'
 import { getWebSearchProviderLogo, WEB_SEARCH_PROVIDER_CONFIG } from '@renderer/config/webSearchProviders'
 import { useWebSearchProvider } from '@renderer/hooks/useWebSearchProviders'
 import { WebSearchProvider } from '@renderer/types'
@@ -11,7 +12,6 @@ import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 import { SettingDivider, SettingHelpLink, SettingHelpTextRow, SettingSubtitle, SettingTitle } from '..'
-import ApiKeyList from '../ProviderSettings/ApiKeyList'
 
 interface Props {
   provider: WebSearchProvider
