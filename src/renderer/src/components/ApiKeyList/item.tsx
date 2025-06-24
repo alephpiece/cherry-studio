@@ -37,6 +37,7 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(isNew || !keyStatus.key.trim())
   const [editValue, setEditValue] = useState(keyStatus.key)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const editInputRef = useRef<any>(null)
   const { t } = useTranslation()
   const disabled = keyStatus.checking || _disabled
@@ -46,6 +47,10 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
       editInputRef.current.focus()
     }
   }, [isEditing])
+
+  useEffect(() => {
+    setHasUnsavedChanges(editValue.trim() !== keyStatus.key.trim())
+  }, [editValue, keyStatus.key])
 
   const handleEditKey = () => {
     if (disabled) return
@@ -117,7 +122,6 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
             ref={editInputRef}
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSaveEdit}
             onPressEnter={handleSaveEdit}
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
@@ -132,7 +136,12 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
           />
           <Flex gap={0} align="center">
             <Tooltip title={t('common.save')}>
-              <Button type="text" icon={<Check size={16} />} onClick={handleSaveEdit} disabled={disabled} />
+              <Button
+                type={hasUnsavedChanges ? 'primary' : 'text'}
+                icon={<Check size={16} />}
+                onClick={handleSaveEdit}
+                disabled={disabled}
+              />
             </Tooltip>
             <Tooltip title={t('common.cancel')}>
               <Button type="text" icon={<X size={16} />} onClick={handleCancelEdit} disabled={disabled} />
