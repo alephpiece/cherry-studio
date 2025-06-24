@@ -7,6 +7,7 @@ import { Button, Card, Flex, List, Popconfirm, Space, Tooltip, Typography } from
 import { Trash } from 'lucide-react'
 import { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import styled from 'styled-components'
 
 import { StreamlineGoodHealthAndWellBeing } from '../Icons/SVGIcon'
 
@@ -75,7 +76,7 @@ const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider',
   const displayKeys = pendingNewKey ? [...keys, { key: pendingNewKey.key }] : keys
 
   return (
-    <>
+    <ApiKeyListContainer>
       <Card
         size="small"
         type="inner"
@@ -124,7 +125,13 @@ const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider',
                   cancelText={t('common.cancel')}
                   okButtonProps={{ danger: true }}>
                   <Tooltip title={t('settings.provider.remove_invalid_keys')} placement="bottom">
-                    <Button type="default" icon={<Trash size={16} />} disabled={isChecking} danger />
+                    <Button
+                      type="default"
+                      icon={<Trash size={16} />}
+                      disabled={isChecking}
+                      danger
+                      className="optional-button"
+                    />
                   </Tooltip>
                 </Popconfirm>
                 <Tooltip title={t('settings.provider.check_all_keys')} placement="bottom">
@@ -133,6 +140,7 @@ const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider',
                     icon={<StreamlineGoodHealthAndWellBeing size={'1.2em'} />}
                     onClick={checkAllKeys}
                     disabled={isChecking}
+                    className="optional-button"
                   />
                 </Tooltip>
               </>
@@ -148,8 +156,23 @@ const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider',
           </Space>
         </Flex>
       )}
-    </>
+    </ApiKeyListContainer>
   )
 }
+
+const ApiKeyListContainer = styled.div`
+  .optional-button {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    transform: translateZ(0);
+    will-change: opacity;
+  }
+
+  &:hover {
+    .optional-button {
+      opacity: 1;
+    }
+  }
+`
 
 export default ApiKeyList

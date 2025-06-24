@@ -148,22 +148,22 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
 
             {!isCopilot && (
               <Flex gap={0} align="center">
-                <Tooltip title={t('settings.provider.check')}>
+                <Tooltip title={t('settings.provider.check')} mouseLeaveDelay={0}>
                   <Button
                     type="text"
                     icon={<StreamlineGoodHealthAndWellBeing size={'1.2em'} isActive={keyStatus.checking} />}
                     onClick={onCheck}
                     disabled={disabled || isCopilot}
-                    className={keyStatus.checking ? '' : 'optional-button'}
+                    className={keyStatus.checking ? '' : 'optional-item-button'}
                   />
                 </Tooltip>
-                <Tooltip title={t('common.edit')}>
+                <Tooltip title={t('common.edit')} mouseLeaveDelay={0}>
                   <Button
                     type="text"
                     icon={<PenLine size={16} />}
                     onClick={handleEditKey}
                     disabled={disabled}
-                    className="optional-button"
+                    className="optional-item-button"
                   />
                 </Tooltip>
                 <Popconfirm
@@ -189,7 +189,7 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
 const ApiKeyItemContainer = styled(List.Item)`
   padding: 4px 11px;
 
-  .optional-button {
+  .optional-item-button {
     opacity: 0;
     transition: opacity 0.2s ease;
     transform: translateZ(0);
@@ -197,7 +197,7 @@ const ApiKeyItemContainer = styled(List.Item)`
   }
 
   &:hover {
-    .optional-button {
+    .optional-item-button {
       opacity: 1;
     }
   }
