@@ -54,30 +54,16 @@ export function determineCitationSource(
 export function withCitationTags(content: string, citations: Citation[], sourceType?: WebSearchSource): string {
   if (!content || citations.length === 0) return content
 
-  console.warn('[withCitationTags] content', content)
-  console.warn('[withCitationTags] citations', citations)
-  console.warn('[withCitationTags] sourceType', sourceType)
-
   const formattedCitations = citations.map((citation) => ({
     ...citation,
     content: citation.content ? cleanMarkdownContent(citation.content) : citation.content
   }))
 
-  console.warn('[withCitationTags] formattedCitations', formattedCitations)
-
   const citationMap = new Map(formattedCitations.map((c) => [c.number, c]))
-
-  console.warn('[withCitationTags] citationMap', citationMap)
 
   const normalizedContent = normalizeCitationMarks(content, citationMap, sourceType)
 
-  console.warn('[withCitationTags] normalizedContent', normalizedContent)
-
-  const result = mapCitationMarksToTags(normalizedContent, citationMap)
-
-  console.warn('[withCitationTags] result', result)
-
-  return result
+  return mapCitationMarksToTags(normalizedContent, citationMap)
 }
 
 /**
@@ -240,6 +226,6 @@ export function generateCitationTag(citation: Citation): string {
   const isLink = citation.url && citation.url.startsWith('http')
 
   // 生成链接格式: [<sup data-citation='...'>N</sup>](url)
-  // 或者生成纯标签格式: <sup data-citation='...'>N</sup>
-  return `[<sup data-citation='${citationJson}'>${citation.number}</sup>]` + (isLink ? `(${citation.url})` : '')
+  // 或者生成空括号格式: [<sup data-citation='...'>N</sup>]()
+  return `[<sup data-citation='${citationJson}'>${citation.number}</sup>]` + (isLink ? `(${citation.url})` : '()')
 }

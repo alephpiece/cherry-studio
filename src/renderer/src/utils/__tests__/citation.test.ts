@@ -502,7 +502,7 @@ Numbered list:
       const result = generateCitationTag(citation)
 
       expect(result).toContain('[<sup data-citation=')
-      expect(result).toContain('2</sup>]')
+      expect(result).toContain('2</sup>]()')
       expect(result).not.toContain('](invalid-url)')
     })
 
@@ -516,8 +516,7 @@ Numbered list:
       const result = generateCitationTag(citation)
 
       expect(result).toContain('[<sup data-citation=')
-      expect(result).toContain('3</sup>]')
-      expect(result).not.toContain('](')
+      expect(result).toContain('3</sup>]()')
     })
 
     it('should use hostname when title is missing', () => {
@@ -544,8 +543,7 @@ Numbered list:
       const result = generateCitationTag(citation)
 
       expect(result).toContain('[<sup data-citation=')
-      expect(result).toContain('6</sup>]')
-      expect(result).not.toContain('](')
+      expect(result).toContain('6</sup>]()')
     })
   })
 
