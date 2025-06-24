@@ -210,14 +210,19 @@ const ApiKeyItemContainer = styled(List.Item)`
   padding: 4px 11px;
 
   .optional-item-button {
+    overflow: hidden;
+    max-width: 0;
     opacity: 0;
-    transition: opacity 0.2s ease;
-    transform: translateZ(0);
-    will-change: opacity;
+    will-change: max-width, opacity;
+    transition:
+      max-width 0.3s ease,
+      opacity 0.3s;
+    white-space: nowrap;
   }
 
   &:hover {
     .optional-item-button {
+      max-width: 3rem;
       opacity: 1;
     }
   }
