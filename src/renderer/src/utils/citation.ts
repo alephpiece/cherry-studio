@@ -54,16 +54,30 @@ export function determineCitationSource(
 export function withCitationTags(content: string, citations: Citation[], sourceType?: WebSearchSource): string {
   if (!content || citations.length === 0) return content
 
+  console.warn('[withCitationTags] content', content)
+  console.warn('[withCitationTags] citations', citations)
+  console.warn('[withCitationTags] sourceType', sourceType)
+
   const formattedCitations = citations.map((citation) => ({
     ...citation,
     content: citation.content ? cleanMarkdownContent(citation.content) : citation.content
   }))
 
+  console.warn('[withCitationTags] formattedCitations', formattedCitations)
+
   const citationMap = new Map(formattedCitations.map((c) => [c.number, c]))
+
+  console.warn('[withCitationTags] citationMap', citationMap)
 
   const normalizedContent = normalizeCitationMarks(content, citationMap, sourceType)
 
-  return mapCitationMarksToTags(normalizedContent, citationMap)
+  console.warn('[withCitationTags] normalizedContent', normalizedContent)
+
+  const result = mapCitationMarksToTags(normalizedContent, citationMap)
+
+  console.warn('[withCitationTags] result', result)
+
+  return result
 }
 
 /**
