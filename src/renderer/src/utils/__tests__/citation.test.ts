@@ -231,7 +231,7 @@ def func():
 echo "Command with [2] parameter"
 \`\`\`
 
-    // Indented code block
+    // Indented code block is not skipped
     echo "Indented code block [3]"
 
 Normal text with [3] citation`
@@ -242,10 +242,10 @@ Normal text with [3] citation`
       expect(result).toContain('# Python code with [2] reference')
       expect(result).toContain('data = [3, 4, 5]  # Array with [1] element reference')
       expect(result).toContain('echo "Command with [2] parameter"')
-      expect(result).toContain('Indented code block [3]')
 
       // 代码块外的引用应该被处理
       expect(result).toContain('Text with citation [cite:1]')
+      expect(result).toContain('Indented code block [cite:3]')
       expect(result).toContain('Normal text with [cite:3]')
     })
 
@@ -349,16 +349,17 @@ Numbered list:
     })
 
     it('should normalize default format citations', () => {
-      const content = 'Text with [1] and [2] citations'
+      const content = 'Text with [1][2] and [3] citations'
       const citations: Citation[] = [
         { number: 1, url: 'https://example1.com', title: 'Test 1' },
-        { number: 2, url: 'https://example2.com', title: 'Test 2' }
+        { number: 2, url: 'https://example2.com', title: 'Test 2' },
+        { number: 3, url: 'https://example3.com', title: 'Test 3' }
       ]
       const citationMap = createCitationMap(citations)
 
       const result = normalizeCitationMarks(content, citationMap)
 
-      expect(result).toBe('Text with [cite:1] and [cite:2] citations')
+      expect(result).toBe('Text with [cite:1][cite:2] and [cite:3] citations')
     })
 
     it('should preserve non-matching default format citations', () => {
@@ -409,22 +410,25 @@ Numbered list:
 
       const result = mapCitationMarksToTags(content, citationMap)
 
-      expect(result).toContain('[<sup data-citation=')
-      expect(result).toContain('1</sup>](https://example.com)')
+      expect(result).toContain('with [<sup data-citation=')
+      expect(result).toContain('1</sup>](https://example.com) citation')
     })
 
     it('should handle multiple cite marks', () => {
-      const content = 'Text with [cite:1] and [cite:2] citations'
+      const content = 'Text with [cite:1][cite:2] and [cite:3] citations'
       const citations: Citation[] = [
         { number: 1, url: 'https://example1.com', title: 'Test 1' },
-        { number: 2, url: 'https://example2.com', title: 'Test 2' }
+        { number: 2, url: 'https://example2.com', title: 'Test 2' },
+        { number: 3, url: 'https://example3.com', title: 'Test 3' }
       ]
       const citationMap = createCitationMap(citations)
 
       const result = mapCitationMarksToTags(content, citationMap)
 
-      expect(result).toContain('1</sup>](https://example1.com)')
-      expect(result).toContain('2</sup>](https://example2.com)')
+      expect(result).toContain('with [<sup data-citation=')
+      expect(result).toContain('1</sup>](https://example1.com)[<sup data-citation=')
+      expect(result).toContain('2</sup>](https://example2.com) and')
+      expect(result).toContain('3</sup>](https://example3.com) citations')
     })
 
     it('should preserve non-matching cite marks', () => {

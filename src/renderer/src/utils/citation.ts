@@ -86,8 +86,8 @@ export function normalizeCitationMarks(
   citationMap: Map<number, Citation>,
   sourceType?: WebSearchSource
 ): string {
-  // 识别需要跳过的代码区域
-  const codeBlockRegex = /```[\s\S]*?```|`[^`\n]*`|^( {4}|\t)[^\n]*$/gm
+  // 识别需要跳过的代码区域，注意：indented code block已被禁用，不需要跳过
+  const codeBlockRegex = /```[\s\S]*?```|`[^`\n]*`/gm
   const skipRanges: Array<{ start: number; end: number }> = []
 
   let match
