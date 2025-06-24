@@ -184,7 +184,7 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
                   okText={t('common.confirm')}
                   cancelText={t('common.cancel')}
                   okButtonProps={{ danger: true }}>
-                  <Tooltip title={t('common.delete')}>
+                  <Tooltip title={t('common.delete')} mouseLeaveDelay={0}>
                     <Button type="text" icon={<MinusOutlined />} disabled={disabled} />
                   </Tooltip>
                 </Popconfirm>

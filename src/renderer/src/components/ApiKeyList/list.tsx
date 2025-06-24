@@ -124,7 +124,7 @@ const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider',
                   okText={t('common.confirm')}
                   cancelText={t('common.cancel')}
                   okButtonProps={{ danger: true }}>
-                  <Tooltip title={t('settings.provider.remove_invalid_keys')} placement="bottom">
+                  <Tooltip title={t('settings.provider.remove_invalid_keys')} placement="bottom" mouseLeaveDelay={0}>
                     <Button
                       type="default"
                       icon={<Trash size={16} />}
@@ -134,7 +134,7 @@ const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider',
                     />
                   </Tooltip>
                 </Popconfirm>
-                <Tooltip title={t('settings.provider.check_all_keys')} placement="bottom">
+                <Tooltip title={t('settings.provider.check_all_keys')} placement="bottom" mouseLeaveDelay={0}>
                   <Button
                     type="default"
                     icon={<StreamlineGoodHealthAndWellBeing size={'1.2em'} />}
