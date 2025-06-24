@@ -141,7 +141,16 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
         </ItemInnerContainer>
       ) : (
         <ItemInnerContainer style={{ gap: '10px' }}>
-          <Typography.Text copyable={{ text: keyStatus.key }}>{maskApiKey(keyStatus.key)}</Typography.Text>
+          <Tooltip
+            title={
+              <Typography.Text style={{ color: 'white' }} copyable={{ text: keyStatus.key }}>
+                {keyStatus.key}
+              </Typography.Text>
+            }
+            mouseEnterDelay={0.5}
+            placement="top">
+            <span style={{ cursor: 'help' }}>{maskApiKey(keyStatus.key)}</span>
+          </Tooltip>
 
           <Flex gap={10} align="center">
             <Tooltip title={renderKeyCheckResultTooltip()}>{renderStatusIcon()}</Tooltip>
