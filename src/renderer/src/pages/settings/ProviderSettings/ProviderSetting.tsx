@@ -257,18 +257,21 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
               <SettingSubtitle style={{ marginTop: 0 }}>{t('settings.provider.api_key')}</SettingSubtitle>
             </Space>
           </SettingSubtitle>
-          <ApiKeyList provider={provider} apiKeys={apiKey} onChange={handleApiKeyChange} type="provider" />
-          {apiKeyWebsite && (
-            <SettingHelpTextRow style={{ justifyContent: 'space-between', marginTop: '10px' }}>
-              <HStack>
-                {!isDmxapi && (
-                  <SettingHelpLink target="_blank" href={apiKeyWebsite}>
-                    {t('settings.provider.get_api_key')}
-                  </SettingHelpLink>
-                )}
-              </HStack>
-            </SettingHelpTextRow>
-          )}
+          <ApiKeyList
+            provider={provider}
+            apiKeys={apiKey}
+            onChange={handleApiKeyChange}
+            type="provider"
+            footer={
+              apiKeyWebsite &&
+              !isDmxapi && (
+                <SettingHelpLink target="_blank" href={apiKeyWebsite}>
+                  {t('settings.provider.get_api_key')}
+                </SettingHelpLink>
+              )
+            }
+          />
+
           {!isDmxapi && (
             <>
               <SettingSubtitle>{t('settings.provider.api_host')}</SettingSubtitle>

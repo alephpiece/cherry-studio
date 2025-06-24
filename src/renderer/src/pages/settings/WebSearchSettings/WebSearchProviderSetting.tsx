@@ -11,7 +11,7 @@ import { FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
-import { SettingDivider, SettingHelpLink, SettingHelpTextRow, SettingSubtitle, SettingTitle } from '..'
+import { SettingDivider, SettingHelpLink, SettingSubtitle, SettingTitle } from '..'
 
 interface Props {
   provider: WebSearchProvider
@@ -90,14 +90,19 @@ const WebSearchProviderSetting: FC<Props> = ({ provider: _provider }) => {
       {hasObjectKey(provider, 'apiKey') && (
         <>
           <SettingSubtitle style={{ marginTop: 5, marginBottom: 10 }}>{t('settings.provider.api_key')}</SettingSubtitle>
-          <ApiKeyList provider={provider} apiKeys={apiKey} onChange={handleApiKeyChange} type="websearch" />
-          {apiKeyWebsite && (
-            <SettingHelpTextRow style={{ justifyContent: 'space-between', marginTop: 5 }}>
-              <SettingHelpLink target="_blank" href={apiKeyWebsite}>
-                {t('settings.websearch.get_api_key')}
-              </SettingHelpLink>
-            </SettingHelpTextRow>
-          )}
+          <ApiKeyList
+            provider={provider}
+            apiKeys={apiKey}
+            onChange={handleApiKeyChange}
+            type="websearch"
+            footer={
+              apiKeyWebsite && (
+                <SettingHelpLink target="_blank" href={apiKeyWebsite}>
+                  {t('settings.websearch.get_api_key')}
+                </SettingHelpLink>
+              )
+            }
+          />
         </>
       )}
       {hasObjectKey(provider, 'apiHost') && (

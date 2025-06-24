@@ -1,7 +1,7 @@
-import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined } from '@ant-design/icons'
+import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined, MinusOutlined } from '@ant-design/icons'
 import { maskApiKey } from '@renderer/utils/api'
 import { Button, Flex, Input, List, Popconfirm, Spin, Tooltip, Typography } from 'antd'
-import { Check, PenLine, Trash, X } from 'lucide-react'
+import { Check, PenLine, X } from 'lucide-react'
 import { FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -177,7 +177,9 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
                   okText={t('common.confirm')}
                   cancelText={t('common.cancel')}
                   okButtonProps={{ danger: true }}>
-                  <Button type="text" icon={<Trash size={16} />} disabled={disabled} danger />
+                  <Tooltip title={t('common.delete')}>
+                    <Button type="text" icon={<MinusOutlined />} disabled={disabled} />
+                  </Tooltip>
                 </Popconfirm>
               </Flex>
             )}
