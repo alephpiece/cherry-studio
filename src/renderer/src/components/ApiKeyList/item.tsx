@@ -1,6 +1,6 @@
-import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined, MinusOutlined } from '@ant-design/icons'
+import { CheckCircleFilled, CloseCircleFilled, MinusOutlined } from '@ant-design/icons'
 import { maskApiKey } from '@renderer/utils/api'
-import { Button, Flex, Input, List, Popconfirm, Spin, Tooltip, Typography } from 'antd'
+import { Button, Flex, Input, List, Popconfirm, Tooltip, Typography } from 'antd'
 import { Check, PenLine, X } from 'lucide-react'
 import { FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -72,10 +72,6 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
   }
 
   const renderStatusIcon = () => {
-    if (keyStatus.checking) {
-      return <Spin indicator={<LoadingOutlined style={{ fontSize: 16 }} spin />} />
-    }
-
     if (!keyStatus.checking && keyStatus.isValid === true) {
       return <CheckCircleFilled style={{ color: STATUS_COLORS.success }} />
     }
@@ -155,10 +151,10 @@ const ApiKeyItem: FC<ApiKeyItemProps> = ({
                 <Tooltip title={t('settings.provider.check')}>
                   <Button
                     type="text"
-                    icon={<StreamlineGoodHealthAndWellBeing size={'1.2em'} />}
+                    icon={<StreamlineGoodHealthAndWellBeing size={'1.2em'} isActive={keyStatus.checking} />}
                     onClick={onCheck}
                     disabled={disabled || isCopilot}
-                    className="optional-button"
+                    className={keyStatus.checking ? '' : 'optional-button'}
                   />
                 </Tooltip>
                 <Tooltip title={t('common.edit')}>

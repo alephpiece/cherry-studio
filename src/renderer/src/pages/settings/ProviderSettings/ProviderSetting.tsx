@@ -11,12 +11,10 @@ import { checkModelsHealth, getModelCheckSummary } from '@renderer/services/Heal
 import { isProviderSupportAuth } from '@renderer/services/ProviderService'
 import { Provider } from '@renderer/types'
 import { formatApiHost, splitApiKeyString } from '@renderer/utils/api'
-import { lightbulbVariants } from '@renderer/utils/motionVariants'
 import { Button, Divider, Flex, Input, Space, Switch, Tooltip } from 'antd'
 import Link from 'antd/es/typography/Link'
 import { isEmpty } from 'lodash'
 import { Settings2, SquareArrowOutUpRight } from 'lucide-react'
-import { motion } from 'motion/react'
 import { FC, useCallback, useDeferredValue, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -332,14 +330,7 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
                 type="text"
                 size="small"
                 onClick={onHealthCheck}
-                icon={
-                  <motion.span
-                    variants={lightbulbVariants}
-                    animate={isHealthChecking ? 'active' : 'idle'}
-                    initial="idle">
-                    <StreamlineGoodHealthAndWellBeing />
-                  </motion.span>
-                }
+                icon={<StreamlineGoodHealthAndWellBeing isActive={isHealthChecking} />}
               />
             </Tooltip>
           )}
