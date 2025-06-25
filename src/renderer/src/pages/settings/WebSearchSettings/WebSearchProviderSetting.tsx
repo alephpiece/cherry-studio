@@ -88,22 +88,24 @@ const WebSearchProviderSetting: FC<Props> = ({ provider: _provider }) => {
       </SettingTitle>
       <Divider style={{ width: '100%', margin: '10px 0' }} />
       {hasObjectKey(provider, 'apiKey') && (
-        <>
-          <SettingSubtitle style={{ marginTop: 5, marginBottom: 10 }}>{t('settings.provider.api_key')}</SettingSubtitle>
-          <ApiKeyList
-            provider={provider}
-            apiKeys={apiKey}
-            onChange={handleApiKeyChange}
-            type="websearch"
-            footer={
-              apiKeyWebsite && (
-                <SettingHelpLink target="_blank" href={apiKeyWebsite}>
-                  {t('settings.websearch.get_api_key')}
-                </SettingHelpLink>
-              )
-            }
-          />
-        </>
+        <ApiKeyList
+          provider={provider}
+          apiKeys={apiKey}
+          onChange={handleApiKeyChange}
+          type="websearch"
+          title={
+            <SettingSubtitle style={{ marginTop: 5, marginBottom: 10 }}>
+              {t('settings.provider.api_key')}
+            </SettingSubtitle>
+          }
+          footer={
+            apiKeyWebsite && (
+              <SettingHelpLink target="_blank" href={apiKeyWebsite}>
+                {t('settings.websearch.get_api_key')}
+              </SettingHelpLink>
+            )
+          }
+        />
       )}
       {hasObjectKey(provider, 'apiHost') && (
         <>

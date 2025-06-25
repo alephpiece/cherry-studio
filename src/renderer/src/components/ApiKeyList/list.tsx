@@ -1,9 +1,10 @@
 import { PlusOutlined } from '@ant-design/icons'
 import { ApiKeyItem, useApiKeys } from '@renderer/components/ApiKeyList'
 import Scrollbar from '@renderer/components/Scrollbar'
+import { SettingSubtitle } from '@renderer/pages/settings'
 import { isProviderSupportAuth } from '@renderer/services/ProviderService'
 import { Provider, WebSearchProvider } from '@renderer/types'
-import { Button, Card, Flex, List, Popconfirm, Space, Tooltip, Typography } from 'antd'
+import { Button, Card, List, Popconfirm, Space, Tooltip, Typography } from 'antd'
 import { Trash } from 'lucide-react'
 import { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -16,13 +17,14 @@ interface Props {
   apiKeys: string
   onChange: (keys: string) => void
   type?: 'provider' | 'websearch'
-  footer?: React.ReactNode
+  title?: React.ReactNode | string
+  footer?: React.ReactNode | string
 }
 
 /**
  * Api key 列表，管理 CRUD 操作、连接检查
  */
-const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider', footer }) => {
+const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider', title, footer }) => {
   const { keys, addKey, updateKey, removeKey, removeInvalid, checkKey, checkAllKeys, isChecking } = useApiKeys({
     provider,
     apiKeys,
@@ -77,11 +79,63 @@ const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider',
 
   return (
     <ApiKeyListContainer>
+      <SettingSubtitle
+        style={{
+          marginBottom: 5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: title ? 'space-between' : 'flex-end'
+        }}>
+        {title && <Space>{title}</Space>}
+        {!isCopilot && (
+          <Space style={{ gap: 0 }}>
+            {keys.length > 1 && (
+              <>
+                <Popconfirm
+                  title={t('common.delete_confirm')}
+                  onConfirm={removeInvalid}
+                  disabled={isChecking}
+                  okText={t('common.confirm')}
+                  cancelText={t('common.cancel')}
+                  okButtonProps={{ danger: true }}>
+                  <Tooltip title={t('settings.provider.remove_invalid_keys')} placement="top" mouseLeaveDelay={0}>
+                    <Button
+                      type="text"
+                      icon={<Trash size={16} />}
+                      disabled={isChecking}
+                      danger
+                      className="optional-button"
+                    />
+                  </Tooltip>
+                </Popconfirm>
+                <Tooltip title={t('settings.provider.check_all_keys')} placement="top" mouseLeaveDelay={0}>
+                  <Button
+                    type="text"
+                    icon={<StreamlineGoodHealthAndWellBeing size={'1.2em'} />}
+                    onClick={checkAllKeys}
+                    disabled={isChecking}
+                    className="optional-button"
+                  />
+                </Tooltip>
+              </>
+            )}
+            <Tooltip title={t('common.add')} placement="top" mouseLeaveDelay={0}>
+              <Button
+                key="add"
+                type="text"
+                onClick={handleAddNew}
+                icon={<PlusOutlined />}
+                autoFocus={shouldAutoFocus()}
+              />
+            </Tooltip>
+          </Space>
+        )}
+      </SettingSubtitle>
       <Card
         size="small"
         type="inner"
         styles={{ body: { padding: 0 } }}
-        style={{ marginBottom: '10px', border: '0.5px solid var(--color-border)' }}>
+        style={{ marginBottom: '5px', border: '0.5px solid var(--color-border)' }}>
         {displayKeys.length === 0 ? (
           <Typography.Text type="secondary" style={{ padding: '4px 11px', display: 'block' }}>
             {t('error.no_api_key')}
@@ -110,57 +164,14 @@ const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider',
           </Scrollbar>
         )}
       </Card>
-
-      {!isCopilot && (
-        <Flex gap={10} align="center" justify={footer ? 'space-between' : 'flex-end'}>
-          {footer && <Space style={{ marginTop: '-1rem' }}>{footer}</Space>}
-          <Space>
-            {keys.length > 1 && (
-              <>
-                <Popconfirm
-                  title={t('common.delete_confirm')}
-                  onConfirm={removeInvalid}
-                  disabled={isChecking}
-                  okText={t('common.confirm')}
-                  cancelText={t('common.cancel')}
-                  okButtonProps={{ danger: true }}>
-                  <Tooltip title={t('settings.provider.remove_invalid_keys')} placement="bottom" mouseLeaveDelay={0}>
-                    <Button
-                      type="default"
-                      icon={<Trash size={16} />}
-                      disabled={isChecking}
-                      danger
-                      className="optional-button"
-                    />
-                  </Tooltip>
-                </Popconfirm>
-                <Tooltip title={t('settings.provider.check_all_keys')} placement="bottom" mouseLeaveDelay={0}>
-                  <Button
-                    type="default"
-                    icon={<StreamlineGoodHealthAndWellBeing size={'1.2em'} />}
-                    onClick={checkAllKeys}
-                    disabled={isChecking}
-                    className="optional-button"
-                  />
-                </Tooltip>
-              </>
-            )}
-            <Button
-              key="add"
-              type="default"
-              onClick={handleAddNew}
-              icon={<PlusOutlined />}
-              autoFocus={shouldAutoFocus()}>
-              {t('common.add')}
-            </Button>
-          </Space>
-        </Flex>
-      )}
+      {footer}
     </ApiKeyListContainer>
   )
 }
 
 const ApiKeyListContainer = styled.div`
+  margin-bottom: 1rem;
+
   .optional-button {
     opacity: 0;
     transition: opacity 0.2s ease;

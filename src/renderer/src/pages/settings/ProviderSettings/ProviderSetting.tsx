@@ -250,16 +250,12 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
       {isDmxapi && <DMXAPISettings provider={provider} setApiKey={setApiKey} />}
       {provider.id !== 'vertexai' && (
         <>
-          <SettingSubtitle style={{ marginBottom: 5 }}>
-            <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-              <SettingSubtitle style={{ marginTop: 0 }}>{t('settings.provider.api_key')}</SettingSubtitle>
-            </Space>
-          </SettingSubtitle>
           <ApiKeyList
             provider={provider}
             apiKeys={apiKey}
             onChange={handleApiKeyChange}
             type="provider"
+            title={<SettingSubtitle style={{ marginTop: 0 }}>{t('settings.provider.api_key')}</SettingSubtitle>}
             footer={
               apiKeyWebsite &&
               !isDmxapi && (
