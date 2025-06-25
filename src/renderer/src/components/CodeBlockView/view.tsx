@@ -272,6 +272,7 @@ const CodeHeader = styled.div<{ $isInSpecialView: boolean }>`
   align-items: center;
   color: var(--color-text);
   font-size: 14px;
+  line-height: 1;
   font-weight: bold;
   padding: 0 10px;
   border-top-left-radius: 8px;
@@ -286,5 +287,9 @@ const SplitViewWrapper = styled.div`
   > * {
     flex: 1 1 auto;
     width: 100%;
+  }
+
+  &:not(:has(+ [class*='Container'])) {
+    border-radius: 0 0 8px 8px;
   }
 `
