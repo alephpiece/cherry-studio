@@ -1644,7 +1644,7 @@
         "api_host": "APIホスト",
         "api_key": "APIキー",
         "api_version": "APIバージョン",
-        "api.key.new_key.placeholder": "新しいAPIキーを入力、カンマで区切る",
+        "api.key.new_key.placeholder": "1つ以上のキーを入力してください。スペースで区切ってください",
         "api.key.warn.key_already_exist": "APIキーはすでに存在します",
         "api.key.check.latency": "遅延",
         "basic_auth": "HTTP 認証",

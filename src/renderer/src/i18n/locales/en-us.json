@@ -1656,7 +1656,7 @@
         "api_host": "API Host",
         "api_key": "API Key",
         "api_version": "API Version",
-        "api.key.new_key.placeholder": "Enter new API key, separated by commas",
+        "api.key.new_key.placeholder": "Enter one or more keys, separated by spaces",
         "api.key.warn.key_already_exist": "API key already exists",
         "api.key.check.latency": "Latency",
         "basic_auth": "HTTP authentication",

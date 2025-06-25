@@ -1644,7 +1644,7 @@
         "api_host": "Хост API",
         "api_key": "Ключ API",
         "api_version": "Версия API",
-        "api.key.new_key.placeholder": "Введите новый API ключ, через запятую",
+        "api.key.new_key.placeholder": "Введите один или несколько ключей, разделенных пробелами",
         "api.key.warn.key_already_exist": "API ключ уже существует",
         "api.key.check.latency": "Задержка",
         "basic_auth": "HTTP аутентификация",

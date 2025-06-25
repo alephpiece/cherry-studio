@@ -1656,7 +1656,7 @@
         "api_host": "API 地址",
         "api_key": "API 密钥",
         "api_version": "API 版本",
-        "api.key.new_key.placeholder": "输入新的API密钥，以逗号分隔",
+        "api.key.new_key.placeholder": "输入一个或多个密钥，以空格分隔",
         "api.key.warn.key_already_exist": "API密钥已存在",
         "api.key.check.latency": "耗时",
         "basic_auth": "HTTP 认证",

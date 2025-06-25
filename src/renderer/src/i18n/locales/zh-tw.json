@@ -1647,7 +1647,7 @@
         "api_host": "API 主機地址",
         "api_key": "API 金鑰",
         "api_version": "API 版本",
-        "api.key.new_key.placeholder": "輸入新的API密鑰，以逗號分隔",
+        "api.key.new_key.placeholder": "輸入一個或多個密鑰，以空格分隔",
         "api.key.warn.key_already_exist": "API密鑰已存在",
         "api.key.check.latency": "耗時",
         "basic_auth": "HTTP 認證",
