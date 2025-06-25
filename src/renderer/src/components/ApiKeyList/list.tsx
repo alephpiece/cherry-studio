@@ -170,8 +170,6 @@ const ApiKeyList: FC<Props> = ({ provider, apiKeys, onChange, type = 'provider',
 }
 
 const ApiKeyListContainer = styled.div`
-  margin-bottom: 1rem;
-
   .optional-button {
     opacity: 0;
     transition: opacity 0.2s ease;
