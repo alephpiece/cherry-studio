@@ -11,6 +11,8 @@ export interface ChatState {
   renamingTopics: string[]
   /** topic ids that are newly renamed */
   newlyRenamedTopics: string[]
+  /** pending quote texts */
+  pendingQuoteTexts: string[]
 }
 
 export interface UpdateState {
@@ -71,7 +73,8 @@ const initialState: RuntimeState = {
     selectedMessageIds: [],
     activeTopic: null,
     renamingTopics: [],
-    newlyRenamedTopics: []
+    newlyRenamedTopics: [],
+    pendingQuoteTexts: []
   }
 }
 
@@ -130,6 +133,19 @@ const runtimeSlice = createSlice({
     },
     setNewlyRenamedTopics: (state, action: PayloadAction<string[]>) => {
       state.chat.newlyRenamedTopics = action.payload
+    },
+    addPendingQuoteText: (state, action: PayloadAction<string>) => {
+      const text = action.payload.trim()
+      if (!text || state.chat.pendingQuoteTexts.includes(text)) return
+
+      // 限制最多10条
+      if (state.chat.pendingQuoteTexts.length >= 10) {
+        state.chat.pendingQuoteTexts.shift()
+      }
+      state.chat.pendingQuoteTexts.push(text)
+    },
+    clearPendingQuoteTexts: (state) => {
+      state.chat.pendingQuoteTexts = []
     }
   }
 })
@@ -151,7 +167,9 @@ export const {
   setSelectedMessageIds,
   setActiveTopic,
   setRenamingTopics,
-  setNewlyRenamedTopics
+  setNewlyRenamedTopics,
+  addPendingQuoteText,
+  clearPendingQuoteTexts
 } = runtimeSlice.actions
 
 export default runtimeSlice.reducer
