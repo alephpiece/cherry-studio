@@ -1,5 +1,6 @@
 import { CodeTool, TOOL_SPECS, useCodeTool } from '@renderer/components/CodeToolbar'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
+import { useCodeHighlight } from '@renderer/hooks/useCodeHighlight'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { uuid } from '@renderer/utils'
 import { getReactStyleFromToken } from '@renderer/utils/shiki'
@@ -27,20 +28,35 @@ const MAX_COLLAPSE_HEIGHT = DEFAULT_LINE_HEIGHT * MIN_COLLAPSE_LINES
  */
 const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
   const { codeShowLineNumbers, fontSize, codeCollapsible, codeWrappable } = useSettings()
-  const { activeShikiTheme, highlightStreamingCode, cleanupTokenizers, getShikiPreProperties } = useCodeStyle()
+  const { activeShikiTheme, getShikiPreProperties } = useCodeStyle()
   const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
   const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
-  const [tokenLines, setTokenLines] = useState<ThemedToken[][]>([])
   const [lineHeights, setLineHeights] = useState<{ [key: number]: number }>({})
   const shikiPreRef = useRef<HTMLPreElement>(null)
   const listRef = useRef<VariableSizeList>(null)
-  const processingRef = useRef(false)
-  const latestRequestedContentRef = useRef<string | null>(null)
   const callerId = useRef(`${Date.now()}-${uuid()}`).current
-  const shikiThemeRef = useRef(activeShikiTheme)
 
   const { t } = useTranslation()
   const { registerTool, removeTool } = useCodeTool(setTools)
+
+  // 使用代码高亮 Hook
+  const { tokenLines, highlightCode } = useCodeHighlight({
+    children,
+    language,
+    callerId
+  })
+
+  // 触发代码高亮
+  useLayoutEffect(() => {
+    if (shikiPreRef.current) {
+      setTimeout(highlightCode, 0)
+    }
+  }, [highlightCode])
+
+  // 主题变化时重置高度缓存
+  useEffect(() => {
+    setLineHeights({})
+  }, [activeShikiTheme])
 
   const shouldCollapse = useMemo(() => codeCollapsible && !isExpanded, [codeCollapsible, isExpanded])
   const shouldWrap = useMemo(() => codeWrappable && !isUnwrapped, [codeWrappable, isUnwrapped])
@@ -82,62 +98,6 @@ const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
   useEffect(() => {
     setIsUnwrapped(!codeWrappable)
   }, [codeWrappable])
-
-  const highlightCode = useCallback(async () => {
-    const currentContent = typeof children === 'string' ? children.trimEnd() : ''
-
-    // 记录最新要处理的内容，为了保证最终状态正确
-    latestRequestedContentRef.current = currentContent
-
-    // 如果正在处理，先跳出，等到完成后会检查是否有新内容
-    if (processingRef.current) return
-
-    processingRef.current = true
-
-    try {
-      // 循环处理，确保会处理最新内容
-      while (latestRequestedContentRef.current !== null) {
-        const contentToProcess = latestRequestedContentRef.current
-        latestRequestedContentRef.current = null // 标记开始处理
-
-        // 传入完整内容，让 ShikiStreamService 检测变化并处理增量高亮
-        const result = await highlightStreamingCode(contentToProcess, language, callerId)
-
-        // 如有结果，更新 tokenLines
-        if (result.lines.length > 0 || result.recall !== 0) {
-          setTokenLines((prev) => {
-            return result.recall === -1
-              ? result.lines
-              : [...prev.slice(0, Math.max(0, prev.length - result.recall)), ...result.lines]
-          })
-        }
-      }
-    } finally {
-      processingRef.current = false
-    }
-  }, [highlightStreamingCode, language, callerId, children])
-
-  // 触发代码高亮
-  useLayoutEffect(() => {
-    if (shikiPreRef.current) {
-      setTimeout(highlightCode, 0)
-    }
-  }, [highlightCode])
-
-  // 主题变化时强制重新高亮
-  useEffect(() => {
-    if (shikiThemeRef.current !== activeShikiTheme) {
-      shikiThemeRef.current = activeShikiTheme
-      cleanupTokenizers(callerId)
-      setTokenLines([])
-      setLineHeights({})
-    }
-  }, [activeShikiTheme, callerId, cleanupTokenizers])
-
-  // 组件卸载时清理资源
-  useEffect(() => {
-    return () => cleanupTokenizers(callerId)
-  }, [callerId, cleanupTokenizers])
 
   // 设置 pre 标签属性
   useLayoutEffect(() => {
