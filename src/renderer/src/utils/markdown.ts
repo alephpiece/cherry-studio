@@ -46,7 +46,7 @@ const containsLatexRegex = /\\\(.*?\\\)|\\\[.*?\\\]/s
  * @param text 输入的 Markdown 文本
  * @returns 处理后的字符串
  */
-export const processLatexBrackets = (text: string) => {
+export const processLatexBrackets = (text: string, options?: { removeIndentation?: boolean }) => {
   // 没有 LaTeX 模式直接返回
   if (!containsLatexRegex.test(text)) {
     return text
@@ -70,29 +70,9 @@ export const processLatexBrackets = (text: string) => {
       return `__CHERRY_STUDIO_PROTECTED_${index}__`
     })
 
-  // LaTeX 括号转换函数
-  const processMath = (content: string, openDelim: string, closeDelim: string, wrapper: string): string => {
-    let result = ''
-    let remaining = content
-
-    while (remaining.length > 0) {
-      const match = findLatexMatch(remaining, openDelim, closeDelim)
-      if (!match) {
-        result += remaining
-        break
-      }
-
-      result += match.pre
-      result += `${wrapper}${match.body}${wrapper}`
-      remaining = match.post
-    }
-
-    return result
-  }
-
   // 先处理块级公式，再处理内联公式
-  let result = processMath(processedContent, '\\[', '\\]', '$$')
-  result = processMath(result, '\\(', '\\)', '$')
+  let result = convertLatexDelimiters(processedContent, '\\[', '\\]', '$$', options)
+  result = convertLatexDelimiters(result, '\\(', '\\)', '$', options)
 
   // 还原被保护的内容
   result = result.replace(/__CHERRY_STUDIO_PROTECTED_(\d+)__/g, (match, indexStr) => {
@@ -104,6 +84,45 @@ export const processLatexBrackets = (text: string) => {
     // 如果索引无效，保持原始匹配
     return match
   })
+
+  return result
+}
+
+/**
+ * LaTeX 括号转换函数
+ */
+const convertLatexDelimiters = (
+  content: string,
+  openDelim: string,
+  closeDelim: string,
+  wrapper: string,
+  options?: { removeIndentation?: boolean }
+): string => {
+  let result = ''
+  let remaining = content
+
+  while (remaining.length > 0) {
+    const match = findLatexMatch(remaining, openDelim, closeDelim)
+    if (!match) {
+      result += remaining
+      break
+    }
+
+    if (options?.removeIndentation) {
+      const startAtLineStart = /(?:^|\n)\s*$/.test(match.pre)
+      const endAtLineStart = /\n\s*$/.test(match.body)
+
+      if (startAtLineStart !== endAtLineStart) {
+        ;[match.pre, match.body] = startAtLineStart
+          ? [match.pre, match.body.replace(/\n\s+$/, '\n')]
+          : [match.pre.replace(/\s+$/, ''), match.body]
+      }
+    }
+
+    result += match.pre
+    result += `${wrapper}${match.body}${wrapper}`
+    remaining = match.post
+  }
 
   return result
 }
