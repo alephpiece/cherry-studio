@@ -11,6 +11,7 @@ import {
   ThemeMode,
   TranslateLanguageVarious
 } from '@renderer/types'
+import { UpgradeChannel } from '@shared/config/constant'
 
 import { WebDAVSyncState } from './backup'
 
@@ -67,7 +68,8 @@ export interface SettingsState {
   pasteLongTextThreshold: number
   clickAssistantToShowTopic: boolean
   autoCheckUpdate: boolean
-  earlyAccess: boolean
+  testPlan: boolean
+  testChannel: UpgradeChannel
   renderInputMessageAsMarkdown: boolean
   // 代码执行
   codeExecution: {
@@ -220,7 +222,8 @@ export const initialState: SettingsState = {
   pasteLongTextThreshold: 1500,
   clickAssistantToShowTopic: true,
   autoCheckUpdate: true,
-  earlyAccess: false,
+  testPlan: false,
+  testChannel: UpgradeChannel.LATEST,
   renderInputMessageAsMarkdown: false,
   codeExecution: {
     enabled: false,
@@ -426,8 +429,11 @@ const settingsSlice = createSlice({
     setAutoCheckUpdate: (state, action: PayloadAction<boolean>) => {
       state.autoCheckUpdate = action.payload
     },
-    setEarlyAccess: (state, action: PayloadAction<boolean>) => {
-      state.earlyAccess = action.payload
+    setTestPlan: (state, action: PayloadAction<boolean>) => {
+      state.testPlan = action.payload
+    },
+    setTestChannel: (state, action: PayloadAction<UpgradeChannel>) => {
+      state.testChannel = action.payload
     },
     setRenderInputMessageAsMarkdown: (state, action: PayloadAction<boolean>) => {
       state.renderInputMessageAsMarkdown = action.payload
@@ -724,7 +730,8 @@ export const {
   setAssistantIconType,
   setPasteLongTextAsFile,
   setAutoCheckUpdate,
-  setEarlyAccess,
+  setTestPlan,
+  setTestChannel,
   setRenderInputMessageAsMarkdown,
   setClickAssistantToShowTopic,
   setSkipBackupFile,

@@ -1,6 +1,6 @@
 import type { ExtractChunkData } from '@cherrystudio/embedjs-interfaces'
 import { electronAPI } from '@electron-toolkit/preload'
-import { FeedUrl } from '@shared/config/constant'
+import { UpgradeChannel } from '@shared/config/constant'
 import { IpcChannel } from '@shared/IpcChannel'
 import { FileType, KnowledgeBaseParams, KnowledgeItem, MCPServer, Shortcut, ThemeMode, WebDavConfig } from '@types'
 import { contextBridge, ipcRenderer, OpenDialogOptions, shell, webUtils } from 'electron'
@@ -23,7 +23,8 @@ const api = {
   setLaunchToTray: (isActive: boolean) => ipcRenderer.invoke(IpcChannel.App_SetLaunchToTray, isActive),
   setTray: (isActive: boolean) => ipcRenderer.invoke(IpcChannel.App_SetTray, isActive),
   setTrayOnClose: (isActive: boolean) => ipcRenderer.invoke(IpcChannel.App_SetTrayOnClose, isActive),
-  setFeedUrl: (feedUrl: FeedUrl) => ipcRenderer.invoke(IpcChannel.App_SetFeedUrl, feedUrl),
+  setTestPlan: (isActive: boolean) => ipcRenderer.invoke(IpcChannel.App_SetTestPlan, isActive),
+  setTestChannel: (channel: UpgradeChannel) => ipcRenderer.invoke(IpcChannel.App_SetTestChannel, channel),
   setTheme: (theme: ThemeMode) => ipcRenderer.invoke(IpcChannel.App_SetTheme, theme),
   handleZoomFactor: (delta: number, reset: boolean = false) =>
     ipcRenderer.invoke(IpcChannel.App_HandleZoomFactor, delta, reset),
@@ -182,6 +183,10 @@ const api = {
     getInstallInfo: () => ipcRenderer.invoke(IpcChannel.Mcp_GetInstallInfo),
     checkMcpConnectivity: (server: any) => ipcRenderer.invoke(IpcChannel.Mcp_CheckConnectivity, server)
   },
+  python: {
+    execute: (script: string, context?: Record<string, any>, timeout?: number) =>
+      ipcRenderer.invoke(IpcChannel.Python_Execute, script, context, timeout)
+  },
   shell: {
     openExternal: (url: string, options?: Electron.OpenExternalOptions) => shell.openExternal(url, options)
   },
@@ -224,7 +229,9 @@ const api = {
   },
   webview: {
     setOpenLinkExternal: (webviewId: number, isExternal: boolean) =>
-      ipcRenderer.invoke(IpcChannel.Webview_SetOpenLinkExternal, webviewId, isExternal)
+      ipcRenderer.invoke(IpcChannel.Webview_SetOpenLinkExternal, webviewId, isExternal),
+    setSpellCheckEnabled: (webviewId: number, isEnable: boolean) =>
+      ipcRenderer.invoke(IpcChannel.Webview_SetSpellCheckEnabled, webviewId, isEnable)
   },
   storeSync: {
     subscribe: () => ipcRenderer.invoke(IpcChannel.StoreSync_Subscribe),
