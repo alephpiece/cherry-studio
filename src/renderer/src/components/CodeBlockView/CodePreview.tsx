@@ -4,11 +4,10 @@ import { useCodeHighlight } from '@renderer/hooks/useCodeHighlight'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { uuid } from '@renderer/utils'
 import { getReactStyleFromToken } from '@renderer/utils/shiki'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { ChevronsDownUp, ChevronsUpDown, Text as UnWrapIcon, WrapText as WrapIcon } from 'lucide-react'
-import React, { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { memo, startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { VariableSizeList } from 'react-window'
-import { ThemedToken } from 'shiki/core'
 import styled from 'styled-components'
 
 interface CodePreviewProps {
@@ -17,27 +16,54 @@ interface CodePreviewProps {
   setTools?: (value: React.SetStateAction<CodeTool[]>) => void
 }
 
-const MIN_COLLAPSE_LINES = 16
-const DEFAULT_LINE_HEIGHT = 24 // 仅作为初始估计值，实际高度基于测量
-const MAX_COLLAPSE_HEIGHT = DEFAULT_LINE_HEIGHT * MIN_COLLAPSE_LINES
+const MAX_COLLAPSE_HEIGHT = 350
 
 /**
  * Shiki 流式代码高亮组件
- * - 使用虚拟滚动
- * - 自动测量高度
+ * - 使用虚拟滚动 (@tanstack/react-virtual)
  */
 const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
   const { codeShowLineNumbers, fontSize, codeCollapsible, codeWrappable } = useSettings()
-  const { activeShikiTheme, getShikiPreProperties } = useCodeStyle()
-  const [isExpanded, setIsExpanded] = useState(!codeCollapsible)
-  const [isUnwrapped, setIsUnwrapped] = useState(!codeWrappable)
-  const [lineHeights, setLineHeights] = useState<{ [key: number]: number }>({})
+  const { getShikiPreProperties } = useCodeStyle()
+  const [expandOverride, setExpandOverride] = useState(!codeCollapsible)
+  const [unwrapOverride, setUnwrapOverride] = useState(!codeWrappable)
   const shikiPreRef = useRef<HTMLPreElement>(null)
-  const listRef = useRef<VariableSizeList>(null)
+  const scrollerRef = useRef<HTMLDivElement>(null)
   const callerId = useRef(`${Date.now()}-${uuid()}`).current
+
+  const rawLines = useMemo(() => children.trimEnd().split('\n'), [children])
 
   const { t } = useTranslation()
   const { registerTool, removeTool } = useCodeTool(setTools)
+
+  // 展开/折叠工具
+  useEffect(() => {
+    registerTool({
+      ...TOOL_SPECS.expand,
+      icon: expandOverride ? <ChevronsDownUp className="icon" /> : <ChevronsUpDown className="icon" />,
+      tooltip: expandOverride ? t('code_block.collapse') : t('code_block.expand'),
+      visible: () => {
+        const scrollHeight = scrollerRef.current?.scrollHeight
+        return codeCollapsible && (scrollHeight ?? 0) > MAX_COLLAPSE_HEIGHT
+      },
+      onClick: () => setExpandOverride((prev) => !prev)
+    })
+
+    return () => removeTool(TOOL_SPECS.expand.id)
+  }, [codeCollapsible, expandOverride, registerTool, removeTool, t])
+
+  // 自动换行工具
+  useEffect(() => {
+    registerTool({
+      ...TOOL_SPECS.wrap,
+      icon: unwrapOverride ? <WrapIcon className="icon" /> : <UnWrapIcon className="icon" />,
+      tooltip: unwrapOverride ? t('code_block.wrap.on') : t('code_block.wrap.off'),
+      visible: () => codeWrappable,
+      onClick: () => setUnwrapOverride((prev) => !prev)
+    })
+
+    return () => removeTool(TOOL_SPECS.wrap.id)
+  }, [codeWrappable, unwrapOverride, registerTool, removeTool, t])
 
   // 使用代码高亮 Hook
   const { tokenLines, highlightCode } = useCodeHighlight({
@@ -47,57 +73,20 @@ const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
   })
 
   // 触发代码高亮
-  useLayoutEffect(() => {
-    if (shikiPreRef.current) {
-      setTimeout(highlightCode, 0)
-    }
+  useEffect(() => {
+    startTransition(() => {
+      shikiPreRef.current && highlightCode()
+    })
   }, [highlightCode])
 
-  // 主题变化时重置高度缓存
-  useEffect(() => {
-    setLineHeights({})
-  }, [activeShikiTheme])
+  const shouldCollapse = useMemo(() => codeCollapsible && !expandOverride, [codeCollapsible, expandOverride])
+  const shouldWrap = useMemo(() => codeWrappable && !unwrapOverride, [codeWrappable, unwrapOverride])
 
-  const shouldCollapse = useMemo(() => codeCollapsible && !isExpanded, [codeCollapsible, isExpanded])
-  const shouldWrap = useMemo(() => codeWrappable && !isUnwrapped, [codeWrappable, isUnwrapped])
-
-  // 展开/折叠工具
-  useEffect(() => {
-    registerTool({
-      ...TOOL_SPECS.expand,
-      icon: isExpanded ? <ChevronsDownUp className="icon" /> : <ChevronsUpDown className="icon" />,
-      tooltip: isExpanded ? t('code_block.collapse') : t('code_block.expand'),
-      visible: () => {
-        return codeCollapsible && tokenLines.length > MIN_COLLAPSE_LINES
-      },
-      onClick: () => setIsExpanded((prev) => !prev)
-    })
-
-    return () => removeTool(TOOL_SPECS.expand.id)
-  }, [codeCollapsible, isExpanded, registerTool, removeTool, t, tokenLines.length])
-
-  // 自动换行工具
-  useEffect(() => {
-    registerTool({
-      ...TOOL_SPECS.wrap,
-      icon: isUnwrapped ? <WrapIcon className="icon" /> : <UnWrapIcon className="icon" />,
-      tooltip: isUnwrapped ? t('code_block.wrap.on') : t('code_block.wrap.off'),
-      visible: () => codeWrappable,
-      onClick: () => setIsUnwrapped((prev) => !prev)
-    })
-
-    return () => removeTool(TOOL_SPECS.wrap.id)
-  }, [codeWrappable, isUnwrapped, registerTool, removeTool, t])
-
-  // 更新展开状态
-  useEffect(() => {
-    setIsExpanded(!codeCollapsible)
-  }, [codeCollapsible])
-
-  // 更新换行状态
-  useEffect(() => {
-    setIsUnwrapped(!codeWrappable)
-  }, [codeWrappable])
+  // 计算行号数字位数
+  const gutterDigits = useMemo(
+    () => (codeShowLineNumbers ? Math.max(rawLines.length.toString().length, 1) : 0),
+    [codeShowLineNumbers, rawLines.length]
+  )
 
   // 设置 pre 标签属性
   useLayoutEffect(() => {
@@ -114,177 +103,119 @@ const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
     })
   }, [language, getShikiPreProperties])
 
-  // 计算行号数字位数
-  const gutterDigits = useMemo(
-    () => (codeShowLineNumbers ? Math.max(tokenLines.length.toString().length, 1) : 0),
-    [codeShowLineNumbers, tokenLines.length]
-  )
+  // Virtualizer 配置
+  const getScrollElement = useCallback(() => scrollerRef.current, [])
+  const getItemKey = useCallback((index: number) => `${callerId}-${index}`, [callerId])
+  const estimateSize = useCallback(() => (fontSize - 1) * 1.6, [fontSize])
 
-  // 自动高度测量
-  const updateLineHeight = useCallback((index: number, height: number) => {
-    setLineHeights((prev) => {
-      const currentHeight = prev[index] || DEFAULT_LINE_HEIGHT
-
-      if (Math.abs(currentHeight - height) > 1) {
-        // 触发VariableSizeList重新计算
-        setTimeout(() => {
-          if (listRef.current) {
-            listRef.current.resetAfterIndex(index, true)
-          }
-        }, 0)
-
-        return { ...prev, [index]: height }
-      }
-      return prev
-    })
-  }, [])
-
-  // wrap模式下实际测量行高，unwrap模式下使用固定高度
-  const getItemSize = useCallback(
-    (index: number) => {
-      if (shouldWrap) {
-        return lineHeights[index] || DEFAULT_LINE_HEIGHT
-      }
-      return DEFAULT_LINE_HEIGHT
-    },
-    [lineHeights, shouldWrap]
-  )
-
-  // wrap状态变化时重置高度缓存
-  useEffect(() => {
-    setLineHeights({})
-  }, [shouldWrap])
-
-  // 计算虚拟列表高度
-  const listHeight = useMemo(() => {
-    const totalHeight = tokenLines.reduce((sum, _, index) => {
-      return sum + getItemSize(index)
-    }, 0)
-    return shouldCollapse ? Math.min(totalHeight, MAX_COLLAPSE_HEIGHT) : totalHeight
-  }, [tokenLines, shouldCollapse, getItemSize])
-
-  const virtualItemData = useMemo(
-    () => ({ tokenLines, lineNumbers: codeShowLineNumbers, shouldWrap, updateLineHeight }),
-    [tokenLines, codeShowLineNumbers, shouldWrap, updateLineHeight]
-  )
-
-  const hasHighlightedCode = tokenLines.length > 0
+  // 创建 virtualizer 实例
+  const virtualizer = useVirtualizer({
+    count: rawLines.length,
+    getScrollElement,
+    getItemKey,
+    estimateSize,
+    overscan: 20
+  })
 
   return (
     <pre ref={shikiPreRef}>
-      <CodeContainer
-        className="shiki-code"
-        $fontSize={fontSize - 1}
-        $wrap={shouldWrap}
-        $fadeIn={hasHighlightedCode}
-        style={{ '--gutter-width': `${gutterDigits}ch` } as React.CSSProperties}>
-        {hasHighlightedCode ? (
-          <VariableSizeList
-            className="shiki-list"
-            ref={listRef}
-            height={listHeight}
-            width="100%"
-            itemCount={tokenLines.length}
-            itemSize={getItemSize}
-            estimatedItemSize={DEFAULT_LINE_HEIGHT}
-            itemData={virtualItemData}
-            overscanCount={20}>
-            {VirtualizedLine}
-          </VariableSizeList>
-        ) : (
-          <CodePlaceholder style={{ maxHeight: shouldCollapse ? MAX_COLLAPSE_HEIGHT : undefined }}>
-            {children}
-          </CodePlaceholder>
-        )}
-      </CodeContainer>
+      <code>
+        <ScrollContainer
+          ref={scrollerRef}
+          className="shiki-scroller"
+          $fontSize={fontSize - 1}
+          $wrap={shouldWrap}
+          style={
+            {
+              '--gutter-width': `${gutterDigits}ch`,
+              maxHeight: shouldCollapse ? MAX_COLLAPSE_HEIGHT : undefined
+            } as React.CSSProperties
+          }>
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative'
+            }}>
+            {virtualizer.getVirtualItems().map((virtualItem) => (
+              <div
+                key={virtualItem.key}
+                ref={virtualizer.measureElement}
+                data-index={virtualItem.index}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualItem.start}px)`
+                }}>
+                <VirtualizedRow
+                  rawLine={rawLines[virtualItem.index]}
+                  tokenLine={tokenLines[virtualItem.index]}
+                  showLineNumbers={codeShowLineNumbers}
+                  index={virtualItem.index}
+                />
+              </div>
+            ))}
+          </div>
+        </ScrollContainer>
+      </code>
     </pre>
   )
 }
 
 CodePreview.displayName = 'CodePreview'
 
-interface VirtualLineData {
-  tokenLines: ThemedToken[][]
-  lineNumbers: boolean
-  shouldWrap: boolean
-  updateLineHeight: (index: number, height: number) => void
+interface VirtualizedRowData {
+  rawLine: string
+  tokenLine?: any[]
+  showLineNumbers: boolean
 }
 
 /**
- * 虚拟化行组件
+ * 单行代码渲染
  */
-const VirtualizedLine = memo<{
-  index: number
-  style: React.CSSProperties
-  data: VirtualLineData
-}>(({ index, style, data }) => {
-  const { tokenLines, lineNumbers, shouldWrap, updateLineHeight } = data
-  const lineTokens = tokenLines[index]
-  const lineRef = useRef<HTMLDivElement>(null)
-
-  // 高度测量
-  useEffect(() => {
-    if (!lineRef.current) return
-
-    const element = lineRef.current
-
-    // 立即测量初始高度
-    const initialHeight = element.clientHeight
-    if (initialHeight > 0) {
-      updateLineHeight(index, initialHeight)
-    }
-
-    // 使用ResizeObserver监听高度变化
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const height = entry.contentRect.height
-        if (height > 0) {
-          updateLineHeight(index, height)
-        }
-      }
-    })
-
-    resizeObserver.observe(element)
-    return () => resizeObserver.disconnect()
-  }, [index, updateLineHeight, lineTokens])
-
-  if (!lineTokens) {
-    return <div style={style} />
+const VirtualizedRow = memo(
+  ({ rawLine, tokenLine, showLineNumbers, index }: VirtualizedRowData & { index: number }) => {
+    return (
+      <div className="line">
+        {showLineNumbers && <span className="line-number">{index + 1}</span>}
+        <span className="line-content">
+          {tokenLine ? (
+            // 渲染高亮后的内容
+            tokenLine.map((token, tokenIndex) => (
+              <span key={tokenIndex} style={getReactStyleFromToken(token)}>
+                {token.content}
+              </span>
+            ))
+          ) : (
+            // 渲染原始内容
+            <span>{rawLine || ' '}</span>
+          )}
+        </span>
+      </div>
+    )
   }
+)
 
-  return (
-    <div ref={lineRef} style={style} className={`line ${shouldWrap ? 'line-wrap' : ''}`}>
-      {lineNumbers && <span className="line-number">{index + 1}</span>}
-      <span className="line-content">
-        {lineTokens.map((token, tokenIndex) => (
-          <span key={`token-${tokenIndex}`} style={getReactStyleFromToken(token)}>
-            {token.content}
-          </span>
-        ))}
-      </span>
-    </div>
-  )
-})
+VirtualizedRow.displayName = 'VirtualizedRow'
 
-VirtualizedLine.displayName = 'VirtualizedLine'
-
-const CodeContainer = styled.code<{ $fontSize: number; $wrap?: boolean; $fadeIn?: boolean }>`
+const ScrollContainer = styled.div<{
+  $fontSize: number
+  $wrap?: boolean
+}>`
   display: block;
-  font-size: ${(props) => props.$fontSize}px;
-  height: auto;
+  overflow: auto;
   position: relative;
-  overflow: visible;
   border-radius: inherit;
+  height: auto;
+  padding: 0.5em 1em;
+  font-size: ${(props) => props.$fontSize}px;
 
   .line {
     display: flex;
     align-items: flex-start;
-    padding-left: 1rem;
-
-    &.line-wrap {
-      /* 强制覆盖虚拟滚动的样式限制，用于支持自动换行 */
-      height: auto !important;
-    }
+    width: 100%;
 
     .line-number {
       width: var(--gutter-width, 1.2ch);
@@ -302,30 +233,12 @@ const CodeContainer = styled.code<{ $fontSize: number; $wrap?: boolean; $fadeIn?
     .line-content {
       flex: 1;
       line-height: inherit;
-      white-space: ${(props) => (props.$wrap ? 'pre-wrap' : 'pre')};
-      overflow-wrap: ${(props) => (props.$wrap ? 'break-word' : 'normal')};
+      * {
+        white-space: ${(props) => (props.$wrap ? 'pre-wrap' : 'pre')};
+        overflow-wrap: ${(props) => (props.$wrap ? 'break-word' : 'normal')};
+      }
     }
   }
-
-  @keyframes contentFadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  animation: ${(props) => (props.$fadeIn ? 'contentFadeIn 0.1s ease-in forwards' : 'none')};
-`
-
-const CodePlaceholder = styled.div`
-  display: block;
-  opacity: 0.1;
-  white-space: pre-wrap;
-  word-break: break-all;
-  overflow-x: hidden;
-  min-height: 1.3rem;
 `
 
 export default memo(CodePreview)
