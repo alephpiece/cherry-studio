@@ -66,6 +66,16 @@ const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
     return () => removeTool(TOOL_SPECS.wrap.id)
   }, [codeWrappable, unwrapOverride, registerTool, removeTool, t])
 
+  // 重置用户操作（可以考虑移除，保持用户操作结果）
+  useEffect(() => {
+    setExpandOverride(!codeCollapsible)
+  }, [codeCollapsible])
+
+  // 重置用户操作（可以考虑移除，保持用户操作结果）
+  useEffect(() => {
+    setUnwrapOverride(!codeWrappable)
+  }, [codeWrappable])
+
   const shouldCollapse = useMemo(() => codeCollapsible && !expandOverride, [codeCollapsible, expandOverride])
   const shouldWrap = useMemo(() => codeWrappable && !unwrapOverride, [codeWrappable, unwrapOverride])
 
