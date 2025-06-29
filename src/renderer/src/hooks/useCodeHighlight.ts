@@ -22,12 +22,17 @@ export const useCodeHighlight = ({ rawLines, language, callerId }: UseCodeHighli
   const [tokenLines, setTokenLines] = useState<ThemedToken[][]>([])
   const processingRef = useRef(false)
   const latestRequestedContentRef = useRef<string | null>(null)
+  const tokenLinesCountRef = useRef(0)
   const shikiThemeRef = useRef(activeShikiTheme)
+
+  useEffect(() => {
+    tokenLinesCountRef.current = tokenLines.length
+  }, [tokenLines])
 
   const highlightLines = useCallback(
     async (count?: number) => {
       const targetCount = count === undefined ? rawLines.length : Math.min(count, rawLines.length)
-      if (targetCount <= tokenLines.length) return
+      if (targetCount <= tokenLinesCountRef.current) return
 
       const currentContent = rawLines.slice(0, targetCount).join('\n').trimEnd()
 
@@ -61,7 +66,7 @@ export const useCodeHighlight = ({ rawLines, language, callerId }: UseCodeHighli
         processingRef.current = false
       }
     },
-    [rawLines, tokenLines.length, highlightStreamingCode, language, callerId]
+    [rawLines, highlightStreamingCode, language, callerId]
   )
 
   const resetHighlight = useCallback(() => {
