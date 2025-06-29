@@ -208,7 +208,7 @@ const VirtualizedRow = memo(
             ))
           ) : (
             // 渲染原始内容
-            <span>{rawLine || ' '}</span>
+            <span className="line-content-raw">{rawLine || ' '}</span>
           )}
         </span>
       </div>
@@ -253,6 +253,10 @@ const ScrollContainer = styled.div<{
         white-space: ${(props) => (props.$wrap ? 'pre-wrap' : 'pre')};
         overflow-wrap: ${(props) => (props.$wrap ? 'break-word' : 'normal')};
       }
+    }
+
+    .line-content-raw {
+      opacity: 0.35;
     }
   }
 `
