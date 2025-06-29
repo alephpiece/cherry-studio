@@ -5,8 +5,9 @@ import { useSettings } from '@renderer/hooks/useSettings'
 import { uuid } from '@renderer/utils'
 import { getReactStyleFromToken } from '@renderer/utils/shiki'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { debounce } from 'lodash'
 import { ChevronsDownUp, ChevronsUpDown, Text as UnWrapIcon, WrapText as WrapIcon } from 'lucide-react'
-import React, { memo, startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -65,20 +66,6 @@ const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
     return () => removeTool(TOOL_SPECS.wrap.id)
   }, [codeWrappable, unwrapOverride, registerTool, removeTool, t])
 
-  // 使用代码高亮 Hook
-  const { tokenLines, highlightCode } = useCodeHighlight({
-    children,
-    language,
-    callerId
-  })
-
-  // 触发代码高亮
-  useEffect(() => {
-    startTransition(() => {
-      shikiPreRef.current && highlightCode()
-    })
-  }, [highlightCode])
-
   const shouldCollapse = useMemo(() => codeCollapsible && !expandOverride, [codeCollapsible, expandOverride])
   const shouldWrap = useMemo(() => codeWrappable && !unwrapOverride, [codeWrappable, unwrapOverride])
 
@@ -106,7 +93,7 @@ const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
   // Virtualizer 配置
   const getScrollElement = useCallback(() => scrollerRef.current, [])
   const getItemKey = useCallback((index: number) => `${callerId}-${index}`, [callerId])
-  const estimateSize = useCallback(() => (fontSize - 1) * 1.6, [fontSize])
+  const estimateSize = useCallback(() => (fontSize - 1) * 1.6, [fontSize]) // 同步全局样式
 
   // 创建 virtualizer 实例
   const virtualizer = useVirtualizer({
@@ -117,21 +104,42 @@ const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
     overscan: 20
   })
 
+  const virtualItems = virtualizer.getVirtualItems()
+
+  // 使用代码高亮 Hook
+  const { tokenLines, highlightLines } = useCodeHighlight({
+    rawLines,
+    language,
+    callerId
+  })
+
+  // 防抖高亮提高流式响应的性能，数字大一点也不会影响用户体验
+  const debouncedHighlightLines = useMemo(() => debounce(highlightLines, 300), [highlightLines])
+
+  // 渐进式高亮
+  useEffect(() => {
+    if (virtualItems.length > 0 && shikiPreRef.current) {
+      const lastIndex = virtualItems[virtualItems.length - 1].index
+      debouncedHighlightLines(lastIndex + 1)
+    }
+  }, [virtualItems, debouncedHighlightLines])
+
   return (
     <pre ref={shikiPreRef}>
       <code>
         <ScrollContainer
           ref={scrollerRef}
           className="shiki-scroller"
-          $fontSize={fontSize - 1}
           $wrap={shouldWrap}
           style={
             {
               '--gutter-width': `${gutterDigits}ch`,
+              fontSize: `${fontSize - 1}px`,
               maxHeight: shouldCollapse ? MAX_COLLAPSE_HEIGHT : undefined
             } as React.CSSProperties
           }>
           <div
+            className="shiki-list"
             style={{
               height: `${virtualizer.getTotalSize()}px`,
               width: '100%',
@@ -201,7 +209,6 @@ const VirtualizedRow = memo(
 VirtualizedRow.displayName = 'VirtualizedRow'
 
 const ScrollContainer = styled.div<{
-  $fontSize: number
   $wrap?: boolean
 }>`
   display: block;
@@ -210,7 +217,6 @@ const ScrollContainer = styled.div<{
   border-radius: inherit;
   height: auto;
   padding: 0.5em 1em;
-  font-size: ${(props) => props.$fontSize}px;
 
   .line {
     display: flex;
