@@ -37,6 +37,19 @@ export type UserTheme = {
   colorPrimary: string
 }
 
+export interface S3Config {
+  endpoint: string
+  region: string
+  bucket: string
+  accessKeyId: string
+  secretAccessKey: string
+  root: string
+  autoSync: boolean
+  syncInterval: number
+  maxBackups: number
+  skipBackupFile: boolean
+}
+
 export interface SettingsState {
   showAssistants: boolean
   showTopics: boolean
@@ -68,8 +81,8 @@ export interface SettingsState {
   pasteLongTextThreshold: number
   clickAssistantToShowTopic: boolean
   autoCheckUpdate: boolean
-  earlyAccess: boolean
-  upgradeChannel: UpgradeChannel
+  testPlan: boolean
+  testChannel: UpgradeChannel
   renderInputMessageAsMarkdown: boolean
   // 代码执行
   codeExecution: {
@@ -186,6 +199,7 @@ export interface SettingsState {
     selectionAssistant: boolean
   }
   defaultPaintingProvider: PaintingProvider
+  s3: S3Config
 }
 
 export type MultiModelMessageStyle = 'horizontal' | 'vertical' | 'fold' | 'grid'
@@ -223,8 +237,8 @@ export const initialState: SettingsState = {
   pasteLongTextThreshold: 1500,
   clickAssistantToShowTopic: true,
   autoCheckUpdate: true,
-  earlyAccess: false,
-  upgradeChannel: UpgradeChannel.LATEST,
+  testPlan: false,
+  testChannel: UpgradeChannel.LATEST,
   renderInputMessageAsMarkdown: false,
   codeExecution: {
     enabled: false,
@@ -331,7 +345,19 @@ export const initialState: SettingsState = {
     knowledgeEmbed: false,
     selectionAssistant: false
   },
-  defaultPaintingProvider: 'aihubmix'
+  defaultPaintingProvider: 'aihubmix',
+  s3: {
+    endpoint: '',
+    region: '',
+    bucket: '',
+    accessKeyId: '',
+    secretAccessKey: '',
+    root: '',
+    autoSync: false,
+    syncInterval: 0,
+    maxBackups: 0,
+    skipBackupFile: false
+  }
 }
 
 const settingsSlice = createSlice({
@@ -431,11 +457,11 @@ const settingsSlice = createSlice({
     setAutoCheckUpdate: (state, action: PayloadAction<boolean>) => {
       state.autoCheckUpdate = action.payload
     },
-    setEarlyAccess: (state, action: PayloadAction<boolean>) => {
-      state.earlyAccess = action.payload
+    setTestPlan: (state, action: PayloadAction<boolean>) => {
+      state.testPlan = action.payload
     },
-    setUpgradeChannel: (state, action: PayloadAction<UpgradeChannel>) => {
-      state.upgradeChannel = action.payload
+    setTestChannel: (state, action: PayloadAction<UpgradeChannel>) => {
+      state.testChannel = action.payload
     },
     setRenderInputMessageAsMarkdown: (state, action: PayloadAction<boolean>) => {
       state.renderInputMessageAsMarkdown = action.payload
@@ -695,6 +721,9 @@ const settingsSlice = createSlice({
     },
     setDefaultPaintingProvider: (state, action: PayloadAction<PaintingProvider>) => {
       state.defaultPaintingProvider = action.payload
+    },
+    setS3: (state, action: PayloadAction<S3Config>) => {
+      state.s3 = action.payload
     }
   }
 })
@@ -732,8 +761,8 @@ export const {
   setAssistantIconType,
   setPasteLongTextAsFile,
   setAutoCheckUpdate,
-  setEarlyAccess,
-  setUpgradeChannel,
+  setTestPlan,
+  setTestChannel,
   setRenderInputMessageAsMarkdown,
   setClickAssistantToShowTopic,
   setSkipBackupFile,
@@ -803,7 +832,8 @@ export const {
   setOpenAISummaryText,
   setOpenAIServiceTier,
   setNotificationSettings,
-  setDefaultPaintingProvider
+  setDefaultPaintingProvider,
+  setS3
 } = settingsSlice.actions
 
 export default settingsSlice.reducer
