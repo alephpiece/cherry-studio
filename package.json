@@ -149,7 +149,7 @@
     "docx": "^9.0.2",
     "dotenv-cli": "^7.4.2",
     "electron": "35.4.0",
-    "electron-builder": "26.0.15",
+    "electron-builder": "26.0.17",
     "electron-devtools-installer": "^3.2.0",
     "electron-log": "^5.1.5",
     "electron-store": "^8.2.0",
