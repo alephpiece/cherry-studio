@@ -99,7 +99,7 @@
     "@google/genai": "patch:@google/genai@npm%3A1.0.1#~/.yarn/patches/@google-genai-npm-1.0.1-e26f0f9af7.patch",
     "@hello-pangea/dnd": "^16.6.0",
     "@kangfenmao/keyv-storage": "^0.1.0",
-    "@langchain/community": "^0.3.36",
+    "@langchain/community": "^0.3.47",
     "@langchain/ollama": "^0.2.1",
     "@modelcontextprotocol/sdk": "^1.11.4",
     "@mozilla/readability": "^0.6.0",
