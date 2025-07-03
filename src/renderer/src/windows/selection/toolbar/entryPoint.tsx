@@ -1,6 +1,5 @@
 import '@ant-design/v5-patch-for-react-19'
 
-import { NotificationProvider } from '@renderer/context/NotificationProvider'
 import { ThemeProvider } from '@renderer/context/ThemeProvider'
 import storeSyncService from '@renderer/services/StoreSyncService'
 import store, { persistor } from '@renderer/store'
@@ -18,11 +17,9 @@ const App: FC = () => {
   return (
     <Provider store={store}>
       <ThemeProvider>
-        <NotificationProvider>
-          <PersistGate loading={null} persistor={persistor}>
-            <SelectionToolbar />
-          </PersistGate>
-        </NotificationProvider>
+        <PersistGate loading={null} persistor={persistor}>
+          <SelectionToolbar />
+        </PersistGate>
       </ThemeProvider>
     </Provider>
   )

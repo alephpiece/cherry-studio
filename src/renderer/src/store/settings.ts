@@ -196,7 +196,6 @@ export interface SettingsState {
     assistant: boolean
     backup: boolean
     knowledgeEmbed: boolean
-    selectionAssistant: boolean
   }
   defaultPaintingProvider: PaintingProvider
   s3: S3Config
@@ -342,8 +341,7 @@ export const initialState: SettingsState = {
   notification: {
     assistant: false,
     backup: false,
-    knowledgeEmbed: false,
-    selectionAssistant: false
+    knowledgeEmbed: false
   },
   defaultPaintingProvider: 'aihubmix',
   s3: {
