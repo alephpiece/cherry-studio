@@ -7,7 +7,7 @@ import {
 } from '@renderer/config/models'
 import { estimateTextTokens } from '@renderer/services/TokenService'
 import {
-  FileType,
+  FileMetadata,
   FileTypes,
   MCPCallToolResponse,
   MCPTool,
@@ -78,10 +78,11 @@ export class OpenAIResponseAPIClient extends OpenAIBaseClient<
 
     return new OpenAI({
       dangerouslyAllowBrowser: true,
-      apiKey: this.provider.apiKey,
+      apiKey: this.apiKey,
       baseURL: this.getBaseURL(),
       defaultHeaders: {
-        ...this.defaultHeaders()
+        ...this.defaultHeaders(),
+        ...this.provider.extra_headers
       }
     })
   }
@@ -94,7 +95,7 @@ export class OpenAIResponseAPIClient extends OpenAIBaseClient<
     return await sdk.responses.create(payload, options)
   }
 
-  private async handlePdfFile(file: FileType): Promise<OpenAI.Responses.ResponseInputFile | undefined> {
+  private async handlePdfFile(file: FileMetadata): Promise<OpenAI.Responses.ResponseInputFile | undefined> {
     if (file.size > 32 * MB) return undefined
     try {
       const pageCount = await window.api.file.pdfInfo(file.id + file.ext)
@@ -385,10 +386,6 @@ export class OpenAIResponseAPIClient extends OpenAIBaseClient<
           })
         }
 
-        const toolChoices: OpenAI.Responses.ToolChoiceTypes = {
-          type: 'web_search_preview'
-        }
-
         tools = tools.concat(extraTools)
         const commonParams = {
           model: model.id,
@@ -401,10 +398,10 @@ export class OpenAIResponseAPIClient extends OpenAIBaseClient<
           max_output_tokens: maxTokens,
           stream: streamOutput,
           tools: !isEmpty(tools) ? tools : undefined,
-          tool_choice: enableWebSearch ? toolChoices : undefined,
           service_tier: this.getServiceTier(model),
           ...(this.getReasoningEffort(assistant, model) as OpenAI.Reasoning),
-          ...this.getCustomParameters(assistant)
+          // 只在对话场景下应用自定义参数，避免影响翻译、总结等其他业务逻辑
+          ...(coreRequest.callType === 'chat' ? this.getCustomParameters(assistant) : {})
         }
         const sdkParams: OpenAIResponseSdkParams = streamOutput
           ? {
@@ -425,6 +422,7 @@ export class OpenAIResponseAPIClient extends OpenAIBaseClient<
     const toolCalls: OpenAIResponseSdkToolCall[] = []
     const outputItems: OpenAI.Responses.ResponseOutputItem[] = []
     let hasBeenCollectedToolCalls = false
+    let hasReasoningSummary = false
     return () => ({
       async transform(chunk: OpenAIResponseSdkRawChunk, controller: TransformStreamDefaultController<GenericChunk>) {
         // 处理chunk
@@ -494,7 +492,21 @@ export class OpenAIResponseAPIClient extends OpenAIBaseClient<
             case 'response.output_item.added':
               if (chunk.item.type === 'function_call') {
                 outputItems.push(chunk.item)
+              } else if (chunk.item.type === 'web_search_call') {
+                controller.enqueue({
+                  type: ChunkType.LLM_WEB_SEARCH_IN_PROGRESS
+                })
               }
+              break
+            case 'response.reasoning_summary_part.added':
+              if (hasReasoningSummary) {
+                const separator = '\n\n'
+                controller.enqueue({
+                  type: ChunkType.THINKING_DELTA,
+                  text: separator
+                })
+              }
+              hasReasoningSummary = true
               break
             case 'response.reasoning_summary_text.delta':
               controller.enqueue({
