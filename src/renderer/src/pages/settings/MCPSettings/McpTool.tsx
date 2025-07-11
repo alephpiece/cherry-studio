@@ -108,7 +108,9 @@ const MCPToolsSection = ({ tools, server, onToggleTool, onToggleAutoApprove }: M
               )}
               {prop.enum && (
                 <div style={{ marginTop: 4 }}>
-                  <Typography.Text type="secondary">Allowed values: </Typography.Text>
+                  <Typography.Text type="secondary">
+                    {t('settings.mcp.tools.inputSchema.enum.allowedValues')}
+                  </Typography.Text>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                     {prop.enum.map((value: string, idx: number) => (
                       <Tag key={idx}>{value}</Tag>
