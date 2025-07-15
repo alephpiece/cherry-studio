@@ -5,6 +5,7 @@ import {
   GEMINI_FLASH_MODEL_REGEX,
   getOpenAIWebSearchParams,
   isDoubaoThinkingAutoModel,
+  isQwenReasoningModel,
   isReasoningModel,
   isSupportedReasoningEffortGrokModel,
   isSupportedReasoningEffortModel,
@@ -31,7 +32,7 @@ import {
   ToolCallResponse,
   WebSearchSource
 } from '@renderer/types'
-import { ChunkType } from '@renderer/types/chunk'
+import { ChunkType, TextStartChunk, ThinkingStartChunk } from '@renderer/types/chunk'
 import { Message } from '@renderer/types/newMessage'
 import {
   OpenAISdkMessageParam,
@@ -114,7 +115,11 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
 
     if (!reasoningEffort) {
       if (model.provider === 'openrouter') {
-        if (isSupportedThinkingTokenGeminiModel(model) && !GEMINI_FLASH_MODEL_REGEX.test(model.id)) {
+        if (
+          isSupportedThinkingTokenGeminiModel(model) &&
+          !GEMINI_FLASH_MODEL_REGEX.test(model.id) &&
+          model.id.includes('grok-4')
+        ) {
           return {}
         }
         return { reasoning: { enabled: false, exclude: true } }
@@ -166,10 +171,17 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
 
     // Qwen models
     if (isSupportedThinkingTokenQwenModel(model)) {
-      return {
+      const thinkConfig = {
         enable_thinking: true,
         thinking_budget: budgetTokens
       }
+      if (this.provider.id === 'dashscope') {
+        return {
+          ...thinkConfig,
+          incremental_output: true
+        }
+      }
+      return thinkConfig
     }
 
     // Grok models
@@ -307,7 +319,7 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
       }
 
       if ([FileTypes.TEXT, FileTypes.DOCUMENT].includes(file.type)) {
-        const fileContent = await (await window.api.file.read(file.id + file.ext)).trim()
+        const fileContent = await (await window.api.file.read(file.id + file.ext, true)).trim()
         parts.push({
           type: 'text',
           text: file.origin_name + '\n' + fileContent
@@ -359,7 +371,12 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
     if ('toolUseId' in mcpToolResponse && mcpToolResponse.toolUseId) {
       // This case is for Anthropic/Claude like tool usage, OpenAI uses tool_call_id
       // For OpenAI, we primarily expect toolCallId. This might need adjustment if mixing provider concepts.
-      return mcpToolCallResponseToOpenAICompatibleMessage(mcpToolResponse, resp, isVisionModel(model))
+      return mcpToolCallResponseToOpenAICompatibleMessage(
+        mcpToolResponse,
+        resp,
+        isVisionModel(model),
+        this.provider.isNotSupportArrayContent ?? false
+      )
     } else if ('toolCallId' in mcpToolResponse && mcpToolResponse.toolCallId) {
       return {
         role: 'tool',
@@ -436,7 +453,14 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
         messages: OpenAISdkMessageParam[]
         metadata: Record<string, any>
       }> => {
-        const { messages, mcpTools, maxTokens, streamOutput, enableWebSearch } = coreRequest
+        const { messages, mcpTools, maxTokens, enableWebSearch } = coreRequest
+        let { streamOutput } = coreRequest
+
+        // Qwen3商业版（思考模式）、Qwen3开源版、QwQ、QVQ只支持流式输出。
+        if (isQwenReasoningModel(model)) {
+          streamOutput = true
+        }
+
         // 1. 处理系统消息
         let systemMessage = { role: 'system', content: assistant.prompt || '' }
 
@@ -564,11 +588,11 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
 
       // Perplexity citations
       // @ts-ignore - citations may not be in standard type definitions
-      if (context.provider?.id === 'perplexity' && chunk.citations && chunk.citations.length > 0) {
+      if (context.provider?.id === 'perplexity' && chunk.search_results && chunk.search_results.length > 0) {
         hasBeenCollectedWebSearch = true
         return {
           // @ts-ignore - citations may not be in standard type definitions
-          results: chunk.citations,
+          results: chunk.search_results,
           source: WebSearchSource.PERPLEXITY
         }
       }
@@ -659,6 +683,8 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
       isFinished = true
     }
 
+    let isFirstThinkingChunk = true
+    let isFirstTextChunk = true
     return (context: ResponseChunkTransformerContext) => ({
       async transform(chunk: OpenAISdkRawChunk, controller: TransformStreamDefaultController<GenericChunk>) {
         // 持续更新usage信息
@@ -672,74 +698,32 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
 
         // 处理chunk
         if ('choices' in chunk && chunk.choices && chunk.choices.length > 0) {
-          const choice = chunk.choices[0]
+          for (const choice of chunk.choices) {
+            if (!choice) continue
 
-          if (!choice) return
-
-          // 对于流式响应，使用 delta；对于非流式响应，使用 message。
-          // 然而某些 OpenAI 兼容平台在非流式请求时会错误地返回一个空对象的 delta 字段。
-          // 如果 delta 为空对象，应当忽略它并回退到 message，避免造成内容缺失。
-          let contentSource: OpenAISdkRawContentSource | null = null
-          if ('delta' in choice && choice.delta && Object.keys(choice.delta).length > 0) {
-            contentSource = choice.delta
-          } else if ('message' in choice) {
-            contentSource = choice.message
-          }
-
-          if (!contentSource) return
-
-          const webSearchData = collectWebSearchData(chunk, contentSource, context)
-          if (webSearchData) {
-            controller.enqueue({
-              type: ChunkType.LLM_WEB_SEARCH_COMPLETE,
-              llm_web_search: webSearchData
-            })
-          }
-
-          // 处理推理内容 (e.g. from OpenRouter DeepSeek-R1)
-          // @ts-ignore - reasoning_content is not in standard OpenAI types but some providers use it
-          const reasoningText = contentSource.reasoning_content || contentSource.reasoning
-          if (reasoningText) {
-            controller.enqueue({
-              type: ChunkType.THINKING_DELTA,
-              text: reasoningText
-            })
-          }
-
-          // 处理文本内容
-          if (contentSource.content) {
-            controller.enqueue({
-              type: ChunkType.TEXT_DELTA,
-              text: contentSource.content
-            })
-          }
-
-          // 处理工具调用
-          if (contentSource.tool_calls) {
-            for (const toolCall of contentSource.tool_calls) {
-              if ('index' in toolCall) {
-                const { id, index, function: fun } = toolCall
-                if (fun?.name) {
-                  toolCalls[index] = {
-                    id: id || '',
-                    function: {
-                      name: fun.name,
-                      arguments: fun.arguments || ''
-                    },
-                    type: 'function'
-                  }
-                } else if (fun?.arguments) {
-                  toolCalls[index].function.arguments += fun.arguments
-                }
-              } else {
-                toolCalls.push(toolCall)
-              }
+            // 对于流式响应，使用 delta；对于非流式响应，使用 message。
+            // 然而某些 OpenAI 兼容平台在非流式请求时会错误地返回一个空对象的 delta 字段。
+            // 如果 delta 为空对象或content为空，应当忽略它并回退到 message，避免造成内容缺失。
+            let contentSource: OpenAISdkRawContentSource | null = null
+            if (
+              'delta' in choice &&
+              choice.delta &&
+              Object.keys(choice.delta).length > 0 &&
+              (!('content' in choice.delta) ||
+                (typeof choice.delta.content === 'string' && choice.delta.content !== ''))
+            ) {
+              contentSource = choice.delta
+            } else if ('message' in choice) {
+              contentSource = choice.message
             }
-          }
 
-          // 处理finish_reason，发送流结束信号
-          if ('finish_reason' in choice && choice.finish_reason) {
-            Logger.debug(`[OpenAIApiClient] Stream finished with reason: ${choice.finish_reason}`)
+            if (!contentSource) {
+              if ('finish_reason' in choice && choice.finish_reason) {
+                emitCompletionSignals(controller)
+              }
+              continue
+            }
+
             const webSearchData = collectWebSearchData(chunk, contentSource, context)
             if (webSearchData) {
               controller.enqueue({
@@ -747,7 +731,72 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
                 llm_web_search: webSearchData
               })
             }
-            emitCompletionSignals(controller)
+
+            // 处理推理内容 (e.g. from OpenRouter DeepSeek-R1)
+            // @ts-ignore - reasoning_content is not in standard OpenAI types but some providers use it
+            const reasoningText = contentSource.reasoning_content || contentSource.reasoning
+            if (reasoningText) {
+              if (isFirstThinkingChunk) {
+                controller.enqueue({
+                  type: ChunkType.THINKING_START
+                } as ThinkingStartChunk)
+                isFirstThinkingChunk = false
+              }
+              controller.enqueue({
+                type: ChunkType.THINKING_DELTA,
+                text: reasoningText
+              })
+            }
+
+            // 处理文本内容
+            if (contentSource.content) {
+              if (isFirstTextChunk) {
+                controller.enqueue({
+                  type: ChunkType.TEXT_START
+                } as TextStartChunk)
+                isFirstTextChunk = false
+              }
+              controller.enqueue({
+                type: ChunkType.TEXT_DELTA,
+                text: contentSource.content
+              })
+            }
+
+            // 处理工具调用
+            if (contentSource.tool_calls) {
+              for (const toolCall of contentSource.tool_calls) {
+                if ('index' in toolCall) {
+                  const { id, index, function: fun } = toolCall
+                  if (fun?.name) {
+                    toolCalls[index] = {
+                      id: id || '',
+                      function: {
+                        name: fun.name,
+                        arguments: fun.arguments || ''
+                      },
+                      type: 'function'
+                    }
+                  } else if (fun?.arguments) {
+                    toolCalls[index].function.arguments += fun.arguments
+                  }
+                } else {
+                  toolCalls.push(toolCall)
+                }
+              }
+            }
+
+            // 处理finish_reason，发送流结束信号
+            if ('finish_reason' in choice && choice.finish_reason) {
+              Logger.debug(`[OpenAIApiClient] Stream finished with reason: ${choice.finish_reason}`)
+              const webSearchData = collectWebSearchData(chunk, contentSource, context)
+              if (webSearchData) {
+                controller.enqueue({
+                  type: ChunkType.LLM_WEB_SEARCH_COMPLETE,
+                  llm_web_search: webSearchData
+                })
+              }
+              emitCompletionSignals(controller)
+            }
           }
         }
       },

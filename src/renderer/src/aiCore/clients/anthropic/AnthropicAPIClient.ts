@@ -50,7 +50,9 @@ import {
   LLMWebSearchInProgressChunk,
   MCPToolCreatedChunk,
   TextDeltaChunk,
-  ThinkingDeltaChunk
+  TextStartChunk,
+  ThinkingDeltaChunk,
+  ThinkingStartChunk
 } from '@renderer/types/chunk'
 import { type Message } from '@renderer/types/newMessage'
 import {
@@ -229,7 +231,7 @@ export class AnthropicAPIClient extends BaseApiClient<
             }
           })
         } else {
-          const fileContent = await (await window.api.file.read(file.id + file.ext)).trim()
+          const fileContent = await (await window.api.file.read(file.id + file.ext, true)).trim()
           parts.push({
             type: 'text',
             text: file.origin_name + '\n' + fileContent
@@ -517,15 +519,23 @@ export class AnthropicAPIClient extends BaseApiClient<
     return () => {
       let accumulatedJson = ''
       const toolCalls: Record<number, ToolUseBlock> = {}
-
       return {
         async transform(rawChunk: AnthropicSdkRawChunk, controller: TransformStreamDefaultController<GenericChunk>) {
           switch (rawChunk.type) {
             case 'message': {
               let i = 0
+              let hasTextContent = false
+              let hasThinkingContent = false
+
               for (const content of rawChunk.content) {
                 switch (content.type) {
                   case 'text': {
+                    if (!hasTextContent) {
+                      controller.enqueue({
+                        type: ChunkType.TEXT_START
+                      } as TextStartChunk)
+                      hasTextContent = true
+                    }
                     controller.enqueue({
                       type: ChunkType.TEXT_DELTA,
                       text: content.text
@@ -538,6 +548,12 @@ export class AnthropicAPIClient extends BaseApiClient<
                     break
                   }
                   case 'thinking': {
+                    if (!hasThinkingContent) {
+                      controller.enqueue({
+                        type: ChunkType.THINKING_START
+                      } as ThinkingStartChunk)
+                      hasThinkingContent = true
+                    }
                     controller.enqueue({
                       type: ChunkType.THINKING_DELTA,
                       text: content.thinking
@@ -610,6 +626,19 @@ export class AnthropicAPIClient extends BaseApiClient<
                 }
                 case 'tool_use': {
                   toolCalls[rawChunk.index] = contentBlock
+                  break
+                }
+                case 'text': {
+                  controller.enqueue({
+                    type: ChunkType.TEXT_START
+                  } as TextStartChunk)
+                  break
+                }
+                case 'thinking':
+                case 'redacted_thinking': {
+                  controller.enqueue({
+                    type: ChunkType.THINKING_START
+                  } as ThinkingStartChunk)
                   break
                 }
               }

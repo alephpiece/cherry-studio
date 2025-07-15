@@ -117,10 +117,8 @@ afterSign: scripts/notarize.js
 artifactBuildCompleted: scripts/artifact-build-completed.js
 releaseInfo:
   releaseNotes: |
-    界面优化：优化多处界面样式，气泡样式改版，自动调整代码预览边栏宽度
-    知识库：修复知识库引用不显示问题，修复部分嵌入模型适配问题
-    备份与恢复：修复超过 2GB 大文件无法恢复问题
-    文件处理：添加 .doc 文件支持
-    划词助手：支持自定义 CSS 样式
-    MCP：基于 Pyodide 实现 Python MCP 服务
-    其他错误修复和优化
+    • [新增] MCP 工具调用自动审批流程
+    • [优化] 输入框快捷弹窗多选交互支持
+    • [新增] 网页内容生成实时预览功能
+    • [支持] Grok-4 大语言模型接入
+    • [修复] Anthropic 模型输出截断缺陷

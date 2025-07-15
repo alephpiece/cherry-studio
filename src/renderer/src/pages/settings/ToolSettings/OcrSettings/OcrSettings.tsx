@@ -1,9 +1,8 @@
 import { ExportOutlined } from '@ant-design/icons'
 import { getOcrProviderLogo, OCR_PROVIDER_CONFIG } from '@renderer/config/ocrProviders'
 import { useOcrProvider } from '@renderer/hooks/useOcr'
-import { formatApiKeys } from '@renderer/services/ApiService'
 import { OcrProvider } from '@renderer/types'
-import { hasObjectKey } from '@renderer/utils'
+import { formatApiKeys, hasObjectKey } from '@renderer/utils'
 import { Avatar, Divider, Flex, Input, InputNumber, Segmented } from 'antd'
 import Link from 'antd/es/typography/Link'
 import { FC, useEffect, useState } from 'react'
@@ -122,7 +121,6 @@ const OcrProviderSettings: FC<Props> = ({ provider: _provider }) => {
 
       {hasObjectKey(ocrProvider, 'options') && ocrProvider.id === 'system' && (
         <>
-          <SettingDivider style={{ marginTop: 15, marginBottom: 12 }} />
           <SettingRow>
             <SettingRowTitle>{t('settings.tool.ocr.mac_system_ocr_options.mode.title')}</SettingRowTitle>
             <Segmented

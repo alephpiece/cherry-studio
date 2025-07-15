@@ -5,7 +5,7 @@ import { SYSTEM_MODELS } from '@renderer/config/models'
 import { TRANSLATE_PROMPT } from '@renderer/config/prompts'
 import db from '@renderer/databases'
 import i18n from '@renderer/i18n'
-import { Assistant, Provider, WebSearchProvider } from '@renderer/types'
+import { Assistant, LanguageCode, Provider, WebSearchProvider } from '@renderer/types'
 import { getDefaultGroupName, getLeadingEmoji, runAsyncFunction, uuid } from '@renderer/utils'
 import { UpgradeChannel } from '@shared/config/constant'
 import { isEmpty } from 'lodash'
@@ -897,6 +897,7 @@ const migrateConfig = {
   },
   '65': (state: RootState) => {
     try {
+      // @ts-ignore expect error
       state.settings.targetLanguage = 'english'
       return state
     } catch (error) {
@@ -1699,6 +1700,9 @@ const migrateConfig = {
   },
   '118': (state: RootState) => {
     try {
+      addProvider(state, 'ph8')
+      state.llm.providers = moveProvider(state.llm.providers, 'ph8', 14)
+
       if (!state.settings.userId) {
         state.settings.userId = uuid()
       }
@@ -1709,46 +1713,87 @@ const migrateConfig = {
         }
       })
 
-      if (!state.preprocess) {
-        state.preprocess = {
-          defaultProvider: '',
-          providers: []
+      return state
+    } catch (error) {
+      return state
+    }
+  },
+  '119': (state: RootState) => {
+    try {
+      addProvider(state, 'new-api')
+      state.llm.providers = moveProvider(state.llm.providers, 'new-api', 16)
+      state.settings.disableHardwareAcceleration = false
+      // migrate to enable memory feature on sidebar
+      if (state.settings && state.settings.sidebarIcons) {
+        // Check if 'memory' is not already in visible icons
+        if (!state.settings.sidebarIcons.visible.includes('memory' as any)) {
+          state.settings.sidebarIcons.visible = [...state.settings.sidebarIcons.visible, 'memory' as any]
         }
       }
-
-      if (state.preprocess.providers.length === 0) {
-        state.preprocess.providers = [
-          {
-            id: 'doc2x',
-            name: 'Doc2x',
-            apiKey: '',
-            apiHost: 'https://v2.doc2x.noedgeai.com'
-          },
-          {
-            id: 'mistral',
-            name: 'Mistral',
-            model: 'mistral-ocr-latest',
-            apiKey: '',
-            apiHost: 'https://api.mistral.ai'
-          },
-          {
-            id: 'mineru',
-            name: 'MinerU',
-            apiKey: '',
-            apiHost: 'https://mineru.net'
-          }
-        ]
+      return state
+    } catch (error) {
+      return state
+    }
+  },
+  '120': (state: RootState) => {
+    try {
+      // migrate to remove memory feature from sidebar (moved to settings)
+      if (state.settings && state.settings.sidebarIcons) {
+        // Remove 'memory' from visible icons if present
+        state.settings.sidebarIcons.visible = state.settings.sidebarIcons.visible.filter(
+          (icon) => icon !== ('memory' as any)
+        )
+        // Remove 'memory' from disabled icons if present
+        state.settings.sidebarIcons.disabled = state.settings.sidebarIcons.disabled.filter(
+          (icon) => icon !== ('memory' as any)
+        )
       }
 
-      if (!state.ocr.providers.find((provider) => provider.id === 'system')) {
-        state.ocr.providers.push({
-          id: 'system',
-          name: 'System(Mac Only)',
-          options: {
-            recognitionLevel: 0,
-            minConfidence: 0.5
-          }
-        })
+      if (!state.settings.s3) {
+        state.settings.s3 = settingsInitialState.s3
+      }
+
+      const langMap: Record<string, LanguageCode> = {
+        english: 'en-us',
+        chinese: 'zh-cn',
+        'chinese-traditional': 'zh-tw',
+        japanese: 'ja-jp',
+        russian: 'ru-ru'
+      }
+
+      const origin = state.settings.targetLanguage
+      const newLang = langMap[origin]
+      if (newLang) state.settings.targetLanguage = newLang
+      else state.settings.targetLanguage = 'en-us'
+
+      state.llm.providers.forEach((provider) => {
+        if (provider.id === 'azure-openai') {
+          provider.type = 'azure-openai'
+        }
+      })
+
+      state.settings.localBackupMaxBackups = 0
+      state.settings.localBackupSkipBackupFile = false
+      state.settings.localBackupDir = ''
+      state.settings.localBackupAutoSync = false
+      state.settings.localBackupSyncInterval = 0
+      return state
+    } catch (error) {
+      return state
+    }
+  },
+  '121': (state: RootState) => {
+    try {
+      const { toolOrder } = state.inputTools
+      const urlContextKey = 'url_context'
+      const webSearchIndex = toolOrder.visible.indexOf('web_search')
+      const knowledgeBaseIndex = toolOrder.visible.indexOf('knowledge_base')
+      if (webSearchIndex !== -1) {
+        toolOrder.visible.splice(webSearchIndex, 0, urlContextKey)
+      } else if (knowledgeBaseIndex !== -1) {
+        toolOrder.visible.splice(knowledgeBaseIndex, 0, urlContextKey)
+      } else {
+        toolOrder.visible.push(urlContextKey)
       }
       return state
     } catch (error) {
