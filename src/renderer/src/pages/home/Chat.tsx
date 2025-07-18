@@ -103,7 +103,11 @@ const Chat: FC<Props> = (props) => {
   }
 
   return (
-    <Container id="chat" className={classNames([messageStyle, { 'multi-select-mode': isMultiSelectMode }])}>
+    <Container
+      id="chat"
+      role="region"
+      aria-label="Chat"
+      className={classNames([messageStyle, { 'multi-select-mode': isMultiSelectMode }])}>
       <Main ref={mainRef} id="chat-main" vertical flex={1} justify="space-between" style={{ maxWidth }}>
         <Messages
           key={props.activeTopic.id}
