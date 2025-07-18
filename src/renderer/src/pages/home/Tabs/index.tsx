@@ -1,10 +1,7 @@
-import AddAssistantPopup from '@renderer/components/Popups/AddAssistantPopup'
-import { useAssistants, useDefaultAssistant } from '@renderer/hooks/useAssistant'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { useShowTopics } from '@renderer/hooks/useStore'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import { Assistant, Topic } from '@renderer/types'
-import { uuid } from '@renderer/utils'
 import { Segmented as AntSegmented, SegmentedProps } from 'antd'
 import { FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -37,10 +34,8 @@ const HomeTabs: FC<Props> = ({
   forceToSeeAllTab,
   style
 }) => {
-  const { addAssistant } = useAssistants()
   const [tab, setTab] = useState<Tab>(position === 'left' ? _tab || 'assistants' : 'topic')
   const { topicPosition } = useSettings()
-  const { defaultAssistant } = useDefaultAssistant()
   const { showTopics, toggleShowTopics } = useShowTopics()
 
   const { t } = useTranslation()
@@ -59,17 +54,6 @@ const HomeTabs: FC<Props> = ({
     label: t('assistants.abbr'),
     value: 'assistants'
     // icon: <BotIcon size={16} />
-  }
-
-  const onCreateAssistant = async () => {
-    const assistant = await AddAssistantPopup.show()
-    assistant && setActiveAssistant(assistant)
-  }
-
-  const onCreateDefaultAssistant = () => {
-    const assistant = { ...defaultAssistant, id: uuid() }
-    addAssistant(assistant)
-    setActiveAssistant(assistant)
   }
 
   useEffect(() => {
@@ -136,12 +120,7 @@ const HomeTabs: FC<Props> = ({
 
       <TabContent className="home-tabs-content">
         {tab === 'assistants' && (
-          <Assistants
-            activeAssistant={activeAssistant}
-            setActiveAssistant={setActiveAssistant}
-            onCreateAssistant={onCreateAssistant}
-            onCreateDefaultAssistant={onCreateDefaultAssistant}
-          />
+          <Assistants activeAssistant={activeAssistant} setActiveAssistant={setActiveAssistant} />
         )}
         {tab === 'topic' && (
           <Topics assistant={activeAssistant} activeTopic={activeTopic} setActiveTopic={setActiveTopic} />

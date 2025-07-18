@@ -12,7 +12,7 @@ import { droppableReorder } from '@renderer/utils'
 import VirtualList from 'rc-virtual-list'
 import { FC } from 'react'
 
-interface Props<T> {
+interface Props<T> extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onDragStart' | 'onDragEnd'> {
   list: T[]
   style?: React.CSSProperties
   listStyle?: React.CSSProperties
@@ -31,7 +31,8 @@ const DraggableList: FC<Props<any>> = ({
   droppableProps,
   onDragStart,
   onUpdate,
-  onDragEnd
+  onDragEnd,
+  ...rest
 }) => {
   const _onDragEnd = (result: DropResult, provided: ResponderProvided) => {
     onDragEnd?.(result, provided)
@@ -47,7 +48,7 @@ const DraggableList: FC<Props<any>> = ({
     <DragDropContext onDragStart={onDragStart} onDragEnd={_onDragEnd}>
       <Droppable droppableId="droppable" {...droppableProps}>
         {(provided) => (
-          <div {...provided.droppableProps} ref={provided.innerRef} style={style}>
+          <div {...rest} {...provided.droppableProps} ref={provided.innerRef} style={style}>
             <VirtualList data={list} itemKey="id">
               {(item, index) => {
                 const id = item.id || item
