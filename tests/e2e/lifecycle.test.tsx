@@ -1,5 +1,4 @@
-import type { ElectronApplication, Page } from '@playwright/test'
-import { _electron as electron, expect, test } from '@playwright/test'
+import { _electron as electron, type ElectronApplication, expect, type Page, test } from '@playwright/test'
 
 let electronApp: ElectronApplication
 let window: Page
@@ -18,8 +17,8 @@ test.afterEach(async () => {
 test.describe('App Lifecycle', () => {
   test('should launch the app successfully and display the main window', async () => {
     expect(window).toBeDefined()
-    await expect(window.getByRole('region', { name: 'Chat' })).toBeVisible({ timeout: 30000 })
     expect(await window.title()).toBe('Cherry Studio')
+    await expect(window.getByRole('region', { name: 'Chat' })).toBeVisible()
   })
 
   test('should exit normally after closing the main window', async () => {
