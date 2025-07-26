@@ -1,4 +1,5 @@
-import { usePreviewToolHandlers, usePreviewTools } from '@renderer/components/CodeToolbar'
+import { useImageTools } from '@renderer/components/ActionTools'
+import { useImagePreview } from '@renderer/components/CodeToolbar'
 import { memo, useEffect, useRef } from 'react'
 
 import { BasicPreviewProps } from './types'
@@ -43,16 +44,16 @@ const SvgPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => {
   }, [children])
 
   // 使用通用图像工具
-  const { handleCopyImage, handleDownload } = usePreviewToolHandlers(svgContainerRef, {
+  const { copy, download } = useImageTools(svgContainerRef, {
     imgSelector: 'svg',
     prefix: 'svg-image'
   })
 
-  // 使用工具栏
-  usePreviewTools({
+  // 注册工具
+  useImagePreview({
     setTools,
-    handleCopyImage,
-    handleDownload
+    handleCopyImage: copy,
+    handleDownload: download
   })
 
   return <div ref={svgContainerRef} className="svg-preview special-preview" />

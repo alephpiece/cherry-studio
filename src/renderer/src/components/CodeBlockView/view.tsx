@@ -1,7 +1,9 @@
 import { LoadingOutlined } from '@ant-design/icons'
 import { loggerService } from '@logger'
+import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import CodeEditor from '@renderer/components/CodeEditor'
-import { CodeTool, CodeToolbar, TOOL_SPECS, useCodeTool } from '@renderer/components/CodeToolbar'
+import { CodeToolbar } from '@renderer/components/CodeToolbar'
+import ImageViewer from '@renderer/components/ImageViewer'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { pyodideService } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
@@ -12,7 +14,6 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
-import ImageViewer from '../ImageViewer'
 import CodePreview from './CodePreview'
 import { SPECIAL_VIEW_COMPONENTS, SPECIAL_VIEWS } from './constants'
 import HtmlArtifactsCard from './HtmlArtifactsCard'
@@ -51,8 +52,8 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
   const [isRunning, setIsRunning] = useState(false)
   const [executionResult, setExecutionResult] = useState<{ text: string; image?: string } | null>(null)
 
-  const [tools, setTools] = useState<CodeTool[]>([])
-  const { registerTool, removeTool } = useCodeTool(setTools)
+  const [tools, setTools] = useState<ActionTool[]>([])
+  const { registerTool, removeTool } = useToolManager(setTools)
 
   const isExecutable = useMemo(() => {
     return codeExecution.enabled && language === 'python'
@@ -110,7 +111,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     // 复制按钮
     registerTool({
       ...TOOL_SPECS.copy,
-      icon: <Copy className="icon" />,
+      icon: <Copy className="tool-icon" />,
       tooltip: t('code_block.copy.source'),
       onClick: handleCopySource
     })
@@ -118,7 +119,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     // 下载按钮
     registerTool({
       ...TOOL_SPECS.download,
-      icon: <Download className="icon" />,
+      icon: <Download className="tool-icon" />,
       tooltip: t('code_block.download.source'),
       onClick: handleDownloadSource
     })
@@ -137,14 +138,14 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     if (codeEditor.enabled) {
       registerTool({
         ...viewSourceToolSpec,
-        icon: viewMode === 'source' ? <Eye className="icon" /> : <SquarePen className="icon" />,
+        icon: viewMode === 'source' ? <Eye className="tool-icon" /> : <SquarePen className="tool-icon" />,
         tooltip: viewMode === 'source' ? t('code_block.preview.label') : t('code_block.edit.label'),
         onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source')
       })
     } else {
       registerTool({
         ...viewSourceToolSpec,
-        icon: viewMode === 'source' ? <Eye className="icon" /> : <CodeXml className="icon" />,
+        icon: viewMode === 'source' ? <Eye className="tool-icon" /> : <CodeXml className="tool-icon" />,
         tooltip: viewMode === 'source' ? t('code_block.preview.label') : t('code_block.preview.source'),
         onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source')
       })
@@ -159,7 +160,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
 
     registerTool({
       ...TOOL_SPECS['split-view'],
-      icon: viewMode === 'split' ? <Square className="icon" /> : <SquareSplitHorizontal className="icon" />,
+      icon: viewMode === 'split' ? <Square className="tool-icon" /> : <SquareSplitHorizontal className="tool-icon" />,
       tooltip: viewMode === 'split' ? t('code_block.split.restore') : t('code_block.split.label'),
       onClick: () => setViewMode(viewMode === 'split' ? 'special' : 'split')
     })
@@ -173,7 +174,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
 
     registerTool({
       ...TOOL_SPECS.run,
-      icon: isRunning ? <LoadingOutlined /> : <CirclePlay className="icon" />,
+      icon: isRunning ? <LoadingOutlined /> : <CirclePlay className="tool-icon" />,
       tooltip: t('code_block.run'),
       onClick: () => !isRunning && handleRunScript()
     })
