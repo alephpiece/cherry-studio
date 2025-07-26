@@ -177,3 +177,70 @@ export const captureScrollableDivAsBlob = async (
     canvas?.toBlob(func, 'image/png')
   })
 }
+
+/**
+ * 将 SVG 元素转换为 Canvas 元素。
+ * @param svgElement 要转换的 SVG 元素
+ * @param scale 缩放比例
+ * @returns {Promise<HTMLCanvasElement>} 转换后的 Canvas 元素
+ */
+export const svgToCanvas = (svgElement: SVGElement, scale = 3): Promise<HTMLCanvasElement> => {
+  const viewBox = svgElement.getAttribute('viewBox')?.split(' ').map(Number) || []
+  const rect = svgElement.getBoundingClientRect()
+  const width = viewBox[2] || svgElement.clientWidth || rect.width
+  const height = viewBox[3] || svgElement.clientHeight || rect.height
+
+  const svgData = new XMLSerializer().serializeToString(svgElement)
+  const svgBase64 = `data:image/svg+xml;base64,${btoa(decodeURIComponent(encodeURIComponent(svgData)))}`
+
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+
+  canvas.width = width * scale
+  canvas.height = height * scale
+
+  return new Promise<HTMLCanvasElement>((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      if (ctx) {
+        ctx.scale(scale, scale)
+        ctx.drawImage(img, 0, 0, width, height)
+      }
+      resolve(canvas)
+    }
+    img.src = svgBase64
+  })
+}
+
+/**
+ * 将 SVG 元素转换为 PNG 格式的 Blob。
+ * @param svgElement 要转换的 SVG 元素
+ * @param scale 缩放比例
+ * @returns {Promise<Blob>} 转换后的 PNG Blob
+ */
+export const svgToPngBlob = (svgElement: SVGElement, scale = 3): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    svgToCanvas(svgElement, scale)
+      .then((canvas) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob)
+          } else {
+            reject(new Error('Failed to create blob from canvas'))
+          }
+        }, 'image/png')
+      })
+      .catch(reject)
+  })
+}
+
+/**
+ * 将 SVG 元素转换为 SVG 格式的 Blob。
+ * @param svgElement 要转换的 SVG 元素
+ * @returns {Blob} 转换后的 SVG Blob
+ */
+export const svgToSvgBlob = (svgElement: SVGElement): Blob => {
+  const svgData = new XMLSerializer().serializeToString(svgElement)
+  return new Blob([svgData], { type: 'image/svg+xml' })
+}
