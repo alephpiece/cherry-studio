@@ -2,12 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 
-import MermaidPreview from '../CodeBlockView/MermaidPreview'
+import { MermaidPreview } from '../Preview'
 
 const mocks = vi.hoisted(() => ({
   useMermaid: vi.fn(),
-  usePreviewToolHandlers: vi.fn(),
-  usePreviewTools: vi.fn()
+  useImagePreview: vi.fn(),
+  useImageTools: vi.fn()
 }))
 
 // Mock hooks
@@ -16,8 +16,11 @@ vi.mock('@renderer/hooks/useMermaid', () => ({
 }))
 
 vi.mock('@renderer/components/CodeToolbar', () => ({
-  usePreviewToolHandlers: () => mocks.usePreviewToolHandlers(),
-  usePreviewTools: () => mocks.usePreviewTools()
+  useImagePreview: () => mocks.useImagePreview()
+}))
+
+vi.mock('@renderer/components/ActionTools', () => ({
+  useImageTools: () => mocks.useImageTools()
 }))
 
 // Mock nanoid
@@ -68,13 +71,13 @@ describe('MermaidPreview', () => {
       error: null
     })
 
-    mocks.usePreviewToolHandlers.mockReturnValue({
+    mocks.useImagePreview.mockReturnValue({
       handleZoom: vi.fn(),
       handleCopyImage: vi.fn(),
       handleDownload: vi.fn()
     })
 
-    mocks.usePreviewTools.mockReturnValue({})
+    mocks.useImageTools.mockReturnValue({})
 
     mockMermaid.parse.mockResolvedValue(true)
     mockMermaid.render.mockResolvedValue({

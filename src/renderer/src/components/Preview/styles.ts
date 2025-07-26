@@ -1,7 +1,6 @@
-import { memo } from 'react'
 import { styled } from 'styled-components'
 
-const PreviewError = styled.div`
+export const PreviewError = styled.div`
   overflow: auto;
   padding: 16px;
   color: #ff4d4f;
@@ -10,5 +9,3 @@ const PreviewError = styled.div`
   word-wrap: break-word;
   white-space: pre-wrap;
 `
-
-export default memo(PreviewError)

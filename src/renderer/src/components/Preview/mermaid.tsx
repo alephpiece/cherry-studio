@@ -1,5 +1,6 @@
 import { nanoid } from '@reduxjs/toolkit'
-import { usePreviewToolHandlers, usePreviewTools } from '@renderer/components/CodeToolbar'
+import { useImageTools } from '@renderer/components/ActionTools'
+import { useImagePreview } from '@renderer/components/CodeToolbar'
 import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
 import { useMermaid } from '@renderer/hooks/useMermaid'
 import { Flex, Spin } from 'antd'
@@ -7,7 +8,7 @@ import { debounce } from 'lodash'
 import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 
-import PreviewError from './PreviewError'
+import { PreviewError } from './styles'
 import { BasicPreviewProps } from './types'
 
 /** 预览 Mermaid 图表
@@ -23,18 +24,18 @@ const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => 
   const [isVisible, setIsVisible] = useState(true)
 
   // 使用通用图像工具
-  const { handleZoom, handleCopyImage, handleDownload } = usePreviewToolHandlers(mermaidRef, {
+  const { zoom, copy, download } = useImageTools(mermaidRef, {
     imgSelector: 'svg',
     prefix: 'mermaid',
     enableWheelZoom: true
   })
 
-  // 使用工具栏
-  usePreviewTools({
+  // 注册工具
+  useImagePreview({
     setTools,
-    handleZoom,
-    handleCopyImage,
-    handleDownload
+    handleZoom: zoom,
+    handleCopyImage: copy,
+    handleDownload: download
   })
 
   // 实际的渲染函数

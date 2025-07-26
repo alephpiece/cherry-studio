@@ -1,13 +1,7 @@
 import { loggerService } from '@logger'
-import { download } from '@renderer/utils/download'
-import { FileImage, ZoomIn, ZoomOut } from 'lucide-react'
+import { download as downloadFile } from '@renderer/utils/download'
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
-import { DownloadPngIcon, DownloadSvgIcon } from '../Icons/DownloadIcons'
-import { TOOL_SPECS } from './constants'
-import { useCodeTool } from './hook'
-import { CodeTool } from './types'
 
 const logger = loggerService.withContext('usePreviewToolHandlers')
 
@@ -18,18 +12,17 @@ const TRANSFORM_REGEX = /translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/
  * 使用图像处理工具的自定义Hook
  * 提供图像缩放、复制和下载功能
  */
-export const usePreviewToolHandlers = (
+export const useImageTools = (
   containerRef: RefObject<HTMLDivElement | null>,
   options: {
     prefix: string
     imgSelector: string
     enableWheelZoom?: boolean
-    customDownloader?: (format: 'svg' | 'png') => void
   }
 ) => {
   const transformRef = useRef({ scale: 1, x: 0, y: 0 }) // 管理变换状态
   const [renderTrigger, setRenderTrigger] = useState(0) // 仅用于触发组件重渲染的状态
-  const { imgSelector, prefix, customDownloader, enableWheelZoom } = options
+  const { imgSelector, prefix, enableWheelZoom } = options
   const { t } = useTranslation()
 
   // 创建选择器函数
@@ -141,7 +134,7 @@ export const usePreviewToolHandlers = (
   }, [containerRef, getCurrentPosition, getImgElement, applyTransform])
 
   // 缩放处理函数
-  const handleZoom = useCallback(
+  const zoom = useCallback(
     (delta: number) => {
       const newScale = Math.max(0.1, Math.min(3, transformRef.current.scale + delta))
       transformRef.current.scale = newScale
@@ -166,17 +159,17 @@ export const usePreviewToolHandlers = (
         // 确认事件发生在容器内部
         if (container.contains(e.target as Node)) {
           const delta = e.deltaY < 0 ? 0.1 : -0.1
-          handleZoom(delta)
+          zoom(delta)
         }
       }
     }
 
     container.addEventListener('wheel', handleWheel, { passive: true })
     return () => container.removeEventListener('wheel', handleWheel)
-  }, [containerRef, handleZoom, enableWheelZoom])
+  }, [containerRef, zoom, enableWheelZoom])
 
   // 复制图像处理函数
-  const handleCopyImage = useCallback(async () => {
+  const copy = useCallback(async () => {
     try {
       const imgElement = getImgElement()
       if (!imgElement) return
@@ -214,14 +207,8 @@ export const usePreviewToolHandlers = (
   }, [getImgElement, t])
 
   // 下载处理函数
-  const handleDownload = useCallback(
+  const download = useCallback(
     (format: 'svg' | 'png') => {
-      // 如果有自定义下载器，使用自定义实现
-      if (customDownloader) {
-        customDownloader(format)
-        return
-      }
-
       try {
         const imgElement = getImgElement()
         if (!imgElement) return
@@ -232,7 +219,7 @@ export const usePreviewToolHandlers = (
           const svgData = new XMLSerializer().serializeToString(imgElement)
           const blob = new Blob([svgData], { type: 'image/svg+xml' })
           const url = URL.createObjectURL(blob)
-          download(url, `${prefix}-${timestamp}.svg`)
+          downloadFile(url, `${prefix}-${timestamp}.svg`)
           URL.revokeObjectURL(url)
         } else if (format === 'png') {
           const canvas = document.createElement('canvas')
@@ -260,7 +247,7 @@ export const usePreviewToolHandlers = (
             canvas.toBlob((blob) => {
               if (blob) {
                 const pngUrl = URL.createObjectURL(blob)
-                download(pngUrl, `${prefix}-${timestamp}.png`)
+                downloadFile(pngUrl, `${prefix}-${timestamp}.png`)
                 URL.revokeObjectURL(pngUrl)
               }
             }, 'image/png')
@@ -271,93 +258,14 @@ export const usePreviewToolHandlers = (
         logger.error('Download failed:', error as Error)
       }
     },
-    [getImgElement, prefix, customDownloader]
+    [getImgElement, prefix]
   )
 
   return {
     scale: transformRef.current.scale,
-    handleZoom,
-    handleCopyImage,
-    handleDownload,
+    zoom,
+    copy,
+    download,
     renderTrigger // 导出渲染触发器，万一要用
   }
-}
-
-export interface PreviewToolsOptions {
-  setTools?: (value: React.SetStateAction<CodeTool[]>) => void
-  handleZoom?: (delta: number) => void
-  handleCopyImage?: () => Promise<void>
-  handleDownload?: (format: 'svg' | 'png') => void
-}
-
-/**
- * 提供预览组件通用工具栏功能的自定义Hook
- */
-export const usePreviewTools = ({ setTools, handleZoom, handleCopyImage, handleDownload }: PreviewToolsOptions) => {
-  const { t } = useTranslation()
-  const { registerTool, removeTool } = useCodeTool(setTools)
-
-  useEffect(() => {
-    // 根据提供的功能有选择性地注册工具
-    if (handleZoom) {
-      // 放大工具
-      registerTool({
-        ...TOOL_SPECS['zoom-in'],
-        icon: <ZoomIn className="icon" />,
-        tooltip: t('code_block.preview.zoom_in'),
-        onClick: () => handleZoom(0.1)
-      })
-
-      // 缩小工具
-      registerTool({
-        ...TOOL_SPECS['zoom-out'],
-        icon: <ZoomOut className="icon" />,
-        tooltip: t('code_block.preview.zoom_out'),
-        onClick: () => handleZoom(-0.1)
-      })
-    }
-
-    if (handleCopyImage) {
-      // 复制图片工具
-      registerTool({
-        ...TOOL_SPECS['copy-image'],
-        icon: <FileImage className="icon" />,
-        tooltip: t('code_block.preview.copy.image'),
-        onClick: handleCopyImage
-      })
-    }
-
-    if (handleDownload) {
-      // 下载 SVG 工具
-      registerTool({
-        ...TOOL_SPECS['download-svg'],
-        icon: <DownloadSvgIcon />,
-        tooltip: t('code_block.download.svg'),
-        onClick: () => handleDownload('svg')
-      })
-
-      // 下载 PNG 工具
-      registerTool({
-        ...TOOL_SPECS['download-png'],
-        icon: <DownloadPngIcon />,
-        tooltip: t('code_block.download.png'),
-        onClick: () => handleDownload('png')
-      })
-    }
-
-    // 清理函数
-    return () => {
-      if (handleZoom) {
-        removeTool(TOOL_SPECS['zoom-in'].id)
-        removeTool(TOOL_SPECS['zoom-out'].id)
-      }
-      if (handleCopyImage) {
-        removeTool(TOOL_SPECS['copy-image'].id)
-      }
-      if (handleDownload) {
-        removeTool(TOOL_SPECS['download-svg'].id)
-        removeTool(TOOL_SPECS['download-png'].id)
-      }
-    }
-  }, [handleCopyImage, handleDownload, handleZoom, registerTool, removeTool, t])
 }
