@@ -2,12 +2,13 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 
-import { MermaidPreview } from '../Preview'
+import { MermaidPreview } from '..'
 
 const mocks = vi.hoisted(() => ({
   useMermaid: vi.fn(),
   useImagePreview: vi.fn(),
-  useImageTools: vi.fn()
+  useImageTools: vi.fn(),
+  ImageToolbar: vi.fn(() => <div data-testid="image-toolbar">ImageToolbar</div>)
 }))
 
 // Mock hooks
@@ -21,6 +22,10 @@ vi.mock('@renderer/components/CodeToolbar', () => ({
 
 vi.mock('@renderer/components/ActionTools', () => ({
   useImageTools: () => mocks.useImageTools()
+}))
+
+vi.mock('@renderer/components/Preview/ImageToolbar', () => ({
+  default: mocks.ImageToolbar
 }))
 
 // Mock nanoid
@@ -94,6 +99,14 @@ describe('MermaidPreview', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+
+  describe('rendering', () => {
+    it('should match snapshot', () => {
+      const mermaidCode = 'graph TD\nA-->B'
+      const { container } = render(<MermaidPreview enableToolbar>{mermaidCode}</MermaidPreview>)
+      expect(container).toMatchSnapshot()
+    })
   })
 
   describe('visibility detection', () => {
