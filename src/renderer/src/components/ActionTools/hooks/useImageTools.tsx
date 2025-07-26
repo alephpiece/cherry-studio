@@ -1,12 +1,10 @@
 import { loggerService } from '@logger'
 import { download as downloadFile } from '@renderer/utils/download'
-import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
+import { svgToPngBlob, svgToSvgBlob } from '@renderer/utils/image'
+import { RefObject, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 const logger = loggerService.withContext('usePreviewToolHandlers')
-
-// 预编译正则表达式用于查询位置
-const TRANSFORM_REGEX = /translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/
 
 /**
  * 使用图像处理工具的自定义Hook
@@ -21,7 +19,6 @@ export const useImageTools = (
   }
 ) => {
   const transformRef = useRef({ scale: 1, x: 0, y: 0 }) // 管理变换状态
-  const [renderTrigger, setRenderTrigger] = useState(0) // 仅用于触发组件重渲染的状态
   const { imgSelector, prefix, enableWheelZoom } = options
   const { t } = useTranslation()
 
@@ -42,108 +39,126 @@ export const useImageTools = (
   // 查询当前位置
   const getCurrentPosition = useCallback(() => {
     const imgElement = getImgElement()
-    if (!imgElement) return { x: transformRef.current.x, y: transformRef.current.y }
+    if (!imgElement) return transformRef.current
 
     const transform = imgElement.style.transform
-    if (!transform || transform === 'none') return { x: transformRef.current.x, y: transformRef.current.y }
+    if (!transform || transform === 'none') return transformRef.current
 
-    const match = transform.match(TRANSFORM_REGEX)
-    if (match && match.length >= 3) {
-      return {
-        x: parseFloat(match[1]),
-        y: parseFloat(match[2])
-      }
-    }
-
-    return { x: transformRef.current.x, y: transformRef.current.y }
+    // 使用CSS矩阵解析
+    const matrix = new DOMMatrix(transform)
+    return { x: matrix.m41, y: matrix.m42 }
   }, [getImgElement])
 
-  // 平移缩放变换
+  /**
+   * 平移缩放变换
+   * @param element 要应用变换的元素
+   * @param x X轴偏移量
+   * @param y Y轴偏移量
+   * @param scale 缩放比例
+   */
   const applyTransform = useCallback((element: SVGElement | null, x: number, y: number, scale: number) => {
     if (!element) return
     element.style.transformOrigin = 'top left'
     element.style.transform = `translate(${x}px, ${y}px) scale(${scale})`
   }, [])
 
+  /**
+   * 平移函数 - 按指定方向和距离移动图像
+   * @param dx X轴偏移量（正数向右，负数向左）
+   * @param dy Y轴偏移量（正数向下，负数向上）
+   * @param absolute 是否为绝对位置（true）或相对偏移（false）
+   */
+  const pan = useCallback(
+    (dx: number, dy: number, absolute = false) => {
+      const currentPos = getCurrentPosition()
+      const newX = absolute ? dx : currentPos.x + dx
+      const newY = absolute ? dy : currentPos.y + dy
+
+      transformRef.current.x = newX
+      transformRef.current.y = newY
+
+      const imgElement = getImgElement()
+      applyTransform(imgElement, newX, newY, transformRef.current.scale)
+    },
+    [getCurrentPosition, getImgElement, applyTransform]
+  )
+
   // 拖拽平移支持
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    let isDragging = false
     const startPos = { x: 0, y: 0 }
-    const startOffset = { x: 0, y: 0 }
 
-    const onMouseDown = (e: MouseEvent) => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - startPos.x
+      const dy = e.clientY - startPos.y
+
+      // 直接使用 transformRef 中的初始偏移量进行计算
+      const newX = transformRef.current.x + dx
+      const newY = transformRef.current.y + dy
+
+      const imgElement = getImgElement()
+      // 实时应用变换，但不更新 ref，避免累积误差
+      applyTransform(imgElement, newX, newY, transformRef.current.scale)
+      e.preventDefault()
+    }
+
+    const handleMouseUp = (e: MouseEvent) => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+
+      container.style.cursor = 'default'
+
+      // 拖拽结束后，计算最终位置并更新 ref
+      const dx = e.clientX - startPos.x
+      const dy = e.clientY - startPos.y
+      transformRef.current.x += dx
+      transformRef.current.y += dy
+    }
+
+    const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return // 只响应左键
 
-      // 更新当前实际位置
-      const position = getCurrentPosition()
-      transformRef.current.x = position.x
-      transformRef.current.y = position.y
+      // 每次拖拽开始时，都以 ref 中当前的位置为基准
+      const currentPos = getCurrentPosition()
+      transformRef.current.x = currentPos.x
+      transformRef.current.y = currentPos.y
 
-      isDragging = true
       startPos.x = e.clientX
       startPos.y = e.clientY
-      startOffset.x = position.x
-      startOffset.y = position.y
 
       container.style.cursor = 'grabbing'
       e.preventDefault()
+
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
     }
 
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return
-
-      const dx = e.clientX - startPos.x
-      const dy = e.clientY - startPos.y
-      const newX = startOffset.x + dx
-      const newY = startOffset.y + dy
-
-      const imgElement = getImgElement()
-      applyTransform(imgElement, newX, newY, transformRef.current.scale)
-
-      e.preventDefault()
-    }
-
-    const stopDrag = () => {
-      if (!isDragging) return
-
-      // 更新位置但不立即触发状态变更
-      const position = getCurrentPosition()
-      transformRef.current.x = position.x
-      transformRef.current.y = position.y
-
-      // 只触发一次渲染以保持组件状态同步
-      setRenderTrigger((prev) => prev + 1)
-
-      isDragging = false
-      container.style.cursor = 'default'
-    }
-
-    // 绑定到document以确保拖拽可以在鼠标离开容器后继续
-    container.addEventListener('mousedown', onMouseDown)
-    document.addEventListener('mousemove', onMouseMove)
-    document.addEventListener('mouseup', stopDrag)
+    container.addEventListener('mousedown', handleMouseDown)
 
     return () => {
-      container.removeEventListener('mousedown', onMouseDown)
-      document.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseup', stopDrag)
+      container.removeEventListener('mousedown', handleMouseDown)
+      // 清理以防万一，例如组件在拖拽过程中被卸载
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [containerRef, getCurrentPosition, getImgElement, applyTransform])
+  }, [containerRef, getImgElement, applyTransform, getCurrentPosition])
 
-  // 缩放处理函数
+  /**
+   * 缩放处理函数
+   * @param delta 缩放增量（正值放大，负值缩小）
+   */
   const zoom = useCallback(
-    (delta: number) => {
-      const newScale = Math.max(0.1, Math.min(3, transformRef.current.scale + delta))
+    (delta: number, absolute = false) => {
+      const newScale = absolute
+        ? Math.max(0.1, Math.min(3, delta))
+        : Math.max(0.1, Math.min(3, transformRef.current.scale + delta))
+
       transformRef.current.scale = newScale
 
       const imgElement = getImgElement()
       applyTransform(imgElement, transformRef.current.x, transformRef.current.y, newScale)
-
-      // 触发重渲染以保持组件状态同步
-      setRenderTrigger((prev) => prev + 1)
     },
     [getImgElement, applyTransform]
   )
@@ -174,32 +189,9 @@ export const useImageTools = (
       const imgElement = getImgElement()
       if (!imgElement) return
 
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
-
-      const viewBox = imgElement.getAttribute('viewBox')?.split(' ').map(Number) || []
-      const width = viewBox[2] || imgElement.clientWidth || imgElement.getBoundingClientRect().width
-      const height = viewBox[3] || imgElement.clientHeight || imgElement.getBoundingClientRect().height
-
-      const svgData = new XMLSerializer().serializeToString(imgElement)
-      const svgBase64 = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}`
-
-      img.onload = async () => {
-        const scale = 3
-        canvas.width = width * scale
-        canvas.height = height * scale
-
-        if (ctx) {
-          ctx.scale(scale, scale)
-          ctx.drawImage(img, 0, 0, width, height)
-          const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), 'image/png'))
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-          window.message.success(t('message.copy.success'))
-        }
-      }
-      img.src = svgBase64
+      const blob = await svgToPngBlob(imgElement)
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+      window.message.success(t('message.copy.success'))
     } catch (error) {
       logger.error('Copy failed:', error as Error)
       window.message.error(t('message.copy.failed'))
@@ -208,7 +200,7 @@ export const useImageTools = (
 
   // 下载处理函数
   const download = useCallback(
-    (format: 'svg' | 'png') => {
+    async (format: 'svg' | 'png') => {
       try {
         const imgElement = getImgElement()
         if (!imgElement) return
@@ -216,56 +208,29 @@ export const useImageTools = (
         const timestamp = Date.now()
 
         if (format === 'svg') {
-          const svgData = new XMLSerializer().serializeToString(imgElement)
-          const blob = new Blob([svgData], { type: 'image/svg+xml' })
+          const blob = svgToSvgBlob(imgElement)
           const url = URL.createObjectURL(blob)
           downloadFile(url, `${prefix}-${timestamp}.svg`)
           URL.revokeObjectURL(url)
-        } else if (format === 'png') {
-          const canvas = document.createElement('canvas')
-          const ctx = canvas.getContext('2d')
-          const img = new Image()
-          img.crossOrigin = 'anonymous'
-
-          const viewBox = imgElement.getAttribute('viewBox')?.split(' ').map(Number) || []
-          const width = viewBox[2] || imgElement.clientWidth || imgElement.getBoundingClientRect().width
-          const height = viewBox[3] || imgElement.clientHeight || imgElement.getBoundingClientRect().height
-
-          const svgData = new XMLSerializer().serializeToString(imgElement)
-          const svgBase64 = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}`
-
-          img.onload = () => {
-            const scale = 3
-            canvas.width = width * scale
-            canvas.height = height * scale
-
-            if (ctx) {
-              ctx.scale(scale, scale)
-              ctx.drawImage(img, 0, 0, width, height)
-            }
-
-            canvas.toBlob((blob) => {
-              if (blob) {
-                const pngUrl = URL.createObjectURL(blob)
-                downloadFile(pngUrl, `${prefix}-${timestamp}.png`)
-                URL.revokeObjectURL(pngUrl)
-              }
-            }, 'image/png')
-          }
-          img.src = svgBase64
+        } else {
+          const blob = await svgToPngBlob(imgElement)
+          const pngUrl = URL.createObjectURL(blob)
+          downloadFile(pngUrl, `${prefix}-${timestamp}.png`)
+          URL.revokeObjectURL(pngUrl)
         }
       } catch (error) {
         logger.error('Download failed:', error as Error)
+        window.message.error(t('message.download.failed'))
       }
     },
-    [getImgElement, prefix]
+    [getImgElement, prefix, t]
   )
 
   return {
     scale: transformRef.current.scale,
     zoom,
+    pan,
     copy,
-    download,
-    renderTrigger // 导出渲染触发器，万一要用
+    download
   }
 }
