@@ -1,6 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons'
 import { useImageTools } from '@renderer/components/ActionTools'
 import { useImagePreview } from '@renderer/components/CodeToolbar'
+import { download } from '@renderer/utils/download'
 import { Spin } from 'antd'
 import pako from 'pako'
 import React, { memo, useCallback, useRef, useState } from 'react'
@@ -73,22 +74,6 @@ function encodeDiagram(diagram: string): string {
   return encode64(compressed)
 }
 
-async function downloadUrl(url: string, filename: string) {
-  const response = await fetch(url)
-  if (!response.ok) {
-    window.message.warning({ content: response.statusText, duration: 1.5 })
-    return
-  }
-  const blob = await response.blob()
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(link.href)
-}
-
 type PlantUMLServerImageProps = {
   format: 'png' | 'svg'
   diagram: string
@@ -149,9 +134,11 @@ const PlantUmlPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enab
       const timestamp = Date.now()
       const url = `${PlantUMLServer}/${format}/${encodedDiagram}`
       const filename = `plantuml-diagram-${timestamp}.${format}`
-      downloadUrl(url, filename).catch(() => {
+      try {
+        download(url, filename)
+      } catch (error) {
         window.message.error(t('code_block.download.failed.network'))
-      })
+      }
     },
     [encodedDiagram, t]
   )
