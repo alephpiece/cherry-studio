@@ -160,12 +160,14 @@ const PlantUmlPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enab
   const { pan, zoom, copy } = useImageTools(containerRef, {
     imgSelector: '.plantuml-preview img',
     prefix: 'plantuml-diagram',
+    enableDrag: true,
     enableWheelZoom: true
   })
 
   // 注册工具到父级
   useImagePreview({
     setTools,
+    handleZoom: zoom,
     handleCopyImage: copy,
     handleDownload: customDownload
   })

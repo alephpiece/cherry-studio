@@ -15,11 +15,12 @@ export const useImageTools = (
   options: {
     prefix: string
     imgSelector: string
+    enableDrag?: boolean
     enableWheelZoom?: boolean
   }
 ) => {
   const transformRef = useRef({ scale: 1, x: 0, y: 0 }) // 管理变换状态
-  const { imgSelector, prefix, enableWheelZoom } = options
+  const { imgSelector, prefix, enableDrag, enableWheelZoom } = options
   const { t } = useTranslation()
 
   // 创建选择器函数
@@ -85,9 +86,9 @@ export const useImageTools = (
 
   // 拖拽平移支持
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
+    if (!enableDrag || !containerRef.current) return
 
+    const container = containerRef.current
     const startPos = { x: 0, y: 0 }
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -143,7 +144,7 @@ export const useImageTools = (
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [containerRef, getImgElement, applyTransform, getCurrentPosition])
+  }, [containerRef, getImgElement, applyTransform, getCurrentPosition, enableDrag])
 
   /**
    * 缩放处理函数

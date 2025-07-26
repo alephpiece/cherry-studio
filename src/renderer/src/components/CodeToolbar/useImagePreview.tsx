@@ -7,7 +7,7 @@ import { DownloadPngIcon, DownloadSvgIcon } from '../Icons/DownloadIcons'
 
 export interface ImagePreviewOptions {
   setTools?: (value: React.SetStateAction<ActionTool[]>) => void
-  handleZoom?: (delta: number) => void
+  handleZoom?: (delta: number) => void // FIXME: for compatibility
   handleCopyImage?: () => Promise<void>
   handleDownload?: (format: 'svg' | 'png') => void
 }
