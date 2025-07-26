@@ -29,12 +29,14 @@ const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enab
   const { pan, zoom, copy, download } = useImageTools(graphvizRef, {
     imgSelector: 'svg',
     prefix: 'graphviz',
+    enableDrag: true,
     enableWheelZoom: true
   })
 
   // 注册工具到父级
   useImagePreview({
     setTools,
+    handleZoom: zoom,
     handleCopyImage: copy,
     handleDownload: download
   })

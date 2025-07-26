@@ -3,6 +3,7 @@ import { useImagePreview } from '@renderer/components/CodeToolbar'
 import { memo, useEffect, useRef } from 'react'
 
 import ImageToolbar from './ImageToolbar'
+import { PreviewContainer } from './styles'
 import { BasicPreviewProps } from './types'
 
 /**
@@ -50,20 +51,24 @@ const SvgPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enableToo
   // 使用通用图像工具
   const { pan, zoom, copy, download } = useImageTools(svgContainerRef, {
     imgSelector: 'svg',
-    prefix: 'svg-image'
+    prefix: 'svg-image',
+    enableDrag: true,
+    enableWheelZoom: true
   })
 
   // 注册工具到父级
   useImagePreview({
     setTools,
+    handleZoom: zoom,
     handleCopyImage: copy,
     handleDownload: download
   })
 
   return (
-    <div ref={svgContainerRef} className="svg-preview special-preview">
+    <PreviewContainer vertical>
+      <div ref={svgContainerRef} className="svg-preview special-preview"></div>
       {enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
-    </div>
+    </PreviewContainer>
   )
 }
 

@@ -28,12 +28,14 @@ const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enabl
   const { pan, zoom, copy, download } = useImageTools(mermaidRef, {
     imgSelector: 'svg',
     prefix: 'mermaid',
+    enableDrag: true,
     enableWheelZoom: true
   })
 
   // 注册工具到父级
   useImagePreview({
     setTools,
+    handleZoom: zoom,
     handleCopyImage: copy,
     handleDownload: download
   })
