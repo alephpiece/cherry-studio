@@ -1,4 +1,4 @@
-import { TOOL_SPECS, useCodeTool } from '@renderer/components/CodeToolbar'
+import { TOOL_SPECS, ToolRegisterProps, useToolManager } from '@renderer/components/ActionTools'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useCodeHighlight } from '@renderer/hooks/useCodeHighlight'
 import { useSettings } from '@renderer/hooks/useSettings'
@@ -12,10 +12,9 @@ import { useTranslation } from 'react-i18next'
 import { ThemedToken } from 'shiki/core'
 import styled from 'styled-components'
 
-import { BasicPreviewProps } from './types'
-
-interface CodePreviewProps extends BasicPreviewProps {
+interface CodePreviewProps extends ToolRegisterProps {
   language: string
+  children: string
 }
 
 const MAX_COLLAPSE_HEIGHT = 350
@@ -38,13 +37,13 @@ const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
   const rawLines = useMemo(() => (typeof children === 'string' ? children.trimEnd().split('\n') : []), [children])
 
   const { t } = useTranslation()
-  const { registerTool, removeTool } = useCodeTool(setTools)
+  const { registerTool, removeTool } = useToolManager(setTools)
 
   // 展开/折叠工具
   useEffect(() => {
     registerTool({
       ...TOOL_SPECS.expand,
-      icon: expandOverride ? <ChevronsDownUp className="icon" /> : <ChevronsUpDown className="icon" />,
+      icon: expandOverride ? <ChevronsDownUp className="tool-icon" /> : <ChevronsUpDown className="tool-icon" />,
       tooltip: expandOverride ? t('code_block.collapse') : t('code_block.expand'),
       visible: () => {
         const scrollHeight = scrollerRef.current?.scrollHeight
@@ -60,7 +59,7 @@ const CodePreview = ({ children, language, setTools }: CodePreviewProps) => {
   useEffect(() => {
     registerTool({
       ...TOOL_SPECS.wrap,
-      icon: unwrapOverride ? <WrapIcon className="icon" /> : <UnWrapIcon className="icon" />,
+      icon: unwrapOverride ? <WrapIcon className="tool-icon" /> : <UnWrapIcon className="tool-icon" />,
       tooltip: unwrapOverride ? t('code_block.wrap.on') : t('code_block.wrap.off'),
       visible: () => codeWrappable,
       onClick: () => setUnwrapOverride((prev) => !prev)

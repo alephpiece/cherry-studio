@@ -1,5 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons'
-import { usePreviewToolHandlers, usePreviewTools } from '@renderer/components/CodeToolbar'
+import { useImageTools } from '@renderer/components/ActionTools'
+import { useImagePreview } from '@renderer/components/CodeToolbar'
 import { Spin } from 'antd'
 import pako from 'pako'
 import React, { memo, useCallback, useRef, useState } from 'react'
@@ -154,18 +155,17 @@ const PlantUmlPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) =>
   )
 
   // 使用通用图像工具，提供自定义下载方法
-  const { handleZoom, handleCopyImage } = usePreviewToolHandlers(containerRef, {
+  const { zoom, copy } = useImageTools(containerRef, {
     imgSelector: '.plantuml-preview img',
     prefix: 'plantuml-diagram',
-    enableWheelZoom: true,
-    customDownloader: customDownload
+    enableWheelZoom: true
   })
 
-  // 使用工具栏
-  usePreviewTools({
+  // 注册工具
+  useImagePreview({
     setTools,
-    handleZoom,
-    handleCopyImage,
+    handleZoom: zoom,
+    handleCopyImage: copy,
     handleDownload: customDownload
   })
 

@@ -1,3 +1,4 @@
+import { ActionTool } from '@renderer/components/ActionTools'
 import { HStack } from '@renderer/components/Layout'
 import { Tooltip } from 'antd'
 import { EllipsisVertical } from 'lucide-react'
@@ -5,21 +6,19 @@ import React, { memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
-import { CodeTool } from './types'
-
 interface CodeToolButtonProps {
-  tool: CodeTool
+  tool: ActionTool
 }
 
 const CodeToolButton: React.FC<CodeToolButtonProps> = memo(({ tool }) => {
   return (
-    <Tooltip key={tool.id} title={tool.tooltip} mouseEnterDelay={0.5}>
+    <Tooltip key={tool.id} title={tool.tooltip} mouseEnterDelay={0.5} mouseLeaveDelay={0}>
       <ToolWrapper onClick={() => tool.onClick()}>{tool.icon}</ToolWrapper>
     </Tooltip>
   )
 })
 
-export const CodeToolbar: React.FC<{ tools: CodeTool[] }> = memo(({ tools }) => {
+export const CodeToolbar: React.FC<{ tools: ActionTool[] }> = memo(({ tools }) => {
   const [showQuickTools, setShowQuickTools] = useState(false)
   const { t } = useTranslation()
 
@@ -51,7 +50,7 @@ export const CodeToolbar: React.FC<{ tools: CodeTool[] }> = memo(({ tools }) => 
         {quickTools.length > 1 && (
           <Tooltip title={t('code_block.more')} mouseEnterDelay={0.5}>
             <ToolWrapper onClick={() => setShowQuickTools(!showQuickTools)} className={showQuickTools ? 'active' : ''}>
-              <EllipsisVertical className="icon" />
+              <EllipsisVertical className="tool-icon" />
             </ToolWrapper>
           </Tooltip>
         )}
@@ -94,20 +93,20 @@ const ToolWrapper = styled.div`
 
   &:hover {
     background-color: var(--color-background-soft);
-    .icon {
+    .tool-icon {
       color: var(--color-text-1);
     }
   }
 
   &.active {
     color: var(--color-primary);
-    .icon {
+    .tool-icon {
       color: var(--color-primary);
     }
   }
 
   /* For Lucide icons */
-  .icon {
+  .tool-icon {
     width: 14px;
     height: 14px;
     color: var(--color-text-3);

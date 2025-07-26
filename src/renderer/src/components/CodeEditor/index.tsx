@@ -1,4 +1,4 @@
-import { CodeTool, TOOL_SPECS, useCodeTool } from '@renderer/components/CodeToolbar'
+import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
 import CodeMirror, { Annotation, BasicSetupOptions, EditorView, Extension } from '@uiw/react-codemirror'
@@ -26,7 +26,7 @@ interface Props {
   onSave?: (newContent: string) => void
   onChange?: (newContent: string) => void
   onBlur?: (newContent: string) => void
-  setTools?: (value: React.SetStateAction<CodeTool[]>) => void
+  setTools?: (value: React.SetStateAction<ActionTool[]>) => void
   height?: string
   minHeight?: string
   maxHeight?: string
@@ -100,13 +100,13 @@ const CodeEditor = ({
 
   const langExtensions = useLanguageExtensions(language, options?.lint)
 
-  const { registerTool, removeTool } = useCodeTool(setTools)
+  const { registerTool, removeTool } = useToolManager(setTools)
 
   // 展开/折叠工具
   useEffect(() => {
     registerTool({
       ...TOOL_SPECS.expand,
-      icon: isExpanded ? <ChevronsDownUp className="icon" /> : <ChevronsUpDown className="icon" />,
+      icon: isExpanded ? <ChevronsDownUp className="tool-icon" /> : <ChevronsUpDown className="tool-icon" />,
       tooltip: isExpanded ? t('code_block.collapse') : t('code_block.expand'),
       visible: () => {
         const scrollHeight = editorViewRef?.current?.scrollDOM?.scrollHeight
@@ -122,7 +122,7 @@ const CodeEditor = ({
   useEffect(() => {
     registerTool({
       ...TOOL_SPECS.wrap,
-      icon: isUnwrapped ? <WrapIcon className="icon" /> : <UnWrapIcon className="icon" />,
+      icon: isUnwrapped ? <WrapIcon className="tool-icon" /> : <UnWrapIcon className="tool-icon" />,
       tooltip: isUnwrapped ? t('code_block.wrap.on') : t('code_block.wrap.off'),
       visible: () => wrappable,
       onClick: () => setIsUnwrapped((prev) => !prev)
@@ -140,7 +140,7 @@ const CodeEditor = ({
   useEffect(() => {
     registerTool({
       ...TOOL_SPECS.save,
-      icon: <SaveIcon className="icon" />,
+      icon: <SaveIcon className="tool-icon" />,
       tooltip: t('code_block.edit.save.label'),
       onClick: handleSave
     })
