@@ -1,3 +1,4 @@
+import { Flex } from 'antd'
 import { styled } from 'styled-components'
 
 export const PreviewError = styled.div`
@@ -8,4 +9,23 @@ export const PreviewError = styled.div`
   border-radius: 4px;
   word-wrap: break-word;
   white-space: pre-wrap;
+`
+
+export const PreviewContainer = styled(Flex)`
+  position: relative;
+  /* Make sure the toolbar is visible */
+  min-height: 8rem;
+
+  .preview-toolbar {
+    transition: opacity 0.3s ease-in-out;
+    transform: translateZ(0);
+    will-change: opacity;
+    opacity: 0;
+  }
+
+  &:hover {
+    .preview-toolbar {
+      opacity: 1;
+    }
+  }
 `

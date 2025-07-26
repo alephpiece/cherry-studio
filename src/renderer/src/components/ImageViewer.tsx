@@ -86,7 +86,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ src, style, ...props }) => {
       },
       {
         key: 'copy-image',
-        label: t('code_block.preview.copy.image'),
+        label: t('preview.copy.image'),
         icon: <FileImageOutlined />,
         onClick: () => handleCopyImage(src)
       }

@@ -7,6 +7,8 @@ import React, { memo, useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
+import ImageToolbar from './ImageToolbar'
+import { PreviewContainer } from './styles'
 import { BasicPreviewProps } from './types'
 
 const PlantUMLServer = 'https://www.plantuml.com/plantuml'
@@ -135,7 +137,7 @@ const PlantUMLServerImage: React.FC<PlantUMLServerImageProps> = ({ format, diagr
   )
 }
 
-const PlantUmlPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => {
+const PlantUmlPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enableToolbar = false }) => {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -155,23 +157,25 @@ const PlantUmlPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) =>
   )
 
   // 使用通用图像工具，提供自定义下载方法
-  const { zoom, copy } = useImageTools(containerRef, {
+  const { pan, zoom, copy } = useImageTools(containerRef, {
     imgSelector: '.plantuml-preview img',
     prefix: 'plantuml-diagram',
     enableWheelZoom: true
   })
 
-  // 注册工具
+  // 注册工具到父级
   useImagePreview({
     setTools,
-    handleZoom: zoom,
     handleCopyImage: copy,
     handleDownload: customDownload
   })
 
   return (
     <div ref={containerRef}>
-      <PlantUMLServerImage format="svg" diagram={children} className="plantuml-preview special-preview" />
+      <PreviewContainer vertical>
+        <PlantUMLServerImage format="svg" diagram={children} className="plantuml-preview special-preview" />
+        {enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
+      </PreviewContainer>
     </div>
   )
 }
@@ -181,6 +185,9 @@ const StyledPlantUML = styled.div`
   text-align: left;
   overflow-y: auto;
   background-color: white;
+  position: relative;
+  width: 100%;
+  height: 100%;
   img {
     max-width: 100%;
     height: auto;

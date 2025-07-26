@@ -3,19 +3,20 @@ import { useImageTools } from '@renderer/components/ActionTools'
 import { useImagePreview } from '@renderer/components/CodeToolbar'
 import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
 import { useMermaid } from '@renderer/hooks/useMermaid'
-import { Flex, Spin } from 'antd'
+import { Spin } from 'antd'
 import { debounce } from 'lodash'
 import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 
-import { PreviewError } from './styles'
+import ImageToolbar from './ImageToolbar'
+import { PreviewContainer, PreviewError } from './styles'
 import { BasicPreviewProps } from './types'
 
 /** 预览 Mermaid 图表
  * 通过防抖渲染提供比较统一的体验，减少闪烁。
  * FIXME: 等将来容易判断代码块结束位置时再重构。
  */
-const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => {
+const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enableToolbar = false }) => {
   const { mermaid, isLoading: isLoadingMermaid, error: mermaidError } = useMermaid()
   const mermaidRef = useRef<HTMLDivElement>(null)
   const diagramId = useRef<string>(`mermaid-${nanoid(6)}`).current
@@ -24,16 +25,15 @@ const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => 
   const [isVisible, setIsVisible] = useState(true)
 
   // 使用通用图像工具
-  const { zoom, copy, download } = useImageTools(mermaidRef, {
+  const { pan, zoom, copy, download } = useImageTools(mermaidRef, {
     imgSelector: 'svg',
     prefix: 'mermaid',
     enableWheelZoom: true
   })
 
-  // 注册工具
+  // 注册工具到父级
   useImagePreview({
     setTools,
-    handleZoom: zoom,
     handleCopyImage: copy,
     handleDownload: download
   })
@@ -141,16 +141,20 @@ const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => 
 
   return (
     <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
-      <Flex vertical style={{ minHeight: isLoading ? '2rem' : 'auto' }}>
+      <PreviewContainer vertical>
         {(mermaidError || error) && <PreviewError>{mermaidError || error}</PreviewError>}
-        <StyledMermaid ref={mermaidRef} className="mermaid  special-preview" />
-      </Flex>
+        <StyledMermaid ref={mermaidRef} className="mermaid special-preview" />
+        {enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
+      </PreviewContainer>
     </Spin>
   )
 }
 
 const StyledMermaid = styled.div`
   overflow: auto;
+  position: relative;
+  width: 100%;
+  height: 100%;
 `
 
 export default memo(MermaidPreview)

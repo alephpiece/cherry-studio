@@ -583,15 +583,6 @@
     },
     "expand": "Expand",
     "more": "More",
-    "preview": {
-      "copy": {
-        "image": "Copy as image"
-      },
-      "label": "Preview",
-      "source": "View Source Code",
-      "zoom_in": "Zoom In",
-      "zoom_out": "Zoom Out"
-    },
     "run": "Run",
     "split": {
       "label": "Split View",
@@ -1581,6 +1572,21 @@
       "resemblance_tip": "Controls similarity to original image",
       "seed_tip": "Controls upscaling randomness"
     }
+  },
+  "preview": {
+    "copy": {
+      "image": "Copy as image"
+    },
+    "label": "Preview",
+    "pan": "Pan",
+    "pan_down": "Pan Down",
+    "pan_left": "Pan Left",
+    "pan_right": "Pan Right",
+    "pan_up": "Pan Up",
+    "reset": "Reset",
+    "source": "View Source Code",
+    "zoom_in": "Zoom In",
+    "zoom_out": "Zoom Out"
   },
   "prompts": {
     "explanation": "Explain this concept to me",

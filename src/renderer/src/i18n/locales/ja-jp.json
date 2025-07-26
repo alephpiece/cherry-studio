@@ -583,15 +583,6 @@
     },
     "expand": "展開する",
     "more": "もっと",
-    "preview": {
-      "copy": {
-        "image": "画像としてコピー"
-      },
-      "label": "プレビュー",
-      "source": "ソースコードを表示",
-      "zoom_in": "拡大",
-      "zoom_out": "縮小"
-    },
     "run": "コードを実行",
     "split": {
       "label": "分割視圖",
@@ -1581,6 +1572,21 @@
       "resemblance_tip": "拡大結果と原画像の類似度を制御します",
       "seed_tip": "拡大結果のランダム性を制御します"
     }
+  },
+  "preview": {
+    "copy": {
+      "image": "画像としてコピー"
+    },
+    "label": "プレビュー",
+    "pan": "パン",
+    "pan_down": "下にパン",
+    "pan_left": "左にパン",
+    "pan_right": "右にパン",
+    "pan_up": "上にパン",
+    "reset": "リセット",
+    "source": "ソースコードを表示",
+    "zoom_in": "拡大",
+    "zoom_out": "縮小"
   },
   "prompts": {
     "explanation": "この概念を説明してください",

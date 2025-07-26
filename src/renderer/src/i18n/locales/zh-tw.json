@@ -583,15 +583,6 @@
     },
     "expand": "展開",
     "more": "更多",
-    "preview": {
-      "copy": {
-        "image": "複製為圖片"
-      },
-      "label": "預覽",
-      "source": "查看源碼",
-      "zoom_in": "放大",
-      "zoom_out": "縮小"
-    },
     "run": "運行代碼",
     "split": {
       "label": "分割視圖",
@@ -1581,6 +1572,21 @@
       "resemblance_tip": "控制放大結果與原圖的相似程度",
       "seed_tip": "控制放大結果的隨機性"
     }
+  },
+  "preview": {
+    "copy": {
+      "image": "複製為圖片"
+    },
+    "label": "預覽",
+    "pan": "移動",
+    "pan_down": "下移",
+    "pan_left": "左移",
+    "pan_right": "右移",
+    "pan_up": "上移",
+    "reset": "重置",
+    "source": "查看源碼",
+    "zoom_in": "放大",
+    "zoom_out": "縮小"
   },
   "prompts": {
     "explanation": "幫我解釋一下這個概念",
