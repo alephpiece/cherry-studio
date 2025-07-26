@@ -5,4 +5,5 @@ import { ToolRegisterProps } from '@renderer/components/ActionTools'
  */
 export interface BasicPreviewProps extends ToolRegisterProps {
   children: string
+  enableToolbar?: boolean
 }

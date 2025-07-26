@@ -26,7 +26,7 @@ export const useImagePreview = ({ setTools, handleZoom, handleCopyImage, handleD
       registerTool({
         ...TOOL_SPECS['zoom-in'],
         icon: <ZoomIn className="tool-icon" />,
-        tooltip: t('code_block.preview.zoom_in'),
+        tooltip: t('preview.zoom_in'),
         onClick: () => handleZoom(0.1)
       })
 
@@ -34,7 +34,7 @@ export const useImagePreview = ({ setTools, handleZoom, handleCopyImage, handleD
       registerTool({
         ...TOOL_SPECS['zoom-out'],
         icon: <ZoomOut className="tool-icon" />,
-        tooltip: t('code_block.preview.zoom_out'),
+        tooltip: t('preview.zoom_out'),
         onClick: () => handleZoom(-0.1)
       })
     }
@@ -44,7 +44,7 @@ export const useImagePreview = ({ setTools, handleZoom, handleCopyImage, handleD
       registerTool({
         ...TOOL_SPECS['copy-image'],
         icon: <FileImage className="tool-icon" />,
-        tooltip: t('code_block.preview.copy.image'),
+        tooltip: t('preview.copy.image'),
         onClick: handleCopyImage
       })
     }

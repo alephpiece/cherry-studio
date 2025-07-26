@@ -139,14 +139,14 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
       registerTool({
         ...viewSourceToolSpec,
         icon: viewMode === 'source' ? <Eye className="tool-icon" /> : <SquarePen className="tool-icon" />,
-        tooltip: viewMode === 'source' ? t('code_block.preview.label') : t('code_block.edit.label'),
+        tooltip: viewMode === 'source' ? t('preview.label') : t('code_block.edit.label'),
         onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source')
       })
     } else {
       registerTool({
         ...viewSourceToolSpec,
         icon: viewMode === 'source' ? <Eye className="tool-icon" /> : <CodeXml className="tool-icon" />,
-        tooltip: viewMode === 'source' ? t('code_block.preview.label') : t('code_block.preview.source'),
+        tooltip: viewMode === 'source' ? t('preview.label') : t('preview.source'),
         onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source')
       })
     }

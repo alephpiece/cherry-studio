@@ -2,12 +2,13 @@ import { useImageTools } from '@renderer/components/ActionTools'
 import { useImagePreview } from '@renderer/components/CodeToolbar'
 import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
 import { AsyncInitializer } from '@renderer/utils/asyncInitializer'
-import { Flex, Spin } from 'antd'
+import { Spin } from 'antd'
 import { debounce } from 'lodash'
 import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 
-import { PreviewError } from './styles'
+import ImageToolbar from './ImageToolbar'
+import { PreviewContainer, PreviewError } from './styles'
 import { BasicPreviewProps } from './types'
 
 // 管理 viz 实例
@@ -19,22 +20,21 @@ const vizInitializer = new AsyncInitializer(async () => {
 /** 预览 Graphviz 图表
  * 通过防抖渲染提供比较统一的体验，减少闪烁。
  */
-const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) => {
+const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enableToolbar = false }) => {
   const graphvizRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   // 使用通用图像工具
-  const { zoom, copy, download } = useImageTools(graphvizRef, {
+  const { pan, zoom, copy, download } = useImageTools(graphvizRef, {
     imgSelector: 'svg',
     prefix: 'graphviz',
     enableWheelZoom: true
   })
 
-  // 注册工具
+  // 注册工具到父级
   useImagePreview({
     setTools,
-    handleZoom: zoom,
     handleCopyImage: copy,
     handleDownload: download
   })
@@ -88,16 +88,20 @@ const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools }) =>
 
   return (
     <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
-      <Flex vertical style={{ minHeight: isLoading ? '2rem' : 'auto' }}>
+      <PreviewContainer vertical>
         {error && <PreviewError>{error}</PreviewError>}
         <StyledGraphviz ref={graphvizRef} className="graphviz special-preview" />
-      </Flex>
+        {enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
+      </PreviewContainer>
     </Spin>
   )
 }
 
 const StyledGraphviz = styled.div`
   overflow: auto;
+  position: relative;
+  width: 100%;
+  height: 100%;
 `
 
 export default memo(GraphvizPreview)
