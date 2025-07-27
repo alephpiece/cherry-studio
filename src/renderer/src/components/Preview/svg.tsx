@@ -1,15 +1,20 @@
 import { useImageTools } from '@renderer/components/ActionTools'
 import { useImagePreview } from '@renderer/components/CodeToolbar'
-import { memo, useEffect, useRef } from 'react'
+import { memo, useEffect, useImperativeHandle, useRef } from 'react'
 
 import ImageToolbar from './ImageToolbar'
 import { PreviewContainer } from './styles'
-import { BasicPreviewProps } from './types'
+import { BasicPreviewHandles, BasicPreviewProps } from './types'
 
 /**
  * 使用 Shadow DOM 渲染 SVG
  */
-const SvgPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enableToolbar = false }) => {
+const SvgPreview = ({
+  children,
+  setTools,
+  enableToolbar = false,
+  ref
+}: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
   const svgContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -60,8 +65,16 @@ const SvgPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enableToo
   useImagePreview({
     setTools,
     handleZoom: zoom,
-    handleCopyImage: copy,
-    handleDownload: download
+    handleCopyImage: copy
+  })
+
+  useImperativeHandle(ref, () => {
+    return {
+      pan,
+      zoom,
+      copy,
+      download
+    }
   })
 
   return (

@@ -1,6 +1,6 @@
 import { ActionTool } from '@renderer/components/ActionTools'
 import { HStack } from '@renderer/components/Layout'
-import { Tooltip } from 'antd'
+import { Dropdown, Tooltip } from 'antd'
 import { EllipsisVertical } from 'lucide-react'
 import React, { memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,11 +11,33 @@ interface CodeToolButtonProps {
 }
 
 const CodeToolButton: React.FC<CodeToolButtonProps> = memo(({ tool }) => {
-  return (
-    <Tooltip key={tool.id} title={tool.tooltip} mouseEnterDelay={0.5} mouseLeaveDelay={0}>
-      <ToolWrapper onClick={() => tool.onClick()}>{tool.icon}</ToolWrapper>
-    </Tooltip>
+  const mainTool = useMemo(
+    () => (
+      <Tooltip key={tool.id} title={tool.tooltip} mouseEnterDelay={0.5} mouseLeaveDelay={0}>
+        <ToolWrapper onClick={tool.onClick}>{tool.icon}</ToolWrapper>
+      </Tooltip>
+    ),
+    [tool]
   )
+
+  if (tool.children?.length && tool.children.length > 0) {
+    return (
+      <Dropdown
+        menu={{
+          items: tool.children.map((child) => ({
+            key: child.id,
+            label: child.tooltip,
+            icon: child.icon,
+            onClick: child.onClick
+          }))
+        }}
+        trigger={['click']}>
+        {mainTool}
+      </Dropdown>
+    )
+  }
+
+  return mainTool
 })
 
 export const CodeToolbar: React.FC<{ tools: ActionTool[] }> = memo(({ tools }) => {

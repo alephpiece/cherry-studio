@@ -3,14 +3,26 @@ import { loggerService } from '@logger'
 import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import CodeEditor from '@renderer/components/CodeEditor'
 import { CodeToolbar } from '@renderer/components/CodeToolbar'
+import { DownloadPngIcon, DownloadSvgIcon } from '@renderer/components/Icons/DownloadIcons'
 import ImageViewer from '@renderer/components/ImageViewer'
+import { BasicPreviewHandles } from '@renderer/components/Preview'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { pyodideService } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
 import { getExtensionByLanguage, isHtmlCode, isValidPlantUML } from '@renderer/utils/markdown'
 import dayjs from 'dayjs'
-import { CirclePlay, CodeXml, Copy, Download, Eye, Square, SquarePen, SquareSplitHorizontal } from 'lucide-react'
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  CirclePlay,
+  CodeXml,
+  Copy,
+  Download,
+  Eye,
+  FileCode,
+  Square,
+  SquarePen,
+  SquareSplitHorizontal
+} from 'lucide-react'
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -59,6 +71,8 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     return codeExecution.enabled && language === 'python'
   }, [codeExecution.enabled, language])
 
+  const specialViewRef = useRef<BasicPreviewHandles>(null)
+
   const hasSpecialView = useMemo(() => SPECIAL_VIEWS.includes(language), [language])
 
   const isInSpecialView = useMemo(() => {
@@ -70,7 +84,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     window.message.success({ content: t('code_block.copy.success'), key: 'copy-code' })
   }, [children, t])
 
-  const handleDownloadSource = useCallback(async () => {
+  const handleDownloadSource = useCallback(() => {
     let fileName = ''
 
     // 尝试提取 HTML 标题
@@ -83,7 +97,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
       fileName = `${dayjs().format('YYYYMMDDHHmm')}`
     }
 
-    const ext = await getExtensionByLanguage(language)
+    const ext = getExtensionByLanguage(language)
     window.api.file.save(`${fileName}${ext}`, children)
   }, [children, language])
 
@@ -107,8 +121,8 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
       })
   }, [children, codeExecution.timeoutMinutes])
 
+  // 复制按钮
   useEffect(() => {
-    // 复制按钮
     registerTool({
       ...TOOL_SPECS.copy,
       icon: <Copy className="tool-icon" />,
@@ -116,18 +130,52 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
       onClick: handleCopySource
     })
 
-    // 下载按钮
-    registerTool({
+    return () => removeTool(TOOL_SPECS.copy.id)
+  }, [handleCopySource, registerTool, removeTool, t])
+
+  // 下载按钮
+  useEffect(() => {
+    const hasSpecialViewTools = hasSpecialView && specialViewRef.current
+
+    const baseTool = {
       ...TOOL_SPECS.download,
       icon: <Download className="tool-icon" />,
-      tooltip: t('code_block.download.source'),
-      onClick: handleDownloadSource
-    })
-    return () => {
-      removeTool(TOOL_SPECS.copy.id)
-      removeTool(TOOL_SPECS.download.id)
+      tooltip: hasSpecialViewTools ? t('common.download') : t('code_block.download.source')
     }
-  }, [handleCopySource, handleDownloadSource, registerTool, removeTool, t])
+
+    if (hasSpecialViewTools) {
+      registerTool({
+        ...baseTool,
+        children: [
+          {
+            ...TOOL_SPECS.download,
+            icon: <FileCode size={'1rem'} />,
+            tooltip: t('code_block.download.source'),
+            onClick: handleDownloadSource
+          },
+          {
+            ...TOOL_SPECS['download-svg'],
+            icon: <DownloadSvgIcon size={'1rem'} />,
+            tooltip: t('code_block.download.svg'),
+            onClick: () => specialViewRef.current?.download('svg')
+          },
+          {
+            ...TOOL_SPECS['download-png'],
+            icon: <DownloadPngIcon size={'1rem'} />,
+            tooltip: t('code_block.download.png'),
+            onClick: () => specialViewRef.current?.download('png')
+          }
+        ]
+      })
+    } else {
+      registerTool({
+        ...baseTool,
+        onClick: handleDownloadSource
+      })
+    }
+
+    return () => removeTool(TOOL_SPECS.download.id)
+  }, [handleDownloadSource, hasSpecialView, registerTool, removeTool, t])
 
   // 特殊视图的编辑按钮，在分屏模式下不可用
   useEffect(() => {
@@ -214,7 +262,11 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
       return null
     }
 
-    return <SpecialView setTools={setTools}>{children}</SpecialView>
+    return (
+      <SpecialView ref={specialViewRef} setTools={setTools}>
+        {children}
+      </SpecialView>
+    )
   }, [children, language])
 
   const renderHeader = useMemo(() => {

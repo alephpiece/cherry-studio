@@ -20,11 +20,15 @@ export const DownloadIcon = (props: SVGProps<SVGSVGElement>) => (
 )
 
 // 带有文件类型的下载图标基础组件
-const DownloadTypeIconBase = ({ type, ...props }: SVGProps<SVGSVGElement> & { type: string }) => (
+const DownloadTypeIconBase = ({
+  type,
+  size = '1.1em',
+  ...props
+}: SVGProps<SVGSVGElement> & { type: string; size?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="1.1em"
-    height="1.1em"
+    width={size}
+    height={size}
     fill="none"
     stroke="currentColor"
     strokeLinecap="round"
@@ -59,10 +63,16 @@ const DownloadTypeIconBase = ({ type, ...props }: SVGProps<SVGSVGElement> & { ty
 )
 
 // JPG 文件下载图标
-export const DownloadJpgIcon = (props: SVGProps<SVGSVGElement>) => <DownloadTypeIconBase type="JPG" {...props} />
+export const DownloadJpgIcon = (props: SVGProps<SVGSVGElement> & { size?: string }) => (
+  <DownloadTypeIconBase type="JPG" {...props} />
+)
 
 // PNG 文件下载图标
-export const DownloadPngIcon = (props: SVGProps<SVGSVGElement>) => <DownloadTypeIconBase type="PNG" {...props} />
+export const DownloadPngIcon = (props: SVGProps<SVGSVGElement> & { size?: string }) => (
+  <DownloadTypeIconBase type="PNG" {...props} />
+)
 
 // SVG 文件下载图标
-export const DownloadSvgIcon = (props: SVGProps<SVGSVGElement>) => <DownloadTypeIconBase type="SVG" {...props} />
+export const DownloadSvgIcon = (props: SVGProps<SVGSVGElement> & { size?: string }) => (
+  <DownloadTypeIconBase type="SVG" {...props} />
+)

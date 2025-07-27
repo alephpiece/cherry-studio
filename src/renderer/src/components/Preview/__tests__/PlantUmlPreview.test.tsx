@@ -129,24 +129,4 @@ describe('PlantUmlPreview', () => {
       expect(screen.queryByTestId('image-toolbar')).not.toBeInTheDocument()
     })
   })
-
-  describe('download', () => {
-    it('should call custom download function when triggered from useImagePreview', () => {
-      render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
-
-      // Get the handleDownload function passed to useImagePreview
-      const downloadFn = mocks.useImagePreview.mock.calls[0][0].handleDownload
-      expect(downloadFn).toBeDefined()
-
-      // Call download function
-      downloadFn('svg')
-
-      // Verify that the download tool function is called correctly
-      expect(mocks.download).toHaveBeenCalledTimes(1)
-      expect(mocks.download).toHaveBeenCalledWith(
-        expect.stringContaining('plantuml.com/plantuml/svg/'),
-        expect.stringContaining('plantuml-diagram-')
-      )
-    })
-  })
 })

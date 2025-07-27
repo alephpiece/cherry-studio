@@ -3,19 +3,16 @@ import { FileImage, ZoomIn, ZoomOut } from 'lucide-react'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { DownloadPngIcon, DownloadSvgIcon } from '../Icons/DownloadIcons'
-
 export interface ImagePreviewOptions {
   setTools?: (value: React.SetStateAction<ActionTool[]>) => void
   handleZoom?: (delta: number) => void // FIXME: for compatibility
   handleCopyImage?: () => Promise<void>
-  handleDownload?: (format: 'svg' | 'png') => void
 }
 
 /**
  * 提供预览组件通用工具栏功能的自定义Hook
  */
-export const useImagePreview = ({ setTools, handleZoom, handleCopyImage, handleDownload }: ImagePreviewOptions) => {
+export const useImagePreview = ({ setTools, handleZoom, handleCopyImage }: ImagePreviewOptions) => {
   const { t } = useTranslation()
   const { registerTool, removeTool } = useToolManager(setTools)
 
@@ -49,24 +46,6 @@ export const useImagePreview = ({ setTools, handleZoom, handleCopyImage, handleD
       })
     }
 
-    if (handleDownload) {
-      // 下载 SVG 工具
-      registerTool({
-        ...TOOL_SPECS['download-svg'],
-        icon: <DownloadSvgIcon />,
-        tooltip: t('code_block.download.svg'),
-        onClick: () => handleDownload('svg')
-      })
-
-      // 下载 PNG 工具
-      registerTool({
-        ...TOOL_SPECS['download-png'],
-        icon: <DownloadPngIcon />,
-        tooltip: t('code_block.download.png'),
-        onClick: () => handleDownload('png')
-      })
-    }
-
     // 清理函数
     return () => {
       if (handleZoom) {
@@ -76,10 +55,6 @@ export const useImagePreview = ({ setTools, handleZoom, handleCopyImage, handleD
       if (handleCopyImage) {
         removeTool(TOOL_SPECS['copy-image'].id)
       }
-      if (handleDownload) {
-        removeTool(TOOL_SPECS['download-svg'].id)
-        removeTool(TOOL_SPECS['download-png'].id)
-      }
     }
-  }, [handleCopyImage, handleDownload, handleZoom, registerTool, removeTool, t])
+  }, [handleCopyImage, handleZoom, registerTool, removeTool, t])
 }
