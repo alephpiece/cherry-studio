@@ -95,6 +95,7 @@ export interface SettingsState {
   codeShowLineNumbers: boolean
   codeCollapsible: boolean
   codeWrappable: boolean
+  codeImageTools: boolean
   mathEngine: MathEngine
   messageStyle: 'plain' | 'bubble'
   foldDisplayMode: 'expanded' | 'compact'
@@ -265,6 +266,7 @@ export const initialState: SettingsState = {
   codeShowLineNumbers: false,
   codeCollapsible: false,
   codeWrappable: false,
+  codeImageTools: false,
   mathEngine: 'KaTeX',
   messageStyle: 'plain',
   foldDisplayMode: 'expanded',
@@ -577,6 +579,9 @@ const settingsSlice = createSlice({
     setCodeWrappable: (state, action: PayloadAction<boolean>) => {
       state.codeWrappable = action.payload
     },
+    setCodeImageTools: (state, action: PayloadAction<boolean>) => {
+      state.codeImageTools = action.payload
+    },
     setMathEngine: (state, action: PayloadAction<MathEngine>) => {
       state.mathEngine = action.payload
     },
@@ -837,6 +842,7 @@ export const {
   setCodeShowLineNumbers,
   setCodeCollapsible,
   setCodeWrappable,
+  setCodeImageTools,
   setMathEngine,
   setFoldDisplayMode,
   setGridColumns,

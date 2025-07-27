@@ -47,7 +47,7 @@ interface Props {
  */
 export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave }) => {
   const { t } = useTranslation()
-  const { codeEditor, codeExecution } = useSettings()
+  const { codeEditor, codeExecution, codeImageTools } = useSettings()
 
   const [viewMode, setViewMode] = useState<ViewMode>('special')
   const [isRunning, setIsRunning] = useState(false)
@@ -212,11 +212,11 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     }
 
     return (
-      <SpecialView ref={specialViewRef} enableToolbar>
+      <SpecialView ref={specialViewRef} enableToolbar={codeImageTools}>
         {children}
       </SpecialView>
     )
-  }, [children, language])
+  }, [children, codeImageTools, language])
 
   const renderHeader = useMemo(() => {
     const langTag = '<' + language.toUpperCase() + '>'

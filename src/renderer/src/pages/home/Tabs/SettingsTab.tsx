@@ -25,6 +25,7 @@ import {
   setCodeCollapsible,
   setCodeEditor,
   setCodeExecution,
+  setCodeImageTools,
   setCodePreview,
   setCodeShowLineNumbers,
   setCodeWrappable,
@@ -92,6 +93,7 @@ const SettingsTab: FC<Props> = (props) => {
     codeWrappable,
     codeEditor,
     codePreview,
+    codeImageTools,
     codeExecution,
     mathEngine,
     autoTranslateWithSpace,
@@ -516,6 +518,15 @@ const SettingsTab: FC<Props> = (props) => {
           <SettingRow>
             <SettingRowTitleSmall>{t('chat.settings.code_wrappable')}</SettingRowTitleSmall>
             <Switch size="small" checked={codeWrappable} onChange={(checked) => dispatch(setCodeWrappable(checked))} />
+          </SettingRow>
+          <SettingDivider />
+          <SettingRow>
+            <SettingRowTitleSmall>{t('chat.settings.code_image_tools')}</SettingRowTitleSmall>
+            <Switch
+              size="small"
+              checked={codeImageTools}
+              onChange={(checked) => dispatch(setCodeImageTools(checked))}
+            />
           </SettingRow>
         </SettingGroup>
         <SettingDivider />
