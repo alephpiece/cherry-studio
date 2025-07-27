@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Use vi.hoisted to manage mocks
 const mocks = vi.hoisted(() => ({
   useImageTools: vi.fn(),
-  useImagePreview: vi.fn(),
   ImageToolbar: vi.fn(() => <div data-testid="image-toolbar">ImageToolbar</div>),
   getPlantUMLImageUrl: vi.fn(),
   download: vi.fn() // 模拟 download 工具函数
@@ -27,10 +26,6 @@ vi.mock('antd', async (importOriginal) => {
 
 vi.mock('@renderer/components/ActionTools', () => ({
   useImageTools: mocks.useImageTools
-}))
-
-vi.mock('@renderer/components/CodeToolbar', () => ({
-  useImagePreview: mocks.useImagePreview
 }))
 
 vi.mock('@renderer/utils/download', () => ({
@@ -65,7 +60,6 @@ describe('PlantUmlPreview', () => {
       zoom: vi.fn(),
       copy: vi.fn()
     })
-    mocks.useImagePreview.mockReturnValue({})
     mocks.getPlantUMLImageUrl.mockReturnValue(mockImageUrl)
     mocks.download.mockResolvedValue(undefined)
   })

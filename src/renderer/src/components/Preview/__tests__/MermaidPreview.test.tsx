@@ -6,7 +6,6 @@ import { MermaidPreview } from '..'
 
 const mocks = vi.hoisted(() => ({
   useMermaid: vi.fn(),
-  useImagePreview: vi.fn(),
   useImageTools: vi.fn(),
   ImageToolbar: vi.fn(() => <div data-testid="image-toolbar">ImageToolbar</div>)
 }))
@@ -14,10 +13,6 @@ const mocks = vi.hoisted(() => ({
 // Mock hooks
 vi.mock('@renderer/hooks/useMermaid', () => ({
   useMermaid: () => mocks.useMermaid()
-}))
-
-vi.mock('@renderer/components/CodeToolbar', () => ({
-  useImagePreview: () => mocks.useImagePreview()
 }))
 
 vi.mock('@renderer/components/ActionTools', () => ({
@@ -74,11 +69,6 @@ describe('MermaidPreview', () => {
       mermaid: mockMermaid,
       isLoading: false,
       error: null
-    })
-
-    mocks.useImagePreview.mockReturnValue({
-      handleZoom: vi.fn(),
-      handleCopyImage: vi.fn()
     })
 
     mocks.useImageTools.mockReturnValue({})

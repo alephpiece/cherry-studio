@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Use vi.hoisted to manage mocks
 const mocks = vi.hoisted(() => ({
   useImageTools: vi.fn(),
-  useImagePreview: vi.fn(),
   vizInstance: {
     renderSVGElement: vi.fn()
   },
@@ -43,10 +42,6 @@ vi.mock('@renderer/components/ActionTools', () => ({
   useImageTools: mocks.useImageTools
 }))
 
-vi.mock('@renderer/components/CodeToolbar', () => ({
-  useImagePreview: mocks.useImagePreview
-}))
-
 vi.mock('@renderer/components/Preview/ImageToolbar', () => ({
   default: mocks.ImageToolbar
 }))
@@ -70,7 +65,6 @@ describe('GraphvizPreview', () => {
       copy: vi.fn(),
       download: vi.fn()
     })
-    mocks.useImagePreview.mockReturnValue({})
     mocks.vizInitializer.get.mockResolvedValue(mocks.vizInstance)
 
     // Mock successful rendering

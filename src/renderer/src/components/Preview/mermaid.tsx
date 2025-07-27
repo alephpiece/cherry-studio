@@ -1,6 +1,5 @@
 import { nanoid } from '@reduxjs/toolkit'
 import { useImageTools } from '@renderer/components/ActionTools'
-import { useImagePreview } from '@renderer/components/CodeToolbar'
 import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
 import { useMermaid } from '@renderer/hooks/useMermaid'
 import { Spin } from 'antd'
@@ -27,7 +26,6 @@ import { BasicPreviewHandles, BasicPreviewProps } from './types'
  */
 const MermaidPreview = ({
   children,
-  setTools,
   enableToolbar = false,
   ref
 }: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
@@ -44,13 +42,6 @@ const MermaidPreview = ({
     prefix: 'mermaid',
     enableDrag: true,
     enableWheelZoom: true
-  })
-
-  // 注册工具到父级
-  useImagePreview({
-    setTools,
-    handleZoom: zoom,
-    handleCopyImage: copy
   })
 
   useImperativeHandle(ref, () => {

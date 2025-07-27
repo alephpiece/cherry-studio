@@ -1,6 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons'
 import { useImageTools } from '@renderer/components/ActionTools'
-import { useImagePreview } from '@renderer/components/CodeToolbar'
 import { download } from '@renderer/utils/download'
 import { Spin } from 'antd'
 import pako from 'pako'
@@ -124,7 +123,6 @@ const PlantUMLServerImage: React.FC<PlantUMLServerImageProps> = ({ format, diagr
 
 const PlantUmlPreview = ({
   children,
-  setTools,
   enableToolbar = false,
   ref
 }: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
@@ -154,13 +152,6 @@ const PlantUmlPreview = ({
     prefix: 'plantuml-diagram',
     enableDrag: true,
     enableWheelZoom: true
-  })
-
-  // 注册工具到父级
-  useImagePreview({
-    setTools,
-    handleZoom: zoom,
-    handleCopyImage: copy
   })
 
   useImperativeHandle(ref, () => {

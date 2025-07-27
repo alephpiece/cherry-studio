@@ -5,16 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Use vi.hoisted to manage mocks
 const mocks = vi.hoisted(() => ({
   useImageTools: vi.fn(),
-  useImagePreview: vi.fn(),
   ImageToolbar: vi.fn(() => <div data-testid="image-toolbar">ImageToolbar</div>)
 }))
 
 vi.mock('@renderer/components/ActionTools', () => ({
   useImageTools: mocks.useImageTools
-}))
-
-vi.mock('@renderer/components/CodeToolbar', () => ({
-  useImagePreview: mocks.useImagePreview
 }))
 
 vi.mock('@renderer/components/Preview/ImageToolbar', () => ({
@@ -23,6 +18,7 @@ vi.mock('@renderer/components/Preview/ImageToolbar', () => ({
 
 describe('SvgPreview', () => {
   const svgContent = '<svg><rect width="100" height="100" /></svg>'
+  const invalidSvgContent = '<svg><rect width="100" height="100"></svg>' // Missing closing tag
 
   beforeEach(() => {
     // Provide default implementations for all mocks
@@ -32,7 +28,6 @@ describe('SvgPreview', () => {
       copy: vi.fn(),
       download: vi.fn()
     })
-    mocks.useImagePreview.mockReturnValue({})
 
     // Mock Shadow DOM API
     Element.prototype.attachShadow = vi.fn().mockImplementation(function (this: HTMLElement) {
@@ -71,6 +66,22 @@ describe('SvgPreview', () => {
       expect(shadowRoot?.querySelector('style')).not.toBeNull()
       expect(shadowRoot?.querySelector('svg')).not.toBeNull()
       expect(shadowRoot?.querySelector('rect')).not.toBeNull()
+    })
+  })
+
+  describe('error handling', () => {
+    it('should display an error message when SVG parsing fails', () => {
+      render(<SvgPreview>{invalidSvgContent}</SvgPreview>)
+
+      // Check that an error message is displayed
+      expect(screen.getByText(/SVG parsing error/)).toBeInTheDocument()
+    })
+
+    it('should display an error message when content is not valid SVG', () => {
+      render(<SvgPreview>{'<div>Not SVG content</div>'}</SvgPreview>)
+
+      // Check that an error message is displayed
+      expect(screen.getByText('Invalid SVG content')).toBeInTheDocument()
     })
   })
 

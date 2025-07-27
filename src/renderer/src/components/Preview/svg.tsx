@@ -1,9 +1,8 @@
 import { useImageTools } from '@renderer/components/ActionTools'
-import { useImagePreview } from '@renderer/components/CodeToolbar'
-import { memo, useEffect, useImperativeHandle, useRef } from 'react'
+import { memo, useEffect, useImperativeHandle, useRef, useState } from 'react'
 
 import ImageToolbar from './ImageToolbar'
-import { PreviewContainer } from './styles'
+import { PreviewContainer, PreviewError } from './styles'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
 
 /**
@@ -11,11 +10,11 @@ import { BasicPreviewHandles, BasicPreviewProps } from './types'
  */
 const SvgPreview = ({
   children,
-  setTools,
   enableToolbar = false,
   ref
 }: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
   const svgContainerRef = useRef<HTMLDivElement>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const container = svgContainerRef.current
@@ -48,9 +47,29 @@ const SvgPreview = ({
     shadowRoot.innerHTML = ''
     shadowRoot.appendChild(style)
 
-    const svgContainer = document.createElement('div')
-    svgContainer.innerHTML = children
-    shadowRoot.appendChild(svgContainer)
+    try {
+      // 清除之前的错误
+      setError(null)
+
+      // 解析和附加 SVG
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(children, 'image/svg+xml')
+
+      // 检查解析错误
+      const parserError = doc.querySelector('parsererror')
+      if (parserError) {
+        throw new Error(`SVG parsing error: ${parserError.textContent}`)
+      }
+
+      const svgElement = doc.documentElement
+      if (svgElement.nodeName === 'svg') {
+        shadowRoot.appendChild(svgElement.cloneNode(true))
+      } else {
+        throw new Error('Invalid SVG content')
+      }
+    } catch (error) {
+      setError((error as Error).message || 'Unknown error')
+    }
   }, [children])
 
   // 使用通用图像工具
@@ -59,13 +78,6 @@ const SvgPreview = ({
     prefix: 'svg-image',
     enableDrag: true,
     enableWheelZoom: true
-  })
-
-  // 注册工具到父级
-  useImagePreview({
-    setTools,
-    handleZoom: zoom,
-    handleCopyImage: copy
   })
 
   useImperativeHandle(ref, () => {
@@ -79,6 +91,7 @@ const SvgPreview = ({
 
   return (
     <PreviewContainer vertical>
+      {error && <PreviewError>{error}</PreviewError>}
       <div ref={svgContainerRef} className="svg-preview special-preview"></div>
       {enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
     </PreviewContainer>

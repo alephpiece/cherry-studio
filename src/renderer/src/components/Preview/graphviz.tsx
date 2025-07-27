@@ -1,5 +1,4 @@
 import { useImageTools } from '@renderer/components/ActionTools'
-import { useImagePreview } from '@renderer/components/CodeToolbar'
 import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
 import { AsyncInitializer } from '@renderer/utils/asyncInitializer'
 import { Spin } from 'antd'
@@ -31,7 +30,6 @@ const vizInitializer = new AsyncInitializer(async () => {
  */
 const GraphvizPreview = ({
   children,
-  setTools,
   enableToolbar = false,
   ref
 }: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
@@ -45,13 +43,6 @@ const GraphvizPreview = ({
     prefix: 'graphviz',
     enableDrag: true,
     enableWheelZoom: true
-  })
-
-  // 注册工具到父级
-  useImagePreview({
-    setTools,
-    handleZoom: zoom,
-    handleCopyImage: copy
   })
 
   // 实际的渲染函数
