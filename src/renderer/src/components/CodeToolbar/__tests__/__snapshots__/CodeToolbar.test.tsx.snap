@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`CodeToolbar > snapshot tests > should match snapshot with mixed tools 1`] = `
+exports[`CodeToolbar > basic rendering > should match snapshot with mixed tools 1`] = `
 .c2 {
   display: flex;
   align-items: center;
@@ -88,7 +88,7 @@ exports[`CodeToolbar > snapshot tests > should match snapshot with mixed tools 1
 </div>
 `;
 
-exports[`CodeToolbar > snapshot tests > should match snapshot with only core tools 1`] = `
+exports[`CodeToolbar > basic rendering > should match snapshot with only core tools 1`] = `
 .c0 {
   position: sticky;
   top: 28px;
