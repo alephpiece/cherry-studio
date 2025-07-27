@@ -4,12 +4,21 @@ import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
 import { AsyncInitializer } from '@renderer/utils/asyncInitializer'
 import { Spin } from 'antd'
 import { debounce } from 'lodash'
-import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
 import styled from 'styled-components'
 
 import ImageToolbar from './ImageToolbar'
 import { PreviewContainer, PreviewError } from './styles'
-import { BasicPreviewProps } from './types'
+import { BasicPreviewHandles, BasicPreviewProps } from './types'
 
 // 管理 viz 实例
 const vizInitializer = new AsyncInitializer(async () => {
@@ -20,7 +29,12 @@ const vizInitializer = new AsyncInitializer(async () => {
 /** 预览 Graphviz 图表
  * 通过防抖渲染提供比较统一的体验，减少闪烁。
  */
-const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enableToolbar = false }) => {
+const GraphvizPreview = ({
+  children,
+  setTools,
+  enableToolbar = false,
+  ref
+}: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
   const graphvizRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -37,8 +51,7 @@ const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enab
   useImagePreview({
     setTools,
     handleZoom: zoom,
-    handleCopyImage: copy,
-    handleDownload: download
+    handleCopyImage: copy
   })
 
   // 实际的渲染函数
@@ -87,6 +100,15 @@ const GraphvizPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enab
       debouncedRender.cancel()
     }
   }, [children, debouncedRender])
+
+  useImperativeHandle(ref, () => {
+    return {
+      pan,
+      zoom,
+      copy,
+      download
+    }
+  })
 
   return (
     <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>

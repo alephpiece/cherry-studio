@@ -5,18 +5,32 @@ import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
 import { useMermaid } from '@renderer/hooks/useMermaid'
 import { Spin } from 'antd'
 import { debounce } from 'lodash'
-import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
 import styled from 'styled-components'
 
 import ImageToolbar from './ImageToolbar'
 import { PreviewContainer, PreviewError } from './styles'
-import { BasicPreviewProps } from './types'
+import { BasicPreviewHandles, BasicPreviewProps } from './types'
 
 /** 预览 Mermaid 图表
  * 通过防抖渲染提供比较统一的体验，减少闪烁。
  * FIXME: 等将来容易判断代码块结束位置时再重构。
  */
-const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enableToolbar = false }) => {
+const MermaidPreview = ({
+  children,
+  setTools,
+  enableToolbar = false,
+  ref
+}: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
   const { mermaid, isLoading: isLoadingMermaid, error: mermaidError } = useMermaid()
   const mermaidRef = useRef<HTMLDivElement>(null)
   const diagramId = useRef<string>(`mermaid-${nanoid(6)}`).current
@@ -36,8 +50,16 @@ const MermaidPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enabl
   useImagePreview({
     setTools,
     handleZoom: zoom,
-    handleCopyImage: copy,
-    handleDownload: download
+    handleCopyImage: copy
+  })
+
+  useImperativeHandle(ref, () => {
+    return {
+      pan,
+      zoom,
+      copy,
+      download
+    }
   })
 
   // 实际的渲染函数

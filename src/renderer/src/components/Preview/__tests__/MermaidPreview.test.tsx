@@ -78,8 +78,7 @@ describe('MermaidPreview', () => {
 
     mocks.useImagePreview.mockReturnValue({
       handleZoom: vi.fn(),
-      handleCopyImage: vi.fn(),
-      handleDownload: vi.fn()
+      handleCopyImage: vi.fn()
     })
 
     mocks.useImageTools.mockReturnValue({})

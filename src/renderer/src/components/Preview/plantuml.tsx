@@ -4,13 +4,13 @@ import { useImagePreview } from '@renderer/components/CodeToolbar'
 import { download } from '@renderer/utils/download'
 import { Spin } from 'antd'
 import pako from 'pako'
-import React, { memo, useCallback, useRef, useState } from 'react'
+import React, { memo, useCallback, useImperativeHandle, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 import ImageToolbar from './ImageToolbar'
 import { PreviewContainer } from './styles'
-import { BasicPreviewProps } from './types'
+import { BasicPreviewHandles, BasicPreviewProps } from './types'
 
 const PlantUMLServer = 'https://www.plantuml.com/plantuml'
 function encode64(data: Uint8Array) {
@@ -122,7 +122,12 @@ const PlantUMLServerImage: React.FC<PlantUMLServerImageProps> = ({ format, diagr
   )
 }
 
-const PlantUmlPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enableToolbar = false }) => {
+const PlantUmlPreview = ({
+  children,
+  setTools,
+  enableToolbar = false,
+  ref
+}: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -130,7 +135,7 @@ const PlantUmlPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enab
 
   // 自定义 PlantUML 下载方法
   const customDownload = useCallback(
-    (format: 'svg' | 'png') => {
+    async (format: 'svg' | 'png') => {
       const timestamp = Date.now()
       const url = `${PlantUMLServer}/${format}/${encodedDiagram}`
       const filename = `plantuml-diagram-${timestamp}.${format}`
@@ -155,8 +160,16 @@ const PlantUmlPreview: React.FC<BasicPreviewProps> = ({ children, setTools, enab
   useImagePreview({
     setTools,
     handleZoom: zoom,
-    handleCopyImage: copy,
-    handleDownload: customDownload
+    handleCopyImage: copy
+  })
+
+  useImperativeHandle(ref, () => {
+    return {
+      pan,
+      zoom,
+      copy,
+      download: customDownload
+    }
   })
 
   return (
