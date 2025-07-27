@@ -227,11 +227,20 @@ export const useImageTools = (
     [getImgElement, prefix, t]
   )
 
+  // 获取当前变换状态
+  const getCurrentTransform = useCallback(() => {
+    return {
+      scale: transformRef.current.scale,
+      x: transformRef.current.x,
+      y: transformRef.current.y
+    }
+  }, [transformRef])
+
   return {
-    scale: transformRef.current.scale,
     zoom,
     pan,
     copy,
-    download
+    download,
+    getCurrentTransform
   }
 }

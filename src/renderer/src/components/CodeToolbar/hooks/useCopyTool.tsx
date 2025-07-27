@@ -18,13 +18,23 @@ export const useCopyTool = ({ hasViewTools, viewRef, onCopySource, setTools }: U
   const { registerTool, removeTool } = useToolManager(setTools)
 
   const handleCopySource = useCallback(() => {
-    onCopySource()
-    setCopiedTemporarily(true)
+    try {
+      onCopySource()
+      setCopiedTemporarily(true)
+    } catch (error) {
+      setCopiedTemporarily(false)
+      throw error
+    }
   }, [onCopySource, setCopiedTemporarily])
 
   const handleCopyImage = useCallback(() => {
-    viewRef.current?.copy()
-    setCopiedTemporarily(true)
+    try {
+      viewRef.current?.copy()
+      setCopiedTemporarily(true)
+    } catch (error) {
+      setCopiedTemporarily(false)
+      throw error
+    }
   }, [viewRef, setCopiedTemporarily])
 
   useEffect(() => {
