@@ -1,9 +1,11 @@
 import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
+import { useTemporaryValue } from '@renderer/hooks/useTemporaryValue'
 import CodeMirror, { Annotation, BasicSetupOptions, EditorView, Extension } from '@uiw/react-codemirror'
 import diff from 'fast-diff'
 import {
+  Check,
   ChevronsDownUp,
   ChevronsUpDown,
   Save as SaveIcon,
@@ -131,22 +133,29 @@ const CodeEditor = ({
     return () => removeTool(TOOL_SPECS.wrap.id)
   }, [wrappable, isUnwrapped, registerTool, removeTool, t])
 
+  const [saved, setSavedTemporarily] = useTemporaryValue(false)
+
   const handleSave = useCallback(() => {
     const currentDoc = editorViewRef.current?.state.doc.toString() ?? ''
     onSave?.(currentDoc)
-  }, [onSave])
+    setSavedTemporarily(true)
+  }, [onSave, setSavedTemporarily])
 
   // 保存按钮
   useEffect(() => {
     registerTool({
       ...TOOL_SPECS.save,
-      icon: <SaveIcon className="tool-icon" />,
+      icon: saved ? (
+        <Check className="tool-icon" color="var(--color-status-success)" />
+      ) : (
+        <SaveIcon className="tool-icon" />
+      ),
       tooltip: t('code_block.edit.save.label'),
       onClick: handleSave
     })
 
     return () => removeTool(TOOL_SPECS.save.id)
-  }, [handleSave, registerTool, removeTool, t])
+  }, [handleSave, registerTool, removeTool, saved, t])
 
   // 流式响应过程中计算 changes 来更新 EditorView
   // 无法处理用户在流式响应过程中编辑代码的情况（应该也不必处理）
