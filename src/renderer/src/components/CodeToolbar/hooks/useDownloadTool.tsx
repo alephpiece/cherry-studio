@@ -1,4 +1,4 @@
-import { TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
+import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { FilePngIcon, FileSvgIcon } from '@renderer/components/Icons/FileIcons'
 import { BasicPreviewHandles } from '@renderer/components/Preview'
 import { Download, FileCode } from 'lucide-react'
@@ -9,7 +9,7 @@ interface UseDownloadToolProps {
   showPreviewTools?: boolean
   previewRef: React.RefObject<BasicPreviewHandles | null>
   onDownloadSource: () => void
-  setTools: React.Dispatch<React.SetStateAction<any[]>>
+  setTools: React.Dispatch<React.SetStateAction<ActionTool[]>>
 }
 
 export const useDownloadTool = ({ showPreviewTools, previewRef, onDownloadSource, setTools }: UseDownloadToolProps) => {

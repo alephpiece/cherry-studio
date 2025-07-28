@@ -21,7 +21,7 @@ import { pyodideService } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
 import { getExtensionByLanguage, isHtmlCode, isValidPlantUML } from '@renderer/utils/markdown'
 import dayjs from 'dayjs'
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -98,14 +98,11 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     return codeCollapsible && sourceScrollHeight > MAX_COLLAPSED_CODE_HEIGHT
   }, [codeCollapsible, sourceScrollHeight])
 
-  const handleHeightChange = useCallback(
-    (height: number) => {
-      if (height !== sourceScrollHeight) {
-        setSourceScrollHeight(height)
-      }
-    },
-    [sourceScrollHeight]
-  )
+  const handleHeightChange = useCallback((height: number) => {
+    startTransition(() => {
+      setSourceScrollHeight((prev) => (prev === height ? prev : height))
+    })
+  }, [])
 
   const handleCopySource = useCallback(() => {
     navigator.clipboard.writeText(children)

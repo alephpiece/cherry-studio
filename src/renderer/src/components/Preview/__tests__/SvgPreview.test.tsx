@@ -31,14 +31,14 @@ describe('SvgPreview', () => {
 
     // Mock Shadow DOM API
     Element.prototype.attachShadow = vi.fn().mockImplementation(function (this: HTMLElement) {
-      const shadowRoot = new DocumentFragment()
-      // @ts-ignore Mock Shadow DOM behavior
+      const shadowRoot = document.createElement('div')
+      // Copy content to simulate shadow DOM behavior
       shadowRoot.innerHTML = this.innerHTML
       Object.defineProperty(this, 'shadowRoot', {
         value: shadowRoot,
         writable: true
       })
-      return shadowRoot
+      return shadowRoot as unknown as ShadowRoot
     })
   })
 

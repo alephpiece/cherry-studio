@@ -1,4 +1,4 @@
-import { TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
+import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { ViewMode } from '@renderer/components/CodeBlockView/types'
 import { Square, SquareSplitHorizontal } from 'lucide-react'
 import { useCallback, useEffect } from 'react'
@@ -8,7 +8,7 @@ interface UseSplitViewToolProps {
   enabled: boolean
   viewMode: ViewMode
   onViewModeChange: (mode: ViewMode) => void
-  setTools: React.Dispatch<React.SetStateAction<any[]>>
+  setTools: React.Dispatch<React.SetStateAction<ActionTool[]>>
 }
 
 export const useSplitViewTool = ({ enabled, viewMode, onViewModeChange, setTools }: UseSplitViewToolProps) => {

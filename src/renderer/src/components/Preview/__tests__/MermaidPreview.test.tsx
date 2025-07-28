@@ -148,15 +148,17 @@ describe('MermaidPreview', () => {
       messageWrapper.appendChild(codeBlock)
       document.body.appendChild(foldContainer)
 
-      render(<MermaidPreview>{mermaidCode}</MermaidPreview>, {
-        container: codeBlock
-      })
+      try {
+        render(<MermaidPreview>{mermaidCode}</MermaidPreview>, {
+          container: codeBlock
+        })
 
-      const observerInstance = (global.MutationObserver as Mock).mock.results[0]?.value
-      expect(observerInstance.observe).toHaveBeenCalled()
-
-      // Cleanup
-      document.body.removeChild(foldContainer)
+        const observerInstance = (global.MutationObserver as Mock).mock.results[0]?.value
+        expect(observerInstance.observe).toHaveBeenCalled()
+      } finally {
+        // Cleanup
+        document.body.removeChild(foldContainer)
+      }
     })
 
     it('should trigger re-render when visibility changes from hidden to visible', async () => {

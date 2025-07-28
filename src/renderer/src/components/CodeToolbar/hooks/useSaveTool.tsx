@@ -1,4 +1,4 @@
-import { TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
+import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { CodeEditorHandles } from '@renderer/components/CodeEditor'
 import { useTemporaryValue } from '@renderer/hooks/useTemporaryValue'
 import { Check, SaveIcon } from 'lucide-react'
@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 interface UseSaveToolProps {
   enabled?: boolean
   sourceViewRef: React.RefObject<CodeEditorHandles | null>
-  setTools: React.Dispatch<React.SetStateAction<any[]>>
+  setTools: React.Dispatch<React.SetStateAction<ActionTool[]>>
 }
 
 export const useSaveTool = ({ enabled, sourceViewRef, setTools }: UseSaveToolProps) => {

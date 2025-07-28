@@ -1,4 +1,4 @@
-import { TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
+import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { Text as UnWrapIcon, WrapText as WrapIcon } from 'lucide-react'
 import { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +8,7 @@ interface UseWrapToolProps {
   unwrapped?: boolean
   wrappable?: boolean
   toggle: () => void
-  setTools: React.Dispatch<React.SetStateAction<any[]>>
+  setTools: React.Dispatch<React.SetStateAction<ActionTool[]>>
 }
 
 export const useWrapTool = ({ enabled, unwrapped, wrappable, toggle, setTools }: UseWrapToolProps) => {

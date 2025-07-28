@@ -41,7 +41,9 @@ const CodeViewer = ({ children, language, expanded, unwrapped, onHeightChange }:
 
   // 设置 pre 标签属性
   useLayoutEffect(() => {
+    let mounted = true
     getShikiPreProperties(language).then((properties) => {
+      if (!mounted) return
       const shikiTheme = shikiThemeRef.current
       if (shikiTheme) {
         shikiTheme.className = `${properties.class || 'shiki'}`
@@ -54,6 +56,9 @@ const CodeViewer = ({ children, language, expanded, unwrapped, onHeightChange }:
         shikiTheme.tabIndex = properties.tabindex
       }
     })
+    return () => {
+      mounted = false
+    }
   }, [language, getShikiPreProperties, isShikiThemeDark])
 
   // Virtualizer 配置

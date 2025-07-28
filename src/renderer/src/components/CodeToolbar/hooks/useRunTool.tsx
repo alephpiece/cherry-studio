@@ -1,5 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons'
-import { TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
+import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { CirclePlay } from 'lucide-react'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +8,7 @@ interface UseRunToolProps {
   enabled: boolean
   isRunning: boolean
   onRun: () => void
-  setTools: React.Dispatch<React.SetStateAction<any[]>>
+  setTools: React.Dispatch<React.SetStateAction<ActionTool[]>>
 }
 
 export const useRunTool = ({ enabled, isRunning, onRun, setTools }: UseRunToolProps) => {

@@ -1,4 +1,4 @@
-import { TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
+import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { BasicPreviewHandles } from '@renderer/components/Preview'
 import { useTemporaryValue } from '@renderer/hooks/useTemporaryValue'
 import { Check, Copy, FileCode, FileImage } from 'lucide-react'
@@ -9,7 +9,7 @@ interface UseCopyToolProps {
   showPreviewTools?: boolean
   previewRef: React.RefObject<BasicPreviewHandles | null>
   onCopySource: () => void
-  setTools: React.Dispatch<React.SetStateAction<any[]>>
+  setTools: React.Dispatch<React.SetStateAction<ActionTool[]>>
 }
 
 export const useCopyTool = ({ showPreviewTools, previewRef, onCopySource, setTools }: UseCopyToolProps) => {

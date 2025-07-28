@@ -1,4 +1,4 @@
-import { TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
+import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { ViewMode } from '@renderer/components/CodeBlockView/types'
 import { CodeXml, Eye, SquarePen } from 'lucide-react'
 import { useCallback, useEffect } from 'react'
@@ -9,7 +9,7 @@ interface UseViewSourceToolProps {
   editable: boolean
   viewMode: ViewMode
   onViewModeChange: (mode: ViewMode) => void
-  setTools: React.Dispatch<React.SetStateAction<any[]>>
+  setTools: React.Dispatch<React.SetStateAction<ActionTool[]>>
 }
 
 export const useViewSourceTool = ({
