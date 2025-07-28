@@ -1935,8 +1935,6 @@ const migrateConfig = {
       if (state.settings.codePreview) {
         // @ts-ignore eslint-disable-next-line
         state.settings.codeViewer = state.settings.codePreview
-        // @ts-ignore eslint-disable-next-line
-        delete state.settings.codePreview
       } else {
         state.settings.codeViewer = {
           themeLight: 'auto',

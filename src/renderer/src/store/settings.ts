@@ -88,6 +88,11 @@ export interface SettingsState {
     autocompletion: boolean
     keymap: boolean
   }
+  /** @deprecated use codeViewer instead */
+  codePreview: {
+    themeLight: CodeStyleVarious
+    themeDark: CodeStyleVarious
+  }
   codeViewer: {
     themeLight: CodeStyleVarious
     themeDark: CodeStyleVarious
@@ -258,6 +263,11 @@ export const initialState: SettingsState = {
     foldGutter: false,
     autocompletion: true,
     keymap: false
+  },
+  /** @deprecated use codeViewer instead */
+  codePreview: {
+    themeLight: 'auto',
+    themeDark: 'auto'
   },
   codeViewer: {
     themeLight: 'auto',
