@@ -1428,6 +1428,7 @@ const migrateConfig = {
 
       state.settings.codeExecution = settingsInitialState.codeExecution
       state.settings.codeEditor = settingsInitialState.codeEditor
+      // @ts-ignore eslint-disable-next-line
       state.settings.codePreview = settingsInitialState.codePreview
 
       // @ts-ignore eslint-disable-next-line
@@ -1905,6 +1906,17 @@ const migrateConfig = {
       if (state.assistants.defaultAssistant.model) {
         updateModelTextDelta(state.assistants.defaultAssistant.model)
         updateModelTextDelta(state.assistants.defaultAssistant.defaultModel)
+      }
+
+      // Migrate codePreview to codeViewer
+      // @ts-ignore eslint-disable-next-line
+      if (state.settings.codePreview) {
+        // @ts-ignore eslint-disable-next-line
+        state.settings.codeViewer = state.settings.codePreview
+        // @ts-ignore eslint-disable-next-line
+        delete state.settings.codePreview
+      } else {
+        state.settings.codeViewer = settingsInitialState.codeViewer
       }
 
       return state

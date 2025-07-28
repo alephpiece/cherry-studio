@@ -88,7 +88,7 @@ export interface SettingsState {
     autocompletion: boolean
     keymap: boolean
   }
-  codePreview: {
+  codeViewer: {
     themeLight: CodeStyleVarious
     themeDark: CodeStyleVarious
   }
@@ -259,7 +259,7 @@ export const initialState: SettingsState = {
     autocompletion: true,
     keymap: false
   },
-  codePreview: {
+  codeViewer: {
     themeLight: 'auto',
     themeDark: 'auto'
   },
@@ -562,12 +562,12 @@ const settingsSlice = createSlice({
         state.codeEditor.keymap = action.payload.keymap
       }
     },
-    setCodePreview: (state, action: PayloadAction<{ themeLight?: string; themeDark?: string }>) => {
+    setCodeViewer: (state, action: PayloadAction<{ themeLight?: string; themeDark?: string }>) => {
       if (action.payload.themeLight !== undefined) {
-        state.codePreview.themeLight = action.payload.themeLight
+        state.codeViewer.themeLight = action.payload.themeLight
       }
       if (action.payload.themeDark !== undefined) {
-        state.codePreview.themeDark = action.payload.themeDark
+        state.codeViewer.themeDark = action.payload.themeDark
       }
     },
     setCodeShowLineNumbers: (state, action: PayloadAction<boolean>) => {
@@ -838,7 +838,7 @@ export const {
   setWebdavDisableStream,
   setCodeExecution,
   setCodeEditor,
-  setCodePreview,
+  setCodeViewer,
   setCodeShowLineNumbers,
   setCodeCollapsible,
   setCodeWrappable,
