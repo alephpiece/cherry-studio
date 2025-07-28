@@ -34,8 +34,6 @@ interface CodeEditorProps {
   options?: {
     stream?: boolean // 用于流式响应场景，默认 false
     lint?: boolean
-    collapsible?: boolean
-    wrappable?: boolean
     keymap?: boolean
   } & BasicSetupOptions
   /** 用于追加 extensions */
@@ -70,7 +68,7 @@ const CodeEditor = ({
   style,
   editable = true,
   expanded = true,
-  unwrapped = true
+  unwrapped = false
 }: CodeEditorProps) => {
   const { fontSize: _fontSize, codeShowLineNumbers: _lineNumbers, codeEditor } = useSettings()
   const enableKeymap = useMemo(() => options?.keymap ?? codeEditor.keymap, [options?.keymap, codeEditor.keymap])
