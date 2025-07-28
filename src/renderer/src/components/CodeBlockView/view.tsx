@@ -1,26 +1,30 @@
 import { loggerService } from '@logger'
 import { ActionTool } from '@renderer/components/ActionTools'
-import CodeEditor from '@renderer/components/CodeEditor'
+import CodeEditor, { CodeEditorHandles } from '@renderer/components/CodeEditor'
 import {
   CodeToolbar,
   useCopyTool,
   useDownloadTool,
+  useExpandTool,
   useRunTool,
+  useSaveTool,
   useSplitViewTool,
-  useViewSourceTool
+  useViewSourceTool,
+  useWrapTool
 } from '@renderer/components/CodeToolbar'
+import CodeViewer from '@renderer/components/CodeViewer'
 import ImageViewer from '@renderer/components/ImageViewer'
 import { BasicPreviewHandles } from '@renderer/components/Preview'
+import { MAX_COLLAPSED_CODE_HEIGHT } from '@renderer/config/constant'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { pyodideService } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
 import { getExtensionByLanguage, isHtmlCode, isValidPlantUML } from '@renderer/utils/markdown'
 import dayjs from 'dayjs'
-import React, { memo, useCallback, useMemo, useRef, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
-import CodePreview from './CodePreview'
 import { SPECIAL_VIEW_COMPONENTS, SPECIAL_VIEWS } from './constants'
 import HtmlArtifactsCard from './HtmlArtifactsCard'
 import StatusBar from './StatusBar'
@@ -52,7 +56,7 @@ interface Props {
  */
 export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave }) => {
   const { t } = useTranslation()
-  const { codeEditor, codeExecution, codeImageTools } = useSettings()
+  const { codeEditor, codeExecution, codeImageTools, codeCollapsible, codeWrappable } = useSettings()
 
   const [viewMode, setViewMode] = useState<ViewMode>('special')
   const [isRunning, setIsRunning] = useState(false)
@@ -64,6 +68,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     return codeExecution.enabled && language === 'python'
   }, [codeExecution.enabled, language])
 
+  const sourceViewRef = useRef<CodeEditorHandles>(null)
   const specialViewRef = useRef<BasicPreviewHandles>(null)
 
   const hasSpecialView = useMemo(() => SPECIAL_VIEWS.includes(language), [language])
@@ -71,6 +76,36 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
   const isInSpecialView = useMemo(() => {
     return hasSpecialView && viewMode === 'special'
   }, [hasSpecialView, viewMode])
+
+  const [expandOverride, setExpandOverride] = useState(!codeCollapsible)
+  const [unwrapOverride, setUnwrapOverride] = useState(!codeWrappable)
+
+  // 重置用户操作
+  useEffect(() => {
+    setExpandOverride(!codeCollapsible)
+  }, [codeCollapsible])
+
+  // 重置用户操作
+  useEffect(() => {
+    setUnwrapOverride(!codeWrappable)
+  }, [codeWrappable])
+
+  const shouldExpand = useMemo(() => !codeCollapsible || expandOverride, [codeCollapsible, expandOverride])
+  const shouldUnwrap = useMemo(() => !codeWrappable || unwrapOverride, [codeWrappable, unwrapOverride])
+
+  const [sourceScrollHeight, setSourceScrollHeight] = useState(0)
+  const expandable = useMemo(() => {
+    return codeCollapsible && sourceScrollHeight > MAX_COLLAPSED_CODE_HEIGHT
+  }, [codeCollapsible, sourceScrollHeight])
+
+  const handleHeightChange = useCallback(
+    (height: number) => {
+      if (height !== sourceScrollHeight) {
+        setSourceScrollHeight(height)
+      }
+    },
+    [sourceScrollHeight]
+  )
 
   const handleCopySource = useCallback(() => {
     navigator.clipboard.writeText(children)
@@ -159,26 +194,57 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     setTools
   })
 
+  // 源代码视图的展开/折叠按钮
+  useExpandTool({
+    enabled: !isInSpecialView,
+    expanded: shouldExpand,
+    expandable,
+    toggle: useCallback(() => setExpandOverride((prev) => !prev), []),
+    setTools
+  })
+
+  // 源代码视图的自动换行按钮
+  useWrapTool({
+    enabled: !isInSpecialView,
+    unwrapped: shouldUnwrap,
+    wrappable: codeWrappable,
+    toggle: useCallback(() => setUnwrapOverride((prev) => !prev), []),
+    setTools
+  })
+
+  // 代码编辑器的保存按钮
+  useSaveTool({
+    enabled: codeEditor.enabled && !isInSpecialView,
+    sourceViewRef,
+    setTools
+  })
+
   // 源代码视图组件
-  const sourceView = useMemo(() => {
-    if (codeEditor.enabled) {
-      return (
+  const sourceView = useMemo(
+    () =>
+      codeEditor.enabled ? (
         <CodeEditor
+          ref={sourceViewRef}
           value={children}
           language={language}
           onSave={onSave}
+          onHeightChange={handleHeightChange}
           options={{ stream: true }}
           setTools={setTools}
+          expanded={shouldExpand}
+          unwrapped={shouldUnwrap}
         />
-      )
-    } else {
-      return (
-        <CodePreview language={language} setTools={setTools}>
+      ) : (
+        <CodeViewer
+          language={language}
+          expanded={shouldExpand}
+          unwrapped={shouldUnwrap}
+          onHeightChange={handleHeightChange}>
           {children}
-        </CodePreview>
-      )
-    }
-  }, [children, codeEditor.enabled, language, onSave, setTools])
+        </CodeViewer>
+      ),
+    [children, codeEditor.enabled, handleHeightChange, language, onSave, shouldExpand, shouldUnwrap]
+  )
 
   // 特殊视图组件映射
   const specialView = useMemo(() => {
@@ -242,7 +308,7 @@ const CodeBlockWrapper = styled.div<{ $isInSpecialView: boolean }>`
   position: relative;
   width: 100%;
   /* FIXME: 最小宽度用于解决两个问题。
-   * 一是 CodePreview 在气泡样式下的用户消息中无法撑开气泡，
+   * 一是 CodeViewer 在气泡样式下的用户消息中无法撑开气泡，
    * 二是 代码块内容过少时 toolbar 会和 title 重叠。
    */
   min-width: 45ch;
