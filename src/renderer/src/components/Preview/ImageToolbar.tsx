@@ -41,7 +41,7 @@ const ImageToolbar = ({ pan, zoom, className }: ImageToolbarProps) => {
 
   return (
     <ToolbarWrapper className={classNames('preview-toolbar', className)} role="toolbar" aria-label={t('preview.label')}>
-      {/* Up, Reset */}
+      {/* Up */}
       <ActionButtonRow>
         <Spacer />
         <ImageToolButton
@@ -49,17 +49,17 @@ const ImageToolbar = ({ pan, zoom, className }: ImageToolbarProps) => {
           icon={<ChevronUp size={'1rem'} />}
           onClick={() => pan(0, -panDistance)}
         />
-        <ImageToolButton tooltip={t('preview.reset')} icon={<RotateCcw size={'1rem'} />} onClick={handleReset} />
+        <Spacer />
       </ActionButtonRow>
 
-      {/* Left, Right */}
+      {/* Left, Reset, Right */}
       <ActionButtonRow>
         <ImageToolButton
           tooltip={t('preview.pan_left')}
           icon={<ChevronLeft size={'1rem'} />}
           onClick={() => pan(-panDistance, 0)}
         />
-        <Spacer />
+        <ImageToolButton tooltip={t('preview.reset')} icon={<RotateCcw size={'1rem'} />} onClick={handleReset} />
         <ImageToolButton
           tooltip={t('preview.pan_right')}
           icon={<ChevronRight size={'1rem'} />}

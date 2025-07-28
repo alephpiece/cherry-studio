@@ -1,6 +1,7 @@
 import { TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
+import { FilePngIcon, FileSvgIcon } from '@renderer/components/Icons/FileIcons'
 import { BasicPreviewHandles } from '@renderer/components/Preview'
-import { Download, FileCode, FileImage } from 'lucide-react'
+import { Download, FileCode } from 'lucide-react'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -36,13 +37,13 @@ export const useDownloadTool = ({ showPreviewTools, previewRef, onDownloadSource
           },
           {
             ...TOOL_SPECS['download-svg'],
-            icon: <FileImage size={'1rem'} />,
+            icon: <FileSvgIcon size={'1rem'} className="lucide" />,
             tooltip: t('code_block.download.svg'),
             onClick: () => previewRef.current?.download('svg')
           },
           {
             ...TOOL_SPECS['download-png'],
-            icon: <FileImage size={'1rem'} />,
+            icon: <FilePngIcon size={'1rem'} className="lucide" />,
             tooltip: t('code_block.download.png'),
             onClick: () => previewRef.current?.download('png')
           }

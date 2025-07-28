@@ -1426,10 +1426,24 @@ const migrateConfig = {
         serviceTier: 'auto'
       }
 
-      state.settings.codeExecution = settingsInitialState.codeExecution
-      state.settings.codeEditor = settingsInitialState.codeEditor
+      state.settings.codeExecution = {
+        enabled: false,
+        timeoutMinutes: 1
+      }
+      state.settings.codeEditor = {
+        enabled: false,
+        themeLight: 'auto',
+        themeDark: 'auto',
+        highlightActiveLine: false,
+        foldGutter: false,
+        autocompletion: true,
+        keymap: false
+      }
       // @ts-ignore eslint-disable-next-line
-      state.settings.codePreview = settingsInitialState.codePreview
+      state.settings.codePreview = {
+        themeLight: 'auto',
+        themeDark: 'auto'
+      }
 
       // @ts-ignore eslint-disable-next-line
       if (state.settings.codeStyle) {
@@ -1908,6 +1922,14 @@ const migrateConfig = {
         updateModelTextDelta(state.assistants.defaultAssistant.defaultModel)
       }
 
+      return state
+    } catch (error) {
+      logger.error('migrate 124 error', error as Error)
+      return state
+    }
+  },
+  '125': (state: RootState) => {
+    try {
       // Migrate codePreview to codeViewer
       // @ts-ignore eslint-disable-next-line
       if (state.settings.codePreview) {
@@ -1916,12 +1938,15 @@ const migrateConfig = {
         // @ts-ignore eslint-disable-next-line
         delete state.settings.codePreview
       } else {
-        state.settings.codeViewer = settingsInitialState.codeViewer
+        state.settings.codeViewer = {
+          themeLight: 'auto',
+          themeDark: 'auto'
+        }
       }
 
       return state
     } catch (error) {
-      logger.error('migrate 124 error', error as Error)
+      logger.error('migrate 125 error', error as Error)
       return state
     }
   }
