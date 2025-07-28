@@ -159,7 +159,7 @@ const MermaidPreview = ({
       <PreviewContainer vertical>
         {(mermaidError || error) && <PreviewError>{mermaidError || error}</PreviewError>}
         <StyledMermaid ref={mermaidRef} className="mermaid special-preview" />
-        {enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
+        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
       </PreviewContainer>
     </Spin>
   )

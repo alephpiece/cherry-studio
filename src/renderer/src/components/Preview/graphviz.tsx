@@ -106,7 +106,7 @@ const GraphvizPreview = ({
       <PreviewContainer vertical>
         {error && <PreviewError>{error}</PreviewError>}
         <StyledGraphviz ref={graphvizRef} className="graphviz special-preview" />
-        {enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
+        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
       </PreviewContainer>
     </Spin>
   )

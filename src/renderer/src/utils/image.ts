@@ -185,30 +185,56 @@ export const captureScrollableDivAsBlob = async (
  * @returns {Promise<HTMLCanvasElement>} 转换后的 Canvas 元素
  */
 export const svgToCanvas = (svgElement: SVGElement, scale = 3): Promise<HTMLCanvasElement> => {
+  // 获取 SVG 尺寸信息
   const viewBox = svgElement.getAttribute('viewBox')?.split(' ').map(Number) || []
   const rect = svgElement.getBoundingClientRect()
   const width = viewBox[2] || svgElement.clientWidth || rect.width
   const height = viewBox[3] || svgElement.clientHeight || rect.height
 
+  // 序列化 SVG 内容
   const svgData = new XMLSerializer().serializeToString(svgElement)
-  const svgBase64 = `data:image/svg+xml;base64,${btoa(decodeURIComponent(encodeURIComponent(svgData)))}`
 
+  let svgBase64: string
+  try {
+    // 使用 TextEncoder 处理 Unicode 字符
+    const encoder = new TextEncoder()
+    const encodedData = encoder.encode(svgData)
+    const binaryString = Array.from(encodedData, (byte) => String.fromCodePoint(byte)).join('')
+    svgBase64 = `data:image/svg+xml;base64,${btoa(binaryString)}`
+  } catch (error) {
+    logger.warn('TextEncoder method failed, falling back to legacy method', error as Error)
+    svgBase64 = `data:image/svg+xml;base64,${btoa(decodeURIComponent(encodeURIComponent(svgData)))}`
+  }
+
+  // 创建 Canvas
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
+
+  if (!ctx) {
+    return Promise.reject(new Error('Failed to get canvas context'))
+  }
 
   canvas.width = width * scale
   canvas.height = height * scale
 
-  return new Promise<HTMLCanvasElement>((resolve) => {
+  return new Promise<HTMLCanvasElement>((resolve, reject) => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
+
     img.onload = () => {
-      if (ctx) {
+      try {
         ctx.scale(scale, scale)
         ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas)
+      } catch (error) {
+        reject(new Error(`Failed to draw image on canvas: ${error}`))
       }
-      resolve(canvas)
     }
+
+    img.onerror = () => {
+      reject(new Error('Failed to load SVG image'))
+    }
+
     img.src = svgBase64
   })
 }

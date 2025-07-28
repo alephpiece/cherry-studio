@@ -1,15 +1,14 @@
-import { LoadingOutlined } from '@ant-design/icons'
-import { useImageTools } from '@renderer/components/ActionTools'
-import { download } from '@renderer/utils/download'
+import { loggerService } from '@logger'
 import { Spin } from 'antd'
 import pako from 'pako'
-import React, { memo, useCallback, useImperativeHandle, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import styled from 'styled-components'
+import React, { memo, useEffect, useState } from 'react'
 
-import ImageToolbar from './ImageToolbar'
-import { PreviewContainer } from './styles'
+import SvgSpinners180Ring from '../Icons/SvgSpinners180Ring'
+import { PreviewContainer, PreviewError } from './styles'
+import SvgPreview from './svg'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
+
+const logger = loggerService.withContext('PlantUmlPreview')
 
 const PlantUMLServer = 'https://www.plantuml.com/plantuml'
 function encode64(data: Uint8Array) {
@@ -73,13 +72,6 @@ function encodeDiagram(diagram: string): string {
   return encode64(compressed)
 }
 
-type PlantUMLServerImageProps = {
-  format: 'png' | 'svg'
-  diagram: string
-  onClick?: React.MouseEventHandler<HTMLDivElement>
-  className?: string
-}
-
 function getPlantUMLImageUrl(format: 'png' | 'svg', diagram: string, isDark?: boolean) {
   const encodedDiagram = encodeDiagram(diagram)
   if (isDark) {
@@ -88,105 +80,65 @@ function getPlantUMLImageUrl(format: 'png' | 'svg', diagram: string, isDark?: bo
   return `${PlantUMLServer}/${format}/${encodedDiagram}`
 }
 
-const PlantUMLServerImage: React.FC<PlantUMLServerImageProps> = ({ format, diagram, onClick, className }) => {
-  const [loading, setLoading] = useState(true)
-  // FIXME: 黑暗模式背景太黑了，目前让 PlantUML 和 SVG 一样保持白色背景
-  const url = getPlantUMLImageUrl(format, diagram, false)
-  return (
-    <StyledPlantUML onClick={onClick} className={className}>
-      <Spin
-        spinning={loading}
-        indicator={
-          <LoadingOutlined
-            spin
-            style={{
-              fontSize: 32
-            }}
-          />
-        }>
-        <img
-          src={url}
-          onLoad={() => {
-            setLoading(false)
-          }}
-          onError={(e) => {
-            setLoading(false)
-            const target = e.target as HTMLImageElement
-            target.style.opacity = '0.5'
-            target.style.filter = 'blur(2px)'
-          }}
-        />
-      </Spin>
-    </StyledPlantUML>
-  )
-}
-
 const PlantUmlPreview = ({
   children,
   enableToolbar = false,
   ref
 }: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
-  const { t } = useTranslation()
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [svgContent, setSvgContent] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const encodedDiagram = encodeDiagram(children)
-
-  // 自定义 PlantUML 下载方法
-  const customDownload = useCallback(
-    async (format: 'svg' | 'png') => {
-      const timestamp = Date.now()
-      const url = `${PlantUMLServer}/${format}/${encodedDiagram}`
-      const filename = `plantuml-diagram-${timestamp}.${format}`
-      try {
-        download(url, filename)
-      } catch (error) {
-        window.message.error(t('code_block.download.failed.network'))
-      }
-    },
-    [encodedDiagram, t]
-  )
-
-  // 使用通用图像工具，提供自定义下载方法
-  const { pan, zoom, copy } = useImageTools(containerRef, {
-    imgSelector: '.plantuml-preview img',
-    prefix: 'plantuml-diagram',
-    enableDrag: true,
-    enableWheelZoom: true
-  })
-
-  useImperativeHandle(ref, () => {
-    return {
-      pan,
-      zoom,
-      copy,
-      download: customDownload
+  useEffect(() => {
+    if (!children) {
+      setIsLoading(false)
+      setSvgContent(null)
+      return
     }
-  })
 
-  return (
-    <div ref={containerRef}>
-      <PreviewContainer vertical>
-        <PlantUMLServerImage format="svg" diagram={children} className="plantuml-preview special-preview" />
-        {enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
-      </PreviewContainer>
-    </div>
+    const controller = new AbortController()
+    const signal = controller.signal
+
+    setIsLoading(true)
+    setSvgContent(null)
+    setError(null)
+
+    const url = getPlantUMLImageUrl('svg', children, false)
+
+    fetch(url, { signal })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(response.statusText)
+        }
+        return response.text()
+      })
+      .then((text) => {
+        setSvgContent(text)
+      })
+      .catch((e) => {
+        if ((e as Error).name !== 'AbortError') {
+          logger.error('Failed to fetch PlantUML diagram', e)
+          setError((e as Error).message)
+        }
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
+
+    return () => {
+      controller.abort()
+    }
+  }, [children])
+
+  return svgContent ? (
+    <SvgPreview ref={ref} enableToolbar={enableToolbar} className="plantuml-preview special-preview">
+      {svgContent}
+    </SvgPreview>
+  ) : (
+    <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
+      <PreviewContainer vertical>{error && <PreviewError>{error}</PreviewError>}</PreviewContainer>
+    </Spin>
   )
 }
-
-const StyledPlantUML = styled.div`
-  max-height: calc(80vh - 100px);
-  text-align: left;
-  overflow-y: auto;
-  background-color: white;
-  position: relative;
-  width: 100%;
-  height: 100%;
-  img {
-    max-width: 100%;
-    height: auto;
-    min-height: 100px;
-    transition: transform 0.2s ease;
-  }
-`
 
 export default memo(PlantUmlPreview)

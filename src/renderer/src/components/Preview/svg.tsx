@@ -3,16 +3,19 @@ import { memo, useEffect, useImperativeHandle, useRef, useState } from 'react'
 
 import ImageToolbar from './ImageToolbar'
 import { PreviewContainer, PreviewError } from './styles'
-import { BasicPreviewHandles, BasicPreviewProps } from './types'
+import { BasicPreviewHandles } from './types'
+
+interface SvgPreviewProps {
+  children: string
+  enableToolbar?: boolean
+  className?: string
+  ref?: React.RefObject<BasicPreviewHandles | null>
+}
 
 /**
  * 使用 Shadow DOM 渲染 SVG
  */
-const SvgPreview = ({
-  children,
-  enableToolbar = false,
-  ref
-}: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
+const SvgPreview = ({ children, enableToolbar = false, className, ref }: SvgPreviewProps) => {
   const svgContainerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -92,8 +95,8 @@ const SvgPreview = ({
   return (
     <PreviewContainer vertical>
       {error && <PreviewError>{error}</PreviewError>}
-      <div ref={svgContainerRef} className="svg-preview special-preview"></div>
-      {enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
+      <div ref={svgContainerRef} className={className ?? 'svg-preview special-preview'}></div>
+      {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
     </PreviewContainer>
   )
 }
