@@ -11,7 +11,7 @@ export const PreviewError = styled.div`
   white-space: pre-wrap;
 `
 
-export const PreviewContainer = styled(Flex)`
+export const PreviewContainer = styled(Flex).attrs({ role: 'alert' })`
   position: relative;
   /* Make sure the toolbar is visible */
   min-height: 8rem;

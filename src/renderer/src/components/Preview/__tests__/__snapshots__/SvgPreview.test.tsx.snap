@@ -20,6 +20,7 @@ exports[`SvgPreview > rendering > should match snapshot 1`] = `
 <div>
   <div
     class="c0 ant-flex css-dev-only-do-not-override-1261szd ant-flex-align-stretch ant-flex-vertical"
+    role="alert"
   >
     <div
       class="svg-preview special-preview"

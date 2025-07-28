@@ -33,6 +33,7 @@ exports[`MermaidPreview > rendering > should match snapshot 1`] = `
       class="c0"
       data-testid="flex"
       data-vertical="true"
+      role="alert"
     >
       <div
         class="c1 mermaid special-preview"

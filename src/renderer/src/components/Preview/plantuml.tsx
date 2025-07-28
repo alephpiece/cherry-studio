@@ -108,7 +108,7 @@ const PlantUmlPreview = ({
     fetch(url, { signal })
       .then((response) => {
         if (!response.ok) {
-          throw new Error(`Bad request: there may be some syntax errors in the diagram.`)
+          throw new Error('Error: there may be some syntax errors in the diagram.')
         }
         return response.text()
       })

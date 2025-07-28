@@ -47,7 +47,7 @@ export const useCopyTool = ({ showPreviewTools, previewRef, onCopySource, setToo
       ) : (
         <Copy className="tool-icon" />
       ),
-      tooltip: includePreviewTools ? t('common.copy') : t('code_block.copy.source')
+      tooltip: includePreviewTools ? undefined : t('code_block.copy.source')
     }
 
     if (includePreviewTools) {

@@ -20,7 +20,7 @@ export interface ActionToolSpec {
  */
 export interface ActionTool extends ActionToolSpec {
   icon: React.ReactNode
-  tooltip: string
+  tooltip?: string
   visible?: () => boolean
   onClick?: () => void
   children?: Omit<ActionTool, 'children'>[]

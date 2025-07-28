@@ -140,7 +140,7 @@ describe('useDownloadTool', () => {
         id: 'download',
         type: 'core',
         order: 10,
-        tooltip: 'common.download',
+        tooltip: undefined,
         icon: expect.any(Object),
         children: expect.arrayContaining([
           expect.objectContaining({

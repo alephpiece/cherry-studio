@@ -145,7 +145,7 @@ describe('useCopyTool', () => {
         id: 'copy',
         type: 'core',
         order: 11,
-        tooltip: 'common.copy',
+        tooltip: undefined,
         icon: expect.any(Object),
         children: expect.arrayContaining([
           expect.objectContaining({
