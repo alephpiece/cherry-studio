@@ -1,8 +1,14 @@
-import { LoadingOutlined } from '@ant-design/icons'
 import { loggerService } from '@logger'
-import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
+import { ActionTool } from '@renderer/components/ActionTools'
 import CodeEditor from '@renderer/components/CodeEditor'
-import { CodeToolbar, useCopyTool, useDownloadTool } from '@renderer/components/CodeToolbar'
+import {
+  CodeToolbar,
+  useCopyTool,
+  useDownloadTool,
+  useRunTool,
+  useSplitViewTool,
+  useViewSourceTool
+} from '@renderer/components/CodeToolbar'
 import ImageViewer from '@renderer/components/ImageViewer'
 import { BasicPreviewHandles } from '@renderer/components/Preview'
 import { useSettings } from '@renderer/hooks/useSettings'
@@ -10,8 +16,7 @@ import { pyodideService } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
 import { getExtensionByLanguage, isHtmlCode, isValidPlantUML } from '@renderer/utils/markdown'
 import dayjs from 'dayjs'
-import { CirclePlay, CodeXml, Eye, Square, SquarePen, SquareSplitHorizontal } from 'lucide-react'
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -54,7 +59,6 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
   const [executionResult, setExecutionResult] = useState<{ text: string; image?: string } | null>(null)
 
   const [tools, setTools] = useState<ActionTool[]>([])
-  const { registerTool, removeTool } = useToolManager(setTools)
 
   const isExecutable = useMemo(() => {
     return codeExecution.enabled && language === 'python'
@@ -110,74 +114,50 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
       })
   }, [children, codeExecution.timeoutMinutes])
 
+  const showPreviewTools = useMemo(() => {
+    return viewMode !== 'source' && hasSpecialView
+  }, [hasSpecialView, viewMode])
+
   // 复制按钮
   useCopyTool({
-    hasViewTools: hasSpecialView,
-    viewRef: specialViewRef,
+    showPreviewTools,
+    previewRef: specialViewRef,
     onCopySource: handleCopySource,
     setTools
   })
 
   // 下载按钮
   useDownloadTool({
-    hasViewTools: hasSpecialView,
-    viewRef: specialViewRef,
+    showPreviewTools,
+    previewRef: specialViewRef,
     onDownloadSource: handleDownloadSource,
     setTools
   })
 
-  // 特殊视图的编辑按钮，在分屏模式下不可用
-  useEffect(() => {
-    if (!hasSpecialView || viewMode === 'split') return
+  // 特殊视图的编辑/查看源码按钮，在分屏模式下不可用
+  useViewSourceTool({
+    enabled: hasSpecialView,
+    editable: codeEditor.enabled,
+    viewMode,
+    onViewModeChange: setViewMode,
+    setTools
+  })
 
-    const viewSourceToolSpec = codeEditor.enabled ? TOOL_SPECS.edit : TOOL_SPECS['view-source']
-
-    if (codeEditor.enabled) {
-      registerTool({
-        ...viewSourceToolSpec,
-        icon: viewMode === 'source' ? <Eye className="tool-icon" /> : <SquarePen className="tool-icon" />,
-        tooltip: viewMode === 'source' ? t('preview.label') : t('code_block.edit.label'),
-        onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source')
-      })
-    } else {
-      registerTool({
-        ...viewSourceToolSpec,
-        icon: viewMode === 'source' ? <Eye className="tool-icon" /> : <CodeXml className="tool-icon" />,
-        tooltip: viewMode === 'source' ? t('preview.label') : t('preview.source'),
-        onClick: () => setViewMode(viewMode === 'source' ? 'special' : 'source')
-      })
-    }
-
-    return () => removeTool(viewSourceToolSpec.id)
-  }, [codeEditor.enabled, hasSpecialView, viewMode, registerTool, removeTool, t])
-
-  // 特殊视图的分屏按钮
-  useEffect(() => {
-    if (!hasSpecialView) return
-
-    registerTool({
-      ...TOOL_SPECS['split-view'],
-      icon: viewMode === 'split' ? <Square className="tool-icon" /> : <SquareSplitHorizontal className="tool-icon" />,
-      tooltip: viewMode === 'split' ? t('code_block.split.restore') : t('code_block.split.label'),
-      onClick: () => setViewMode(viewMode === 'split' ? 'special' : 'split')
-    })
-
-    return () => removeTool(TOOL_SPECS['split-view'].id)
-  }, [hasSpecialView, viewMode, registerTool, removeTool, t])
+  // 特殊视图存在时的分屏按钮
+  useSplitViewTool({
+    enabled: hasSpecialView,
+    viewMode,
+    onViewModeChange: setViewMode,
+    setTools
+  })
 
   // 运行按钮
-  useEffect(() => {
-    if (!isExecutable) return
-
-    registerTool({
-      ...TOOL_SPECS.run,
-      icon: isRunning ? <LoadingOutlined /> : <CirclePlay className="tool-icon" />,
-      tooltip: t('code_block.run'),
-      onClick: () => !isRunning && handleRunScript()
-    })
-
-    return () => isExecutable && removeTool(TOOL_SPECS.run.id)
-  }, [isExecutable, isRunning, handleRunScript, registerTool, removeTool, t])
+  useRunTool({
+    enabled: isExecutable,
+    isRunning,
+    onRun: handleRunScript,
+    setTools
+  })
 
   // 源代码视图组件
   const sourceView = useMemo(() => {

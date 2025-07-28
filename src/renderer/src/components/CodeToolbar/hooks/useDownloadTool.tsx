@@ -5,26 +5,26 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface UseDownloadToolProps {
-  hasViewTools?: boolean
-  viewRef: React.RefObject<BasicPreviewHandles | null>
+  showPreviewTools?: boolean
+  previewRef: React.RefObject<BasicPreviewHandles | null>
   onDownloadSource: () => void
   setTools: React.Dispatch<React.SetStateAction<any[]>>
 }
 
-export const useDownloadTool = ({ hasViewTools, viewRef, onDownloadSource, setTools }: UseDownloadToolProps) => {
+export const useDownloadTool = ({ showPreviewTools, previewRef, onDownloadSource, setTools }: UseDownloadToolProps) => {
   const { t } = useTranslation()
   const { registerTool, removeTool } = useToolManager(setTools)
 
   useEffect(() => {
-    const showViewTools = hasViewTools && viewRef.current !== null
+    const includePreviewTools = showPreviewTools && previewRef.current !== null
 
     const baseTool = {
       ...TOOL_SPECS.download,
       icon: <Download className="tool-icon" />,
-      tooltip: showViewTools ? t('common.download') : t('code_block.download.source')
+      tooltip: includePreviewTools ? t('common.download') : t('code_block.download.source')
     }
 
-    if (showViewTools) {
+    if (includePreviewTools) {
       registerTool({
         ...baseTool,
         children: [
@@ -38,13 +38,13 @@ export const useDownloadTool = ({ hasViewTools, viewRef, onDownloadSource, setTo
             ...TOOL_SPECS['download-svg'],
             icon: <FileImage size={'1rem'} />,
             tooltip: t('code_block.download.svg'),
-            onClick: () => viewRef.current?.download('svg')
+            onClick: () => previewRef.current?.download('svg')
           },
           {
             ...TOOL_SPECS['download-png'],
             icon: <FileImage size={'1rem'} />,
             tooltip: t('code_block.download.png'),
-            onClick: () => viewRef.current?.download('png')
+            onClick: () => previewRef.current?.download('png')
           }
         ]
       })
@@ -56,5 +56,5 @@ export const useDownloadTool = ({ hasViewTools, viewRef, onDownloadSource, setTo
     }
 
     return () => removeTool(TOOL_SPECS.download.id)
-  }, [viewRef, onDownloadSource, registerTool, removeTool, t, hasViewTools])
+  }, [onDownloadSource, registerTool, removeTool, t, showPreviewTools, previewRef])
 }

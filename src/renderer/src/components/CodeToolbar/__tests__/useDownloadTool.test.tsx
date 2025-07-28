@@ -65,8 +65,8 @@ describe('useDownloadTool', () => {
   // Helper function to create mock props
   const createMockProps = (overrides: Partial<Parameters<typeof useDownloadTool>[0]> = {}) => {
     const defaultProps = {
-      hasViewTools: false,
-      viewRef: { current: null },
+      showPreviewTools: false,
+      previewRef: { current: null },
       onDownloadSource: vi.fn(),
       setTools: vi.fn()
     }
@@ -96,8 +96,8 @@ describe('useDownloadTool', () => {
   }
 
   describe('tool registration', () => {
-    it('should register single download tool when hasViewTools is false', () => {
-      const props = createMockProps({ hasViewTools: false })
+    it('should register single download tool when showPreviewTools is false', () => {
+      const props = createMockProps({ showPreviewTools: false })
       renderHook(() => useDownloadTool(props))
 
       expect(mocks.useToolManager).toHaveBeenCalledWith(props.setTools)
@@ -112,26 +112,26 @@ describe('useDownloadTool', () => {
       expectNoChildren()
     })
 
-    it('should register single download tool when hasViewTools is true but viewRef.current is null', () => {
-      const props = createMockProps({ hasViewTools: true, viewRef: { current: null } })
+    it('should register single download tool when showPreviewTools is true but previewRef.current is null', () => {
+      const props = createMockProps({ showPreviewTools: true, previewRef: { current: null } })
       renderHook(() => useDownloadTool(props))
 
       expectToolRegistration(1, {
         id: 'download',
         type: 'core',
         order: 10,
-        tooltip: 'code_block.download.source', // When viewRef.current is null, showViewTools is false
+        tooltip: 'code_block.download.source', // When previewRef.current is null, showPreviewTools is false
         onClick: expect.any(Function),
         icon: expect.any(Object)
       })
       expectNoChildren()
     })
 
-    it('should register download tool with children when hasViewTools is true and viewRef.current is not null', () => {
+    it('should register download tool with children when showPreviewTools is true and previewRef.current is not null', () => {
       const mockPreviewHandles = createMockPreviewHandles()
       const props = createMockProps({
-        hasViewTools: true,
-        viewRef: { current: mockPreviewHandles }
+        showPreviewTools: true,
+        previewRef: { current: mockPreviewHandles }
       })
 
       renderHook(() => useDownloadTool(props))
@@ -190,8 +190,8 @@ describe('useDownloadTool', () => {
     it('should execute download SVG behavior when SVG download tool is activated', () => {
       const mockPreviewHandles = createMockPreviewHandles()
       const props = createMockProps({
-        hasViewTools: true,
-        viewRef: { current: mockPreviewHandles }
+        showPreviewTools: true,
+        previewRef: { current: mockPreviewHandles }
       })
 
       renderHook(() => useDownloadTool(props))
@@ -213,8 +213,8 @@ describe('useDownloadTool', () => {
     it('should execute download PNG behavior when PNG download tool is activated', () => {
       const mockPreviewHandles = createMockPreviewHandles()
       const props = createMockProps({
-        hasViewTools: true,
-        viewRef: { current: mockPreviewHandles }
+        showPreviewTools: true,
+        previewRef: { current: mockPreviewHandles }
       })
 
       renderHook(() => useDownloadTool(props))
@@ -236,9 +236,9 @@ describe('useDownloadTool', () => {
     it('should execute download source behavior from child tool', () => {
       const mockOnDownloadSource = vi.fn()
       const props = createMockProps({
-        hasViewTools: true,
+        showPreviewTools: true,
         onDownloadSource: mockOnDownloadSource,
-        viewRef: { current: createMockPreviewHandles() }
+        previewRef: { current: createMockPreviewHandles() }
       })
 
       renderHook(() => useDownloadTool(props))
@@ -282,10 +282,10 @@ describe('useDownloadTool', () => {
       expect(mocks.useToolManager).toHaveBeenCalledWith(undefined)
     })
 
-    it('should handle missing viewRef.current gracefully', () => {
+    it('should handle missing previewRef.current gracefully', () => {
       const props = createMockProps({
-        hasViewTools: true,
-        viewRef: { current: null }
+        showPreviewTools: true,
+        previewRef: { current: null }
       })
 
       expect(() => {
@@ -326,8 +326,8 @@ describe('useDownloadTool', () => {
       })
 
       const props = createMockProps({
-        hasViewTools: true,
-        viewRef: { current: mockPreviewHandles }
+        showPreviewTools: true,
+        previewRef: { current: mockPreviewHandles }
       })
 
       renderHook(() => useDownloadTool(props))

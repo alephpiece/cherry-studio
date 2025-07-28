@@ -6,13 +6,13 @@ import { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface UseCopyToolProps {
-  hasViewTools?: boolean
-  viewRef: React.RefObject<BasicPreviewHandles | null>
+  showPreviewTools?: boolean
+  previewRef: React.RefObject<BasicPreviewHandles | null>
   onCopySource: () => void
   setTools: React.Dispatch<React.SetStateAction<any[]>>
 }
 
-export const useCopyTool = ({ hasViewTools, viewRef, onCopySource, setTools }: UseCopyToolProps) => {
+export const useCopyTool = ({ showPreviewTools, previewRef, onCopySource, setTools }: UseCopyToolProps) => {
   const [copied, setCopiedTemporarily] = useTemporaryValue(false)
   const { t } = useTranslation()
   const { registerTool, removeTool } = useToolManager(setTools)
@@ -29,16 +29,16 @@ export const useCopyTool = ({ hasViewTools, viewRef, onCopySource, setTools }: U
 
   const handleCopyImage = useCallback(() => {
     try {
-      viewRef.current?.copy()
+      previewRef.current?.copy()
       setCopiedTemporarily(true)
     } catch (error) {
       setCopiedTemporarily(false)
       throw error
     }
-  }, [viewRef, setCopiedTemporarily])
+  }, [previewRef, setCopiedTemporarily])
 
   useEffect(() => {
-    const showViewTools = hasViewTools && viewRef.current !== null
+    const includePreviewTools = showPreviewTools && previewRef.current !== null
 
     const baseTool = {
       ...TOOL_SPECS.copy,
@@ -47,10 +47,10 @@ export const useCopyTool = ({ hasViewTools, viewRef, onCopySource, setTools }: U
       ) : (
         <Copy className="tool-icon" />
       ),
-      tooltip: hasViewTools ? t('common.copy') : t('code_block.copy.source')
+      tooltip: includePreviewTools ? t('common.copy') : t('code_block.copy.source')
     }
 
-    if (showViewTools) {
+    if (includePreviewTools) {
       registerTool({
         ...baseTool,
         children: [
@@ -76,5 +76,15 @@ export const useCopyTool = ({ hasViewTools, viewRef, onCopySource, setTools }: U
     }
 
     return () => removeTool(TOOL_SPECS.copy.id)
-  }, [viewRef, onCopySource, registerTool, removeTool, t, hasViewTools, copied, handleCopySource, handleCopyImage])
+  }, [
+    onCopySource,
+    registerTool,
+    removeTool,
+    t,
+    copied,
+    handleCopySource,
+    handleCopyImage,
+    showPreviewTools,
+    previewRef
+  ])
 }

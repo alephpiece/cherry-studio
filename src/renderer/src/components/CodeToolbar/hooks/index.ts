@@ -1,2 +1,5 @@
 export * from './useCopyTool'
 export * from './useDownloadTool'
+export * from './useRunTool'
+export * from './useSplitViewTool'
+export * from './useViewSourceTool'

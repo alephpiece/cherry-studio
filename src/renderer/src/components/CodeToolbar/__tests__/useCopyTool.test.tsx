@@ -70,8 +70,8 @@ describe('useCopyTool', () => {
   // Helper function to create mock props
   const createMockProps = (overrides: Partial<Parameters<typeof useCopyTool>[0]> = {}) => {
     const defaultProps = {
-      hasViewTools: false,
-      viewRef: { current: null },
+      showPreviewTools: false,
+      previewRef: { current: null },
       onCopySource: vi.fn(),
       setTools: vi.fn()
     }
@@ -101,8 +101,8 @@ describe('useCopyTool', () => {
   }
 
   describe('tool registration', () => {
-    it('should register single copy tool when hasViewTools is false', () => {
-      const props = createMockProps({ hasViewTools: false })
+    it('should register single copy tool when showPreviewTools is false', () => {
+      const props = createMockProps({ showPreviewTools: false })
       renderHook(() => useCopyTool(props))
 
       expect(mocks.useToolManager).toHaveBeenCalledWith(props.setTools)
@@ -117,26 +117,26 @@ describe('useCopyTool', () => {
       expectNoChildren()
     })
 
-    it('should register single copy tool when hasViewTools is true but viewRef.current is null', () => {
-      const props = createMockProps({ hasViewTools: true, viewRef: { current: null } })
+    it('should register single copy tool when showPreviewTools is true but previewRef.current is null', () => {
+      const props = createMockProps({ showPreviewTools: true, previewRef: { current: null } })
       renderHook(() => useCopyTool(props))
 
       expectToolRegistration(1, {
         id: 'copy',
         type: 'core',
         order: 11,
-        tooltip: 'common.copy',
+        tooltip: 'code_block.copy.source',
         onClick: expect.any(Function),
         icon: expect.any(Object)
       })
       expectNoChildren()
     })
 
-    it('should register copy tool with children when hasViewTools is true and viewRef.current is not null', () => {
+    it('should register copy tool with children when showPreviewTools is true and previewRef.current is not null', () => {
       const mockPreviewHandles = createMockPreviewHandles()
       const props = createMockProps({
-        hasViewTools: true,
-        viewRef: { current: mockPreviewHandles }
+        showPreviewTools: true,
+        previewRef: { current: mockPreviewHandles }
       })
 
       renderHook(() => useCopyTool(props))
@@ -188,8 +188,8 @@ describe('useCopyTool', () => {
     it('should execute copy image behavior when image copy tool is activated', () => {
       const mockPreviewHandles = createMockPreviewHandles()
       const props = createMockProps({
-        hasViewTools: true,
-        viewRef: { current: mockPreviewHandles }
+        showPreviewTools: true,
+        previewRef: { current: mockPreviewHandles }
       })
 
       renderHook(() => useCopyTool(props))
@@ -211,9 +211,9 @@ describe('useCopyTool', () => {
     it('should execute copy source behavior from child tool', () => {
       const mockOnCopySource = vi.fn()
       const props = createMockProps({
-        hasViewTools: true,
+        showPreviewTools: true,
         onCopySource: mockOnCopySource,
-        viewRef: { current: createMockPreviewHandles() }
+        previewRef: { current: createMockPreviewHandles() }
       })
 
       renderHook(() => useCopyTool(props))
@@ -323,10 +323,10 @@ describe('useCopyTool', () => {
       expect(mocks.useToolManager).toHaveBeenCalledWith(undefined)
     })
 
-    it('should handle missing viewRef.current gracefully', () => {
+    it('should handle missing previewRef.current gracefully', () => {
       const props = createMockProps({
-        hasViewTools: true,
-        viewRef: { current: null }
+        showPreviewTools: true,
+        previewRef: { current: null }
       })
 
       expect(() => {
@@ -369,8 +369,8 @@ describe('useCopyTool', () => {
       })
 
       const props = createMockProps({
-        hasViewTools: true,
-        viewRef: { current: mockPreviewHandles }
+        showPreviewTools: true,
+        previewRef: { current: mockPreviewHandles }
       })
 
       renderHook(() => useCopyTool(props))
