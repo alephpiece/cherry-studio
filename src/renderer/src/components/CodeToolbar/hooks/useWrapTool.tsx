@@ -1,6 +1,6 @@
 import { TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { Text as UnWrapIcon, WrapText as WrapIcon } from 'lucide-react'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface UseWrapToolProps {
@@ -15,6 +15,10 @@ export const useWrapTool = ({ enabled, unwrapped, wrappable, toggle, setTools }:
   const { t } = useTranslation()
   const { registerTool, removeTool } = useToolManager(setTools)
 
+  const handleToggle = useCallback(() => {
+    toggle?.()
+  }, [toggle])
+
   useEffect(() => {
     if (enabled) {
       registerTool({
@@ -22,10 +26,10 @@ export const useWrapTool = ({ enabled, unwrapped, wrappable, toggle, setTools }:
         icon: unwrapped ? <UnWrapIcon className="tool-icon" /> : <WrapIcon className="tool-icon" />,
         tooltip: unwrapped ? t('code_block.wrap.off') : t('code_block.wrap.on'),
         visible: () => wrappable ?? false,
-        onClick: toggle
+        onClick: handleToggle
       })
     }
 
     return () => removeTool(TOOL_SPECS.wrap.id)
-  }, [wrappable, enabled, registerTool, removeTool, t, toggle, unwrapped])
+  }, [enabled, handleToggle, registerTool, removeTool, t, unwrapped, wrappable])
 }

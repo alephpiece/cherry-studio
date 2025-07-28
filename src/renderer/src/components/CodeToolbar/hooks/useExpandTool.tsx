@@ -1,6 +1,6 @@
 import { TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface UseExpandToolProps {
@@ -15,6 +15,10 @@ export const useExpandTool = ({ enabled, expanded, expandable, toggle, setTools 
   const { t } = useTranslation()
   const { registerTool, removeTool } = useToolManager(setTools)
 
+  const handleToggle = useCallback(() => {
+    toggle?.()
+  }, [toggle])
+
   useEffect(() => {
     if (enabled) {
       registerTool({
@@ -22,10 +26,10 @@ export const useExpandTool = ({ enabled, expanded, expandable, toggle, setTools 
         icon: expanded ? <ChevronsDownUp className="tool-icon" /> : <ChevronsUpDown className="tool-icon" />,
         tooltip: expanded ? t('code_block.collapse') : t('code_block.expand'),
         visible: () => expandable ?? false,
-        onClick: toggle
+        onClick: handleToggle
       })
     }
 
     return () => removeTool(TOOL_SPECS.expand.id)
-  }, [enabled, expandable, expanded, registerTool, removeTool, t, toggle])
+  }, [enabled, expandable, expanded, handleToggle, registerTool, removeTool, t])
 }
