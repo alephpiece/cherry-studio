@@ -108,7 +108,7 @@ const PlantUmlPreview = ({
     fetch(url, { signal })
       .then((response) => {
         if (!response.ok) {
-          throw new Error(response.statusText)
+          throw new Error(`Bad request: there may be some syntax errors in the diagram.`)
         }
         return response.text()
       })
@@ -117,7 +117,7 @@ const PlantUmlPreview = ({
       })
       .catch((e) => {
         if ((e as Error).name !== 'AbortError') {
-          logger.error('Failed to fetch PlantUML diagram', e)
+          logger.warn('Failed to fetch PlantUML diagram', e)
           setError((e as Error).message)
         }
       })
@@ -130,15 +130,29 @@ const PlantUmlPreview = ({
     }
   }, [children])
 
+  if (isLoading) {
+    return (
+      <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
+        <PreviewContainer vertical className="special-preview">
+          {' '}
+        </PreviewContainer>
+      </Spin>
+    )
+  }
+
+  if (error) {
+    return (
+      <PreviewContainer vertical className="special-preview">
+        <PreviewError>{error}</PreviewError>
+      </PreviewContainer>
+    )
+  }
+
   return svgContent ? (
     <SvgPreview ref={ref} enableToolbar={enableToolbar} className="plantuml-preview special-preview">
       {svgContent}
     </SvgPreview>
-  ) : (
-    <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
-      <PreviewContainer vertical>{error && <PreviewError>{error}</PreviewError>}</PreviewContainer>
-    </Spin>
-  )
+  ) : null
 }
 
 export default memo(PlantUmlPreview)
