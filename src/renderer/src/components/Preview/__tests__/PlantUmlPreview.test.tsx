@@ -4,8 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock SvgPreview as it's a separate unit being tested elsewhere
 const mocks = vi.hoisted(() => ({
-  SvgPreview: vi.fn(({ children, enableToolbar, className }) => (
-    <div data-testid="svg-preview" data-enable-toolbar={enableToolbar} data-classname={className}>
+  SvgPreview: vi.fn(({ children, enableToolbar, className, loading }) => (
+    <div
+      data-testid="svg-preview"
+      data-enable-toolbar={enableToolbar}
+      data-classname={className}
+      data-loading={loading}>
       <div data-testid="svg-content">{children}</div>
     </div>
   ))
@@ -14,20 +18,6 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@renderer/components/Preview/svg', () => ({
   default: mocks.SvgPreview
 }))
-
-// Mock antd's Spin component for state assertions
-vi.mock('antd', async (importOriginal) => {
-  const antd = await importOriginal<typeof import('antd')>()
-  return {
-    ...antd,
-    Spin: ({ children, spinning }) => (
-      <div data-testid="spin" data-spinning={spinning}>
-        {spinning && <div data-testid="loading-indicator">Loading...</div>}
-        {children}
-      </div>
-    )
-  }
-})
 
 describe('PlantUmlPreview', () => {
   const diagram = 'A -> B'
@@ -43,7 +33,7 @@ describe('PlantUmlPreview', () => {
     vi.restoreAllMocks()
   })
 
-  it('should show loading indicator initially', async () => {
+  it('should pass loading state to SvgPreview initially', async () => {
     // @ts-ignore mock fetch success
     global.fetch.mockResolvedValue({
       ok: true,
@@ -52,13 +42,13 @@ describe('PlantUmlPreview', () => {
 
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
-    // Wait for the component to update
+    // Should immediately render SvgPreview with loading=true after fetch starts
     await waitFor(() => {
-      expect(screen.getByTestId('loading-indicator')).toBeInTheDocument()
+      expect(screen.getByTestId('svg-preview')).toHaveAttribute('data-loading', 'true')
     })
   })
 
-  it('should render SvgPreview with fetched content on success', async () => {
+  it('should render SvgPreview with fetched content and stop loading on success', async () => {
     // @ts-ignore mock fetch success
     global.fetch.mockResolvedValue({
       ok: true,
@@ -68,11 +58,10 @@ describe('PlantUmlPreview', () => {
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
-      expect(screen.getByTestId('svg-preview')).toBeInTheDocument()
+      expect(screen.getByTestId('svg-preview')).toHaveAttribute('data-loading', 'false')
     })
 
     expect(screen.getByTestId('svg-content')).toHaveTextContent(mockSvgContent)
-    expect(screen.queryByTestId('loading-indicator')).not.toBeInTheDocument()
   })
 
   it('should pass props correctly to SvgPreview', async () => {
@@ -90,7 +79,7 @@ describe('PlantUmlPreview', () => {
     })
 
     // Get the props from the last call to the mock
-    const lastCallProps = mocks.SvgPreview.mock.calls[0][0]
+    const lastCallProps = mocks.SvgPreview.mock.calls[mocks.SvgPreview.mock.calls.length - 1][0]
     expect(lastCallProps.enableToolbar).toBe(true)
     expect(lastCallProps.className).toBe('plantuml-preview special-preview')
     expect(lastCallProps.children).toBe(mockSvgContent)
@@ -103,11 +92,9 @@ describe('PlantUmlPreview', () => {
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
-      // Check that an error message is displayed (without specifying exact text)
-      expect(screen.queryByTestId('svg-preview')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('loading-indicator')).not.toBeInTheDocument()
-      // Check that error container with alert role is in the document
+      // Check that an error message is displayed
       expect(screen.getByRole('alert')).toBeInTheDocument()
+      expect(screen.queryByTestId('svg-preview')).not.toBeInTheDocument()
     })
   })
 
@@ -121,22 +108,44 @@ describe('PlantUmlPreview', () => {
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
-      // Check that an error message is displayed (without specifying exact text)
-      expect(screen.queryByTestId('svg-preview')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('loading-indicator')).not.toBeInTheDocument()
-      // Check that error container with alert role is in the document
+      // Check that an error message is displayed
       expect(screen.getByRole('alert')).toBeInTheDocument()
+      expect(screen.queryByTestId('svg-preview')).not.toBeInTheDocument()
     })
   })
 
-  it('should not call fetch if children is empty', async () => {
+  it('should render SvgPreview with empty content when children is empty', async () => {
     render(<PlantUmlPreview>{''}</PlantUmlPreview>)
-    // Wait a bit to ensure any potential fetch calls would have happened
+
+    // Should render SvgPreview immediately with empty content and loading=false
+    expect(screen.getByTestId('svg-preview')).toBeInTheDocument()
+    expect(screen.getByTestId('svg-preview')).toHaveAttribute('data-loading', 'false')
+    expect(screen.getByTestId('svg-content')).toHaveTextContent('')
+
+    // Wait a bit to ensure no fetch call happens
     await waitFor(
       () => {
         expect(global.fetch).not.toHaveBeenCalled()
       },
       { timeout: 100 }
     )
+  })
+
+  it('should clear error and content when children becomes empty', async () => {
+    // @ts-ignore mock fetch error first
+    global.fetch.mockRejectedValue(new Error('Network Error'))
+
+    const { rerender } = render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+    })
+
+    // Clear children
+    rerender(<PlantUmlPreview>{''}</PlantUmlPreview>)
+
+    // Should now render SvgPreview instead of error
+    expect(screen.getByTestId('svg-preview')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })

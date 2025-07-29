@@ -1,5 +1,5 @@
 import SvgPreview from '@renderer/components/Preview/svg'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Use vi.hoisted to manage mocks
@@ -7,6 +7,30 @@ const mocks = vi.hoisted(() => ({
   useImageTools: vi.fn(),
   ImageToolbar: vi.fn(() => <div data-testid="image-toolbar">ImageToolbar</div>)
 }))
+
+vi.mock('antd', async (importOriginal) => {
+  const antd = await importOriginal<typeof import('antd')>()
+  return {
+    ...antd,
+    Spin: ({ children, spinning }) => (
+      <div data-testid="spin" data-spinning={spinning}>
+        {children}
+      </div>
+    )
+  }
+})
+
+vi.mock('lodash', async () => {
+  const actual = await import('lodash')
+  return {
+    ...actual,
+    debounce: vi.fn((fn) => {
+      const debounced = (...args: any[]) => fn(...args)
+      debounced.cancel = vi.fn()
+      return debounced
+    })
+  }
+})
 
 vi.mock('@renderer/components/ActionTools', () => ({
   useImageTools: mocks.useImageTools
@@ -52,12 +76,16 @@ describe('SvgPreview', () => {
       expect(container).toMatchSnapshot()
     })
 
-    it('should render the svg content inside a shadow DOM', () => {
+    it('should render the svg content inside a shadow DOM with loading state', async () => {
       const { container } = render(<SvgPreview>{svgContent}</SvgPreview>)
       const previewElement = container.querySelector('.svg-preview')
 
       expect(previewElement).not.toBeNull()
-      expect(Element.prototype.attachShadow).toHaveBeenCalledWith({ mode: 'open' })
+
+      // Wait for async rendering to complete
+      await waitFor(() => {
+        expect(Element.prototype.attachShadow).toHaveBeenCalledWith({ mode: 'open' })
+      })
 
       // Verify Shadow DOM content
       const shadowRoot = previewElement?.shadowRoot
@@ -67,33 +95,111 @@ describe('SvgPreview', () => {
       expect(shadowRoot?.querySelector('svg')).not.toBeNull()
       expect(shadowRoot?.querySelector('rect')).not.toBeNull()
     })
+
+    it('should show loading state initially', () => {
+      const { container } = render(<SvgPreview>{svgContent}</SvgPreview>)
+
+      const spinElement = container.querySelector('[data-testid="spin"]')
+      expect(spinElement).toBeInTheDocument()
+    })
   })
 
   describe('error handling', () => {
-    it('should display an error message when SVG parsing fails', () => {
+    it('should display an error message when SVG parsing fails', async () => {
       render(<SvgPreview>{invalidSvgContent}</SvgPreview>)
 
-      // Check that an error message is displayed
-      expect(screen.getByText(/SVG parsing error/)).toBeInTheDocument()
+      // Wait for debounced rendering and error to appear
+      await waitFor(() => {
+        expect(screen.getByText(/SVG parsing error/)).toBeInTheDocument()
+      })
     })
 
-    it('should display an error message when content is not valid SVG', () => {
+    it('should display an error message when content is not valid SVG', async () => {
       render(<SvgPreview>{'<div>Not SVG content</div>'}</SvgPreview>)
 
-      // Check that an error message is displayed
-      expect(screen.getByText('Invalid SVG content')).toBeInTheDocument()
+      // Wait for debounced rendering and error to appear
+      await waitFor(() => {
+        expect(screen.getByText('Invalid SVG content')).toBeInTheDocument()
+      })
     })
   })
 
   describe('ImageToolbar', () => {
-    it('should render ImageToolbar if enableToolbar is true', () => {
+    it('should render ImageToolbar if enableToolbar is true and no error', async () => {
       render(<SvgPreview enableToolbar>{svgContent}</SvgPreview>)
-      expect(screen.getByTestId('image-toolbar')).toBeInTheDocument()
+
+      // Wait for successful rendering
+      await waitFor(() => {
+        expect(screen.getByTestId('image-toolbar')).toBeInTheDocument()
+      })
     })
 
     it('should not render ImageToolbar if enableToolbar is false', () => {
       render(<SvgPreview enableToolbar={false}>{svgContent}</SvgPreview>)
       expect(screen.queryByTestId('image-toolbar')).not.toBeInTheDocument()
+    })
+
+    it('should not render ImageToolbar when there is an error', async () => {
+      render(<SvgPreview enableToolbar>{invalidSvgContent}</SvgPreview>)
+
+      // Wait for error to appear
+      await waitFor(() => {
+        expect(screen.getByText(/SVG parsing error/)).toBeInTheDocument()
+      })
+
+      expect(screen.queryByTestId('image-toolbar')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('debounced rendering', () => {
+    it('should handle empty content by canceling debounced render', () => {
+      const { rerender } = render(<SvgPreview>{svgContent}</SvgPreview>)
+
+      // Change to empty content
+      rerender(<SvgPreview>{''}</SvgPreview>)
+
+      // Should not throw any errors
+      expect(true).toBe(true)
+    })
+  })
+
+  describe('external loading prop', () => {
+    it('should show loading when external loading prop is true', () => {
+      const { container } = render(<SvgPreview loading>{svgContent}</SvgPreview>)
+
+      const spinElement = container.querySelector('[data-testid="spin"]')
+      expect(spinElement).toBeInTheDocument()
+      expect(spinElement).toHaveAttribute('data-spinning', 'true')
+    })
+
+    it('should show loading when either internal or external loading is true', async () => {
+      const { container, rerender } = render(<SvgPreview loading={false}>{svgContent}</SvgPreview>)
+
+      // Initially should show internal loading
+      let spinElement = container.querySelector('[data-testid="spin"]')
+      expect(spinElement).toHaveAttribute('data-spinning', 'true')
+
+      // Wait for internal loading to finish
+      await waitFor(() => {
+        spinElement = container.querySelector('[data-testid="spin"]')
+        expect(spinElement).toHaveAttribute('data-spinning', 'false')
+      })
+
+      // Set external loading to true
+      rerender(<SvgPreview loading>{svgContent}</SvgPreview>)
+
+      spinElement = container.querySelector('[data-testid="spin"]')
+      expect(spinElement).toHaveAttribute('data-spinning', 'true')
+    })
+
+    it('should not show loading when both internal and external loading are false', async () => {
+      const { container } = render(<SvgPreview loading={false}>{svgContent}</SvgPreview>)
+
+      // Wait for internal loading to finish
+      await waitFor(() => {
+        const spinElement = container.querySelector('[data-testid="spin"]')
+        expect(spinElement).toHaveAttribute('data-spinning', 'false')
+      })
     })
   })
 })

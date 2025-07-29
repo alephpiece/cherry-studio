@@ -1,9 +1,7 @@
 import { loggerService } from '@logger'
-import { Spin } from 'antd'
 import pako from 'pako'
 import React, { memo, useEffect, useState } from 'react'
 
-import SvgSpinners180Ring from '../Icons/SvgSpinners180Ring'
 import { PreviewContainer, PreviewError } from './styles'
 import SvgPreview from './svg'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
@@ -86,13 +84,14 @@ const PlantUmlPreview = ({
   ref
 }: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
   const [svgContent, setSvgContent] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!children) {
       setIsLoading(false)
       setSvgContent(null)
+      setError(null)
       return
     }
 
@@ -130,16 +129,6 @@ const PlantUmlPreview = ({
     }
   }, [children])
 
-  if (isLoading) {
-    return (
-      <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
-        <PreviewContainer vertical className="special-preview">
-          {' '}
-        </PreviewContainer>
-      </Spin>
-    )
-  }
-
   if (error) {
     return (
       <PreviewContainer vertical className="special-preview">
@@ -148,11 +137,15 @@ const PlantUmlPreview = ({
     )
   }
 
-  return svgContent ? (
-    <SvgPreview ref={ref} enableToolbar={enableToolbar} className="plantuml-preview special-preview">
-      {svgContent}
+  return (
+    <SvgPreview
+      ref={ref}
+      className="plantuml-preview special-preview"
+      enableToolbar={enableToolbar}
+      loading={isLoading}>
+      {svgContent || ''}
     </SvgPreview>
-  ) : null
+  )
 }
 
 export default memo(PlantUmlPreview)
