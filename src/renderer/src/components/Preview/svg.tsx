@@ -12,7 +12,6 @@ interface SvgPreviewProps {
   children: string
   enableToolbar?: boolean
   className?: string
-  loading?: boolean
   ref?: React.RefObject<BasicPreviewHandles | null>
 }
 
@@ -20,7 +19,7 @@ interface SvgPreviewProps {
  * 使用 Shadow DOM 渲染 SVG
  * 通过防抖渲染提供比较统一的体验，减少闪烁。
  */
-const SvgPreview = ({ children, enableToolbar = false, className, loading = false, ref }: SvgPreviewProps) => {
+const SvgPreview = ({ children, enableToolbar = false, className, ref }: SvgPreviewProps) => {
   const svgContainerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -129,7 +128,7 @@ const SvgPreview = ({ children, enableToolbar = false, className, loading = fals
   }, [children, debouncedRender])
 
   return (
-    <Spin spinning={loading || isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
+    <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
       <PreviewContainer vertical>
         {error && <PreviewError>{error}</PreviewError>}
         <div ref={svgContainerRef} className={className ?? 'svg-preview special-preview'}></div>

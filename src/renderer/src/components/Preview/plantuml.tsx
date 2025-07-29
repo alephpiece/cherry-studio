@@ -1,7 +1,10 @@
 import { loggerService } from '@logger'
+import { Spin } from 'antd'
+import { debounce } from 'lodash'
 import pako from 'pako'
-import React, { memo, useEffect, useState } from 'react'
+import React, { memo, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 
+import SvgSpinners180Ring from '../Icons/SvgSpinners180Ring'
 import { PreviewContainer, PreviewError } from './styles'
 import SvgPreview from './svg'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
@@ -84,65 +87,72 @@ const PlantUmlPreview = ({
   ref
 }: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
   const [svgContent, setSvgContent] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!children) {
-      setIsLoading(false)
+  // 实际的渲染函数
+  const renderPlantUml = useCallback(async (content: string) => {
+    if (!content) return
+
+    try {
+      setIsLoading(true)
       setSvgContent(null)
       setError(null)
-      return
+
+      const url = getPlantUMLImageUrl('svg', content, false)
+
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error('Error: there may be some syntax errors in the diagram.')
+      }
+
+      const text = await response.text()
+      setSvgContent(text)
+    } catch (error) {
+      logger.warn('Failed to fetch PlantUML diagram', error as Error)
+      setError((error as Error).message)
+    } finally {
+      setIsLoading(false)
     }
+  }, [])
 
-    const controller = new AbortController()
-    const signal = controller.signal
+  // debounce 渲染
+  const debouncedRender = useMemo(
+    () =>
+      debounce((content: string) => {
+        startTransition(() => renderPlantUml(content))
+      }, 150),
+    [renderPlantUml]
+  )
 
-    setIsLoading(true)
-    setSvgContent(null)
-    setError(null)
-
-    const url = getPlantUMLImageUrl('svg', children, false)
-
-    fetch(url, { signal })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Error: there may be some syntax errors in the diagram.')
-        }
-        return response.text()
-      })
-      .then((text) => {
-        setSvgContent(text)
-      })
-      .catch((e) => {
-        if ((e as Error).name !== 'AbortError') {
-          logger.warn('Failed to fetch PlantUML diagram', e)
-          setError((e as Error).message)
-        }
-      })
-      .finally(() => {
-        setIsLoading(false)
-      })
+  // 触发渲染
+  useEffect(() => {
+    if (children) {
+      setIsLoading(true)
+      debouncedRender(children)
+    } else {
+      debouncedRender.cancel()
+      setIsLoading(false)
+      setSvgContent(null)
+    }
 
     return () => {
-      controller.abort()
+      debouncedRender.cancel()
     }
-  }, [children])
+  }, [children, debouncedRender])
 
-  if (error) {
+  if (isLoading || error) {
     return (
-      <PreviewContainer vertical className="special-preview">
-        <PreviewError>{error}</PreviewError>
-      </PreviewContainer>
+      <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
+        <PreviewContainer vertical className="special-preview">
+          {error ? <PreviewError>{error}</PreviewError> : ' '}
+        </PreviewContainer>
+      </Spin>
     )
   }
 
   return (
-    <SvgPreview
-      ref={ref}
-      className="plantuml-preview special-preview"
-      enableToolbar={enableToolbar}
-      loading={isLoading}>
+    <SvgPreview ref={ref} enableToolbar={enableToolbar} className="plantuml-preview special-preview">
       {svgContent || ''}
     </SvgPreview>
   )

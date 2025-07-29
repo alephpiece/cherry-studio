@@ -19,7 +19,7 @@ import { MAX_COLLAPSED_CODE_HEIGHT } from '@renderer/config/constant'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { pyodideService } from '@renderer/services/PyodideService'
 import { extractTitle } from '@renderer/utils/formats'
-import { getExtensionByLanguage, isHtmlCode, isValidPlantUML } from '@renderer/utils/markdown'
+import { getExtensionByLanguage, isHtmlCode } from '@renderer/utils/markdown'
 import dayjs from 'dayjs'
 import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -248,11 +248,6 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     const SpecialView = SPECIAL_VIEW_COMPONENTS[language as keyof typeof SPECIAL_VIEW_COMPONENTS]
 
     if (!SpecialView) return null
-
-    // PlantUML 语法验证
-    if (language === 'plantuml' && !isValidPlantUML(children)) {
-      return null
-    }
 
     return (
       <SpecialView ref={specialViewRef} enableToolbar={codeImageTools}>

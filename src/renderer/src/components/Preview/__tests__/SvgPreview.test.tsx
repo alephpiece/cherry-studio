@@ -163,44 +163,4 @@ describe('SvgPreview', () => {
       expect(true).toBe(true)
     })
   })
-
-  describe('external loading prop', () => {
-    it('should show loading when external loading prop is true', () => {
-      const { container } = render(<SvgPreview loading>{svgContent}</SvgPreview>)
-
-      const spinElement = container.querySelector('[data-testid="spin"]')
-      expect(spinElement).toBeInTheDocument()
-      expect(spinElement).toHaveAttribute('data-spinning', 'true')
-    })
-
-    it('should show loading when either internal or external loading is true', async () => {
-      const { container, rerender } = render(<SvgPreview loading={false}>{svgContent}</SvgPreview>)
-
-      // Initially should show internal loading
-      let spinElement = container.querySelector('[data-testid="spin"]')
-      expect(spinElement).toHaveAttribute('data-spinning', 'true')
-
-      // Wait for internal loading to finish
-      await waitFor(() => {
-        spinElement = container.querySelector('[data-testid="spin"]')
-        expect(spinElement).toHaveAttribute('data-spinning', 'false')
-      })
-
-      // Set external loading to true
-      rerender(<SvgPreview loading>{svgContent}</SvgPreview>)
-
-      spinElement = container.querySelector('[data-testid="spin"]')
-      expect(spinElement).toHaveAttribute('data-spinning', 'true')
-    })
-
-    it('should not show loading when both internal and external loading are false', async () => {
-      const { container } = render(<SvgPreview loading={false}>{svgContent}</SvgPreview>)
-
-      // Wait for internal loading to finish
-      await waitFor(() => {
-        const spinElement = container.querySelector('[data-testid="spin"]')
-        expect(spinElement).toHaveAttribute('data-spinning', 'false')
-      })
-    })
-  })
 })
