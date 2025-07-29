@@ -126,15 +126,31 @@ const PlantUmlPreview = ({
       const url = getPlantUMLImageUrl('svg', content, false)
       const response = await fetch(url)
       if (!response.ok) {
-        throw new Error('Error: there may be some syntax errors in the diagram.')
+        if (response.status === 400) {
+          throw new Error(
+            'Diagram rendering failed (400): This is likely due to a syntax error in the diagram. Please check your code.'
+          )
+        }
+        if (response.status >= 500) {
+          throw new Error(
+            `Diagram rendering failed (${response.status}): The PlantUML server is temporarily unavailable. Please try again later.`
+          )
+        }
+        throw new Error(`Diagram rendering failed, server returned: ${response.status} ${response.statusText}`)
       }
 
       const text = await response.text()
       renderSvgInShadowHost(svgContainerRef.current, text)
       setError(null) // 渲染成功，清除错误记录
     } catch (error) {
-      logger.warn('Failed to fetch PlantUML diagram', error as Error)
-      setError((error as Error).message)
+      let errorMessage = (error as Error).message
+      // Handle network errors specifically
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        errorMessage = 'Network Error: Unable to connect to PlantUML server. Please check your network connection.'
+      }
+
+      logger.warn(errorMessage)
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }

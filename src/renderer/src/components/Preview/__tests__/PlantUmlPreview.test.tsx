@@ -53,7 +53,7 @@ describe('PlantUmlPreview', () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(mockSvgContent)
-    })
+    } as Response)
 
     mocks.useImageTools.mockReturnValue({
       pan: { current: { x: 0, y: 0, scale: 1 } },
@@ -79,12 +79,6 @@ describe('PlantUmlPreview', () => {
   })
 
   it('should show loading indicator initially and call fetch', async () => {
-    // @ts-ignore mock fetch success
-    global.fetch.mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve(mockSvgContent)
-    })
-
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     expect(screen.getByTestId('spin')).toHaveAttribute('data-spinning', 'true')
@@ -95,12 +89,6 @@ describe('PlantUmlPreview', () => {
   })
 
   it('should call renderSvgInShadowHost with fetched content on success', async () => {
-    // @ts-ignore mock fetch success
-    global.fetch.mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve(mockSvgContent)
-    })
-
     const { container } = render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
@@ -111,12 +99,6 @@ describe('PlantUmlPreview', () => {
   })
 
   it('should render ImageToolbar when enabled', async () => {
-    // @ts-ignore mock fetch success
-    global.fetch.mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve(mockSvgContent)
-    })
-
     render(<PlantUmlPreview enableToolbar>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
@@ -124,30 +106,64 @@ describe('PlantUmlPreview', () => {
     })
   })
 
-  it('should display an error message when fetch fails', async () => {
-    // @ts-ignore mock fetch error
-    global.fetch.mockRejectedValue(new Error('Network Error'))
+  it('should display a network error message when fetch fails', async () => {
+    vi.mocked(global.fetch).mockRejectedValueOnce(new TypeError('Failed to fetch'))
 
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
-      expect(screen.getByText('Network Error')).toBeInTheDocument()
-      expect(screen.getByTestId('spin')).toHaveAttribute('data-spinning', 'false')
+      expect(
+        screen.getByText('Network Error: Unable to connect to PlantUML server. Please check your network connection.')
+      ).toBeInTheDocument()
       expect(screen.queryByTestId('image-toolbar')).not.toBeInTheDocument()
     })
   })
 
-  it('should display an error message when response is not ok', async () => {
-    // @ts-ignore mock fetch error
-    global.fetch.mockResolvedValue({
-      ok: false
-    })
+  it('should display a syntax error message for 400 response', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 400
+    } as Response)
 
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
-      expect(screen.getByText('Error: there may be some syntax errors in the diagram.')).toBeInTheDocument()
-      expect(screen.getByTestId('spin')).toHaveAttribute('data-spinning', 'false')
+      expect(
+        screen.getByText(
+          'Diagram rendering failed (400): This is likely due to a syntax error in the diagram. Please check your code.'
+        )
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('should display a server error message for 503 response', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 503
+    } as Response)
+
+    render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Diagram rendering failed (503): The PlantUML server is temporarily unavailable. Please try again later.'
+        )
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('should display a generic error for other non-ok responses', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 418,
+      statusText: "I'm a teapot"
+    } as Response)
+
+    render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
+
+    await waitFor(() => {
+      expect(screen.getByText("Diagram rendering failed, server returned: 418 I'm a teapot")).toBeInTheDocument()
     })
   })
 
