@@ -1084,6 +1084,9 @@
       "failed": "Delete Failed",
       "success": "Delete Successful"
     },
+    "dialog": {
+      "failed": "Preview failed"
+    },
     "download": {
       "failed": "Download failed",
       "success": "Download successfully"
@@ -1580,6 +1583,7 @@
     "copy": {
       "image": "Copy as image"
     },
+    "dialog": "Open Dialog",
     "label": "Preview",
     "pan": "Pan",
     "pan_down": "Pan Down",

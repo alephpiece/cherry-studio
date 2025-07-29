@@ -101,6 +101,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ src, style, ...props }) => {
         {...props}
         preview={{
           mask: typeof props.preview === 'object' ? props.preview.mask : false,
+          ...(typeof props.preview === 'object' ? props.preview : {}),
           toolbarRender: (
             _,
             {

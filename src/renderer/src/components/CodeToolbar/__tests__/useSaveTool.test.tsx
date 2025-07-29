@@ -54,11 +54,15 @@ mocks.useToolManager.mockImplementation(() => ({
   removeTool: mockRemoveTool
 }))
 
-// Mock icons
-vi.mock('lucide-react', () => ({
-  Check: () => <div data-testid="check-icon" />,
-  SaveIcon: () => <div data-testid="save-icon" />
-}))
+// Mock icons using importOriginal to avoid missing exports
+vi.mock('lucide-react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('lucide-react')>()
+  return {
+    ...actual,
+    Check: () => <div data-testid="check-icon" />,
+    SaveIcon: () => <div data-testid="save-icon" />
+  }
+})
 
 describe('useSaveTool', () => {
   beforeEach(() => {

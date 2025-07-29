@@ -45,11 +45,15 @@ mocks.useToolManager.mockImplementation(() => ({
   removeTool: mockRemoveTool
 }))
 
-// Mock icons
-vi.mock('lucide-react', () => ({
-  ChevronsDownUp: () => <div data-testid="chevrons-down-up" />,
-  ChevronsUpDown: () => <div data-testid="chevrons-up-down" />
-}))
+// Mock icons using importOriginal to avoid missing exports
+vi.mock('lucide-react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('lucide-react')>()
+  return {
+    ...actual,
+    ChevronsDownUp: () => <div data-testid="chevrons-down-up" />,
+    ChevronsUpDown: () => <div data-testid="chevrons-up-down" />
+  }
+})
 
 describe('useExpandTool', () => {
   beforeEach(() => {

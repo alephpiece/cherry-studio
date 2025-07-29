@@ -50,7 +50,8 @@ describe('SvgPreview', () => {
       pan: { current: { x: 0, y: 0, scale: 1 } },
       zoom: vi.fn(),
       copy: vi.fn(),
-      download: vi.fn()
+      download: vi.fn(),
+      dialog: vi.fn()
     })
 
     // Mock Shadow DOM API

@@ -37,7 +37,7 @@ const MermaidPreview = ({
   const [isVisible, setIsVisible] = useState(true)
 
   // 使用通用图像工具
-  const { pan, zoom, copy, download } = useImageTools(mermaidRef, {
+  const { pan, zoom, copy, download, dialog } = useImageTools(mermaidRef, {
     imgSelector: 'svg',
     prefix: 'mermaid',
     enableDrag: true,
@@ -49,7 +49,8 @@ const MermaidPreview = ({
       pan,
       zoom,
       copy,
-      download
+      download,
+      dialog
     }
   })
 
@@ -159,7 +160,7 @@ const MermaidPreview = ({
       <PreviewContainer vertical>
         {(mermaidError || error) && <PreviewError>{mermaidError || error}</PreviewError>}
         <StyledMermaid ref={mermaidRef} className="mermaid special-preview" />
-        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
+        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} dialog={dialog} />}
       </PreviewContainer>
     </Spin>
   )

@@ -45,11 +45,15 @@ mocks.useToolManager.mockImplementation(() => ({
   removeTool: mockRemoveTool
 }))
 
-// Mock icons
-vi.mock('lucide-react', () => ({
-  Text: () => <div data-testid="text-icon" />,
-  WrapText: () => <div data-testid="wrap-text-icon" />
-}))
+// Mock icons using importOriginal to avoid missing exports
+vi.mock('lucide-react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('lucide-react')>()
+  return {
+    ...actual,
+    Text: () => <div data-testid="text-icon" />,
+    WrapText: () => <div data-testid="wrap-text-icon" />
+  }
+})
 
 describe('useWrapTool', () => {
   beforeEach(() => {

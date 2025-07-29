@@ -26,7 +26,7 @@ const SvgPreview = ({ children, enableToolbar = false, className, loading = fals
   const [isLoading, setIsLoading] = useState(false)
 
   // 使用通用图像工具
-  const { pan, zoom, copy, download } = useImageTools(svgContainerRef, {
+  const { pan, zoom, copy, download, dialog } = useImageTools(svgContainerRef, {
     imgSelector: 'svg',
     prefix: 'svg-image',
     enableDrag: true,
@@ -38,7 +38,8 @@ const SvgPreview = ({ children, enableToolbar = false, className, loading = fals
       pan,
       zoom,
       copy,
-      download
+      download,
+      dialog
     }
   })
 
@@ -132,7 +133,7 @@ const SvgPreview = ({ children, enableToolbar = false, className, loading = fals
       <PreviewContainer vertical>
         {error && <PreviewError>{error}</PreviewError>}
         <div ref={svgContainerRef} className={className ?? 'svg-preview special-preview'}></div>
-        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
+        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} dialog={dialog} />}
       </PreviewContainer>
     </Spin>
   )

@@ -1,4 +1,5 @@
 import { loggerService } from '@logger'
+import { ImagePreviewService } from '@renderer/services/ImagePreviewService'
 import { download as downloadFile } from '@renderer/utils/download'
 import { svgToPngBlob, svgToSvgBlob } from '@renderer/utils/image'
 import { RefObject, useCallback, useEffect, useRef } from 'react'
@@ -227,6 +228,19 @@ export const useImageTools = (
     [getImgElement, prefix, t]
   )
 
+  // 预览 dialog 处理函数
+  const dialog = useCallback(async () => {
+    try {
+      const imgElement = getImgElement()
+      if (!imgElement) return
+
+      await ImagePreviewService.show(imgElement, { format: 'png', scale: 3 })
+    } catch (error) {
+      logger.error('Dialog preview failed:', error as Error)
+      window.message.error(t('message.dialog.failed'))
+    }
+  }, [getImgElement, t])
+
   // 获取当前变换状态
   const getCurrentTransform = useCallback(() => {
     return {
@@ -241,6 +255,7 @@ export const useImageTools = (
     pan,
     copy,
     download,
+    dialog,
     getCurrentTransform
   }
 }

@@ -9,7 +9,10 @@ const mocks = vi.hoisted(() => ({
   },
   svgToPngBlob: vi.fn(),
   svgToSvgBlob: vi.fn(),
-  download: vi.fn()
+  download: vi.fn(),
+  ImagePreviewService: {
+    show: vi.fn()
+  }
 }))
 
 vi.mock('@renderer/utils/image', () => ({
@@ -25,6 +28,10 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: mocks.i18n.t
   })
+}))
+
+vi.mock('@renderer/services/ImagePreviewService', () => ({
+  ImagePreviewService: mocks.ImagePreviewService
 }))
 
 // Mock navigator.clipboard
@@ -357,6 +364,77 @@ describe('useImageTools', () => {
         await result.current.download('png')
       })
       expect(mockMessage.error).toHaveBeenCalledWith('message.download.failed')
+    })
+  })
+
+  describe('dialog function', () => {
+    it('should preview image successfully', async () => {
+      const mockContainer = createMockContainer()
+      const mockSvg = createMockSvgElement()
+      mockContainer.querySelector = vi.fn().mockReturnValue(mockSvg)
+
+      mocks.ImagePreviewService.show.mockResolvedValue(undefined)
+
+      const { result } = renderHook(() =>
+        useImageTools(
+          { current: mockContainer },
+          {
+            prefix: 'test',
+            imgSelector: 'svg'
+          }
+        )
+      )
+
+      await act(async () => {
+        await result.current.dialog()
+      })
+
+      expect(mocks.ImagePreviewService.show).toHaveBeenCalledWith(mockSvg, { format: 'png', scale: 3 })
+    })
+
+    it('should handle preview failure', async () => {
+      const mockContainer = createMockContainer()
+      const mockSvg = createMockSvgElement()
+      mockContainer.querySelector = vi.fn().mockReturnValue(mockSvg)
+
+      mocks.ImagePreviewService.show.mockRejectedValue(new Error('Preview failed'))
+
+      const { result } = renderHook(() =>
+        useImageTools(
+          { current: mockContainer },
+          {
+            prefix: 'test',
+            imgSelector: 'svg'
+          }
+        )
+      )
+
+      await act(async () => {
+        await result.current.dialog()
+      })
+
+      expect(mockMessage.error).toHaveBeenCalledWith('message.dialog.failed')
+    })
+
+    it('should do nothing when no element is found', async () => {
+      const mockContainer = createMockContainer()
+      mockContainer.querySelector = vi.fn().mockReturnValue(null)
+
+      const { result } = renderHook(() =>
+        useImageTools(
+          { current: mockContainer },
+          {
+            prefix: 'test',
+            imgSelector: 'svg'
+          }
+        )
+      )
+
+      await act(async () => {
+        await result.current.dialog()
+      })
+
+      expect(mocks.ImagePreviewService.show).not.toHaveBeenCalled()
     })
   })
 

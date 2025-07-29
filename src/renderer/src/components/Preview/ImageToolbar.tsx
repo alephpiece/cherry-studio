@@ -1,6 +1,6 @@
 import { classNames } from '@renderer/utils'
 import { Button, Tooltip } from 'antd'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RotateCcw, Scan, ZoomIn, ZoomOut } from 'lucide-react'
 import { memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -8,6 +8,7 @@ import styled from 'styled-components'
 interface ImageToolbarProps {
   pan: (dx: number, dy: number, absolute?: boolean) => void
   zoom: (delta: number, absolute?: boolean) => void
+  dialog: () => void
   className?: string
 }
 
@@ -25,7 +26,7 @@ const ImageToolButton: React.FC<ImageToolButtonProps> = memo(({ tooltip, icon, o
   )
 })
 
-const ImageToolbar = ({ pan, zoom, className }: ImageToolbarProps) => {
+const ImageToolbar = ({ pan, zoom, dialog, className }: ImageToolbarProps) => {
   const { t } = useTranslation()
 
   // 定义平移距离
@@ -49,7 +50,7 @@ const ImageToolbar = ({ pan, zoom, className }: ImageToolbarProps) => {
           icon={<ChevronUp size={'1rem'} />}
           onClick={() => pan(0, -panDistance)}
         />
-        <Spacer />
+        <ImageToolButton tooltip={t('preview.dialog')} icon={<Scan size={'1rem'} />} onClick={dialog} />
       </ActionButtonRow>
 
       {/* Left, Reset, Right */}

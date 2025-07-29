@@ -38,7 +38,7 @@ const GraphvizPreview = ({
   const [isLoading, setIsLoading] = useState(false)
 
   // 使用通用图像工具
-  const { pan, zoom, copy, download } = useImageTools(graphvizRef, {
+  const { pan, zoom, copy, download, dialog } = useImageTools(graphvizRef, {
     imgSelector: 'svg',
     prefix: 'graphviz',
     enableDrag: true,
@@ -97,7 +97,8 @@ const GraphvizPreview = ({
       pan,
       zoom,
       copy,
-      download
+      download,
+      dialog
     }
   })
 
@@ -106,7 +107,7 @@ const GraphvizPreview = ({
       <PreviewContainer vertical>
         {error && <PreviewError>{error}</PreviewError>}
         <StyledGraphviz ref={graphvizRef} className="graphviz special-preview" />
-        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} />}
+        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} dialog={dialog} />}
       </PreviewContainer>
     </Spin>
   )

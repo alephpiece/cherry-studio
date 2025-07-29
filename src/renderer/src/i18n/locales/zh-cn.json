@@ -1084,6 +1084,9 @@
       "failed": "删除失败",
       "success": "删除成功"
     },
+    "dialog": {
+      "failed": "预览失败"
+    },
     "download": {
       "failed": "下载失败",
       "success": "下载成功"
@@ -1580,6 +1583,7 @@
     "copy": {
       "image": "复制为图片"
     },
+    "dialog": "打开预览窗口",
     "label": "预览",
     "pan": "移动",
     "pan_down": "下移",
