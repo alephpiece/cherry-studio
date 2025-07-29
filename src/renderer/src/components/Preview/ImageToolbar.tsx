@@ -1,9 +1,10 @@
 import { classNames } from '@renderer/utils'
-import { Button, Tooltip } from 'antd'
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RotateCcw, Scan, ZoomIn, ZoomOut } from 'lucide-react'
 import { memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
+
+import ImageToolButton from './ImageToolButton'
 
 interface ImageToolbarProps {
   pan: (dx: number, dy: number, absolute?: boolean) => void
@@ -11,20 +12,6 @@ interface ImageToolbarProps {
   dialog: () => void
   className?: string
 }
-
-interface ImageToolButtonProps {
-  tooltip: string
-  icon: React.ReactNode
-  onClick: () => void
-}
-
-const ImageToolButton: React.FC<ImageToolButtonProps> = memo(({ tooltip, icon, onClick }) => {
-  return (
-    <Tooltip title={tooltip} mouseEnterDelay={0.5} mouseLeaveDelay={0}>
-      <Button shape="circle" icon={icon} onClick={onClick} role="button" aria-label={tooltip} />
-    </Tooltip>
-  )
-})
 
 const ImageToolbar = ({ pan, zoom, dialog, className }: ImageToolbarProps) => {
   const { t } = useTranslation()
