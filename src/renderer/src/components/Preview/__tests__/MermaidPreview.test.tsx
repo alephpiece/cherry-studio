@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 
@@ -6,8 +6,7 @@ import { MermaidPreview } from '..'
 
 const mocks = vi.hoisted(() => ({
   useMermaid: vi.fn(),
-  useImageTools: vi.fn(),
-  ImageToolbar: vi.fn(() => <div data-testid="image-toolbar">ImageToolbar</div>)
+  ImagePreviewLayout: vi.fn(({ children }) => <div data-testid="image-preview-layout">{children}</div>)
 }))
 
 // Mock hooks
@@ -15,12 +14,8 @@ vi.mock('@renderer/hooks/useMermaid', () => ({
   useMermaid: () => mocks.useMermaid()
 }))
 
-vi.mock('@renderer/components/ActionTools', () => ({
-  useImageTools: () => mocks.useImageTools()
-}))
-
-vi.mock('@renderer/components/Preview/ImageToolbar', () => ({
-  default: mocks.ImageToolbar
+vi.mock('@renderer/components/Preview/ImagePreviewLayout', () => ({
+  default: mocks.ImagePreviewLayout
 }))
 
 // Mock nanoid
@@ -29,31 +24,12 @@ vi.mock('@reduxjs/toolkit', () => ({
 }))
 
 // Mock lodash debounce
-vi.mock('lodash', async () => {
-  const actual = await import('lodash')
-  return {
-    ...actual,
-    debounce: vi.fn((fn) => {
-      const debounced = (...args: any[]) => fn(...args)
-      debounced.cancel = vi.fn()
-      return debounced
-    })
-  }
-})
-
-// Mock antd components
-vi.mock('antd', () => ({
-  Flex: ({ children, vertical, ...props }: any) => (
-    <div data-testid="flex" data-vertical={vertical} {...props}>
-      {children}
-    </div>
-  ),
-  Spin: ({ children, spinning, indicator }: any) => (
-    <div data-testid="spin" data-spinning={spinning}>
-      {spinning && indicator}
-      {children}
-    </div>
-  )
+vi.mock('lodash', () => ({
+  debounce: vi.fn((fn) => {
+    const debounced = (...args: any[]) => fn(...args)
+    debounced.cancel = vi.fn()
+    return debounced
+  })
 }))
 
 describe('MermaidPreview', () => {
@@ -70,8 +46,6 @@ describe('MermaidPreview', () => {
       isLoading: false,
       error: null
     })
-
-    mocks.useImageTools.mockReturnValue({})
 
     mockMermaid.parse.mockResolvedValue(true)
     mockMermaid.render.mockResolvedValue({
@@ -220,9 +194,6 @@ describe('MermaidPreview', () => {
 
       // Should not render when mermaid is loading
       expect(mockMermaid.render).not.toHaveBeenCalled()
-
-      // Should show loading state
-      expect(screen.getByTestId('spin')).toHaveAttribute('data-spinning', 'true')
     })
   })
 })

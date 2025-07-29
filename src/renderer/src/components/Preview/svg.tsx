@@ -1,11 +1,7 @@
-import { useImageTools } from '@renderer/components/ActionTools'
-import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
-import { Spin } from 'antd'
 import { debounce } from 'lodash'
-import { memo, startTransition, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import ImageToolbar from './ImageToolbar'
-import { PreviewContainer, PreviewError } from './styles'
+import ImagePreviewLayout from './ImagePreviewLayout'
 import { BasicPreviewHandles } from './types'
 import { renderSvgInShadowHost } from './utils'
 
@@ -24,24 +20,6 @@ const SvgPreview = ({ children, enableToolbar = false, className, ref }: SvgPrev
   const svgContainerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-
-  // 使用通用图像工具
-  const { pan, zoom, copy, download, dialog } = useImageTools(svgContainerRef, {
-    imgSelector: 'svg',
-    prefix: 'svg-image',
-    enableDrag: true,
-    enableWheelZoom: true
-  })
-
-  useImperativeHandle(ref, () => {
-    return {
-      pan,
-      zoom,
-      copy,
-      download,
-      dialog
-    }
-  })
 
   // 实际的渲染函数
   const renderSvg = useCallback(async (content: string) => {
@@ -83,13 +61,15 @@ const SvgPreview = ({ children, enableToolbar = false, className, ref }: SvgPrev
   }, [children, debouncedRender])
 
   return (
-    <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
-      <PreviewContainer vertical>
-        {error && <PreviewError>{error}</PreviewError>}
-        <div ref={svgContainerRef} className={className ?? 'svg-preview special-preview'}></div>
-        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} dialog={dialog} />}
-      </PreviewContainer>
-    </Spin>
+    <ImagePreviewLayout
+      loading={isLoading}
+      error={error}
+      enableToolbar={enableToolbar}
+      ref={ref}
+      imageRef={svgContainerRef}
+      source="svg">
+      <div ref={svgContainerRef} className={className ?? 'svg-preview special-preview'}></div>
+    </ImagePreviewLayout>
   )
 }
 

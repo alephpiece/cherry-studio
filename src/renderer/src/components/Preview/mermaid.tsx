@@ -1,23 +1,10 @@
 import { nanoid } from '@reduxjs/toolkit'
-import { useImageTools } from '@renderer/components/ActionTools'
-import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
 import { useMermaid } from '@renderer/hooks/useMermaid'
-import { Spin } from 'antd'
 import { debounce } from 'lodash'
-import React, {
-  memo,
-  startTransition,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState
-} from 'react'
+import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 
-import ImageToolbar from './ImageToolbar'
-import { PreviewContainer, PreviewError } from './styles'
+import ImagePreviewLayout from './ImagePreviewLayout'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
 
 /** 预览 Mermaid 图表
@@ -35,24 +22,6 @@ const MermaidPreview = ({
   const [error, setError] = useState<string | null>(null)
   const [isRendering, setIsRendering] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
-
-  // 使用通用图像工具
-  const { pan, zoom, copy, download, dialog } = useImageTools(mermaidRef, {
-    imgSelector: 'svg',
-    prefix: 'mermaid',
-    enableDrag: true,
-    enableWheelZoom: true
-  })
-
-  useImperativeHandle(ref, () => {
-    return {
-      pan,
-      zoom,
-      copy,
-      download,
-      dialog
-    }
-  })
 
   // 实际的渲染函数
   const renderMermaid = useCallback(
@@ -156,13 +125,15 @@ const MermaidPreview = ({
   const isLoading = isLoadingMermaid || isRendering
 
   return (
-    <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
-      <PreviewContainer vertical>
-        {(mermaidError || error) && <PreviewError>{mermaidError || error}</PreviewError>}
-        <StyledMermaid ref={mermaidRef} className="mermaid special-preview" />
-        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} dialog={dialog} />}
-      </PreviewContainer>
-    </Spin>
+    <ImagePreviewLayout
+      loading={isLoading}
+      error={mermaidError || error}
+      enableToolbar={enableToolbar}
+      ref={ref}
+      imageRef={mermaidRef}
+      source="mermaid">
+      <StyledMermaid ref={mermaidRef} className="mermaid special-preview" />
+    </ImagePreviewLayout>
   )
 }
 

@@ -1,40 +1,13 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`PlantUmlPreview > should match snapshot 1`] = `
-.c0 {
-  position: relative;
-  min-height: 8rem;
-}
-
-.c0 .preview-toolbar {
-  transition: opacity 0.3s ease-in-out;
-  transform: translateZ(0);
-  will-change: opacity;
-  opacity: 0;
-}
-
-.c0:hover .preview-toolbar {
-  opacity: 1;
-}
-
 <div>
   <div
-    data-spinning="false"
-    data-testid="spin"
+    data-testid="image-preview-layout"
   >
     <div
-      class="c0 ant-flex css-dev-only-do-not-override-1261szd ant-flex-align-stretch ant-flex-vertical"
-      role="alert"
-    >
-      <div
-        class="plantuml-preview special-preview"
-      />
-      <div
-        data-testid="image-toolbar"
-      >
-        ImageToolbar
-      </div>
-    </div>
+      class="plantuml-preview special-preview"
+    />
   </div>
 </div>
 `;

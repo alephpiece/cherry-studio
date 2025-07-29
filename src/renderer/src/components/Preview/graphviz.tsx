@@ -1,22 +1,9 @@
-import { useImageTools } from '@renderer/components/ActionTools'
-import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
 import { AsyncInitializer } from '@renderer/utils/asyncInitializer'
-import { Spin } from 'antd'
 import { debounce } from 'lodash'
-import React, {
-  memo,
-  startTransition,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState
-} from 'react'
+import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 
-import ImageToolbar from './ImageToolbar'
-import { PreviewContainer, PreviewError } from './styles'
+import ImagePreviewLayout from './ImagePreviewLayout'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
 
 // 管理 viz 实例
@@ -36,14 +23,6 @@ const GraphvizPreview = ({
   const graphvizRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-
-  // 使用通用图像工具
-  const { pan, zoom, copy, download, dialog } = useImageTools(graphvizRef, {
-    imgSelector: 'svg',
-    prefix: 'graphviz',
-    enableDrag: true,
-    enableWheelZoom: true
-  })
 
   // 实际的渲染函数
   const renderGraphviz = useCallback(async (content: string) => {
@@ -92,24 +71,16 @@ const GraphvizPreview = ({
     }
   }, [children, debouncedRender])
 
-  useImperativeHandle(ref, () => {
-    return {
-      pan,
-      zoom,
-      copy,
-      download,
-      dialog
-    }
-  })
-
   return (
-    <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
-      <PreviewContainer vertical>
-        {error && <PreviewError>{error}</PreviewError>}
-        <StyledGraphviz ref={graphvizRef} className="graphviz special-preview" />
-        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} dialog={dialog} />}
-      </PreviewContainer>
-    </Spin>
+    <ImagePreviewLayout
+      loading={isLoading}
+      error={error}
+      enableToolbar={enableToolbar}
+      ref={ref}
+      imageRef={graphvizRef}
+      source="graphviz">
+      <StyledGraphviz ref={graphvizRef} className="graphviz special-preview" />
+    </ImagePreviewLayout>
   )
 }
 

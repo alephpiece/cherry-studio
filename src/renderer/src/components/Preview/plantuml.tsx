@@ -1,22 +1,9 @@
 import { loggerService } from '@logger'
-import { useImageTools } from '@renderer/components/ActionTools'
-import { Spin } from 'antd'
 import { debounce } from 'lodash'
 import pako from 'pako'
-import React, {
-  memo,
-  startTransition,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState
-} from 'react'
+import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import SvgSpinners180Ring from '../Icons/SvgSpinners180Ring'
-import ImageToolbar from './ImageToolbar'
-import { PreviewContainer, PreviewError } from './styles'
+import ImagePreviewLayout from './ImagePreviewLayout'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
 import { renderSvgInShadowHost } from './utils'
 
@@ -101,21 +88,6 @@ const PlantUmlPreview = ({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { pan, zoom, copy, download, dialog } = useImageTools(svgContainerRef, {
-    imgSelector: 'svg',
-    prefix: 'plantuml-image',
-    enableDrag: true,
-    enableWheelZoom: true
-  })
-
-  useImperativeHandle(ref, () => ({
-    pan,
-    zoom,
-    copy,
-    download,
-    dialog
-  }))
-
   // 实际的渲染函数
   const renderPlantUml = useCallback(async (content: string) => {
     if (!content || !svgContainerRef.current) return
@@ -181,13 +153,15 @@ const PlantUmlPreview = ({
   }, [children, debouncedRender])
 
   return (
-    <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
-      <PreviewContainer vertical>
-        {error && <PreviewError>{error}</PreviewError>}
-        <div ref={svgContainerRef} className="plantuml-preview special-preview" />
-        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} dialog={dialog} />}
-      </PreviewContainer>
-    </Spin>
+    <ImagePreviewLayout
+      loading={isLoading}
+      error={error}
+      enableToolbar={enableToolbar}
+      ref={ref}
+      imageRef={svgContainerRef}
+      source="plantuml">
+      <div ref={svgContainerRef} className="plantuml-preview special-preview" />
+    </ImagePreviewLayout>
   )
 }
 

@@ -1,48 +1,27 @@
 import PlantUmlPreview from '@renderer/components/Preview/plantuml'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-  useImageTools: vi.fn(),
-  ImageToolbar: vi.fn(() => <div data-testid="image-toolbar">ImageToolbar</div>),
+  ImagePreviewLayout: vi.fn(({ children }) => <div data-testid="image-preview-layout">{children}</div>),
   renderSvgInShadowHost: vi.fn()
 }))
 
-vi.mock('antd', async (importOriginal) => {
-  const antd = await importOriginal<typeof import('antd')>()
-  return {
-    ...antd,
-    Spin: ({ children, spinning }) => (
-      <div data-testid="spin" data-spinning={spinning}>
-        {children}
-      </div>
-    )
-  }
-})
-
-vi.mock('@renderer/components/ActionTools', () => ({
-  useImageTools: mocks.useImageTools
-}))
-
-vi.mock('@renderer/components/Preview/ImageToolbar', () => ({
-  default: mocks.ImageToolbar
+vi.mock('@renderer/components/Preview/ImagePreviewLayout', () => ({
+  default: mocks.ImagePreviewLayout
 }))
 
 vi.mock('@renderer/components/Preview/utils', () => ({
   renderSvgInShadowHost: mocks.renderSvgInShadowHost
 }))
 
-vi.mock('lodash', async () => {
-  const actual = await import('lodash')
-  return {
-    ...actual,
-    debounce: vi.fn((fn) => {
-      const debounced = (...args: any[]) => fn(...args)
-      debounced.cancel = vi.fn()
-      return debounced
-    })
-  }
-})
+vi.mock('lodash', () => ({
+  debounce: vi.fn((fn) => {
+    const debounced = (...args: any[]) => fn(...args)
+    debounced.cancel = vi.fn()
+    return debounced
+  })
+}))
 
 describe('PlantUmlPreview', () => {
   const diagram = 'A -> B'
@@ -55,37 +34,16 @@ describe('PlantUmlPreview', () => {
       text: () => Promise.resolve(mockSvgContent)
     } as Response)
 
-    mocks.useImageTools.mockReturnValue({
-      pan: { current: { x: 0, y: 0, scale: 1 } },
-      zoom: vi.fn(),
-      copy: vi.fn(),
-      download: vi.fn(),
-      dialog: vi.fn()
-    })
+    vi.clearAllMocks()
   })
 
   afterEach(() => {
-    vi.clearAllMocks()
     vi.restoreAllMocks()
   })
 
   it('should match snapshot', async () => {
-    const { container, findByTestId } = render(<PlantUmlPreview enableToolbar>{diagram}</PlantUmlPreview>)
-
-    // Wait for the final state with the toolbar
-    await findByTestId('image-toolbar')
-
+    const { container } = render(<PlantUmlPreview enableToolbar>{diagram}</PlantUmlPreview>)
     expect(container).toMatchSnapshot()
-  })
-
-  it('should show loading indicator initially and call fetch', async () => {
-    render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
-
-    expect(screen.getByTestId('spin')).toHaveAttribute('data-spinning', 'true')
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalled()
-    })
   })
 
   it('should call renderSvgInShadowHost with fetched content on success', async () => {
@@ -94,15 +52,6 @@ describe('PlantUmlPreview', () => {
     await waitFor(() => {
       const previewElement = container.querySelector('.plantuml-preview')
       expect(mocks.renderSvgInShadowHost).toHaveBeenCalledWith(previewElement, mockSvgContent)
-      expect(screen.getByTestId('spin')).toHaveAttribute('data-spinning', 'false')
-    })
-  })
-
-  it('should render ImageToolbar when enabled', async () => {
-    render(<PlantUmlPreview enableToolbar>{diagram}</PlantUmlPreview>)
-
-    await waitFor(() => {
-      expect(screen.getByTestId('image-toolbar')).toBeInTheDocument()
     })
   })
 
@@ -112,10 +61,12 @@ describe('PlantUmlPreview', () => {
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Network Error: Unable to connect to PlantUML server. Please check your network connection.')
-      ).toBeInTheDocument()
-      expect(screen.queryByTestId('image-toolbar')).not.toBeInTheDocument()
+      // Check that ImagePreviewLayout was called with the error on the second call
+      const calls = mocks.ImagePreviewLayout.mock.calls
+      const lastCall = calls[calls.length - 1][0] // Get the props from the last call
+      expect(lastCall.error).toBe(
+        'Network Error: Unable to connect to PlantUML server. Please check your network connection.'
+      )
     })
   })
 
@@ -128,11 +79,12 @@ describe('PlantUmlPreview', () => {
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
-      expect(
-        screen.getByText(
-          'Diagram rendering failed (400): This is likely due to a syntax error in the diagram. Please check your code.'
-        )
-      ).toBeInTheDocument()
+      // Check that ImagePreviewLayout was called with the error on the second call
+      const calls = mocks.ImagePreviewLayout.mock.calls
+      const lastCall = calls[calls.length - 1][0] // Get the props from the last call
+      expect(lastCall.error).toBe(
+        'Diagram rendering failed (400): This is likely due to a syntax error in the diagram. Please check your code.'
+      )
     })
   })
 
@@ -145,11 +97,12 @@ describe('PlantUmlPreview', () => {
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
-      expect(
-        screen.getByText(
-          'Diagram rendering failed (503): The PlantUML server is temporarily unavailable. Please try again later.'
-        )
-      ).toBeInTheDocument()
+      // Check that ImagePreviewLayout was called with the error on the second call
+      const calls = mocks.ImagePreviewLayout.mock.calls
+      const lastCall = calls[calls.length - 1][0] // Get the props from the last call
+      expect(lastCall.error).toBe(
+        'Diagram rendering failed (503): The PlantUML server is temporarily unavailable. Please try again later.'
+      )
     })
   })
 
@@ -163,7 +116,10 @@ describe('PlantUmlPreview', () => {
     render(<PlantUmlPreview>{diagram}</PlantUmlPreview>)
 
     await waitFor(() => {
-      expect(screen.getByText("Diagram rendering failed, server returned: 418 I'm a teapot")).toBeInTheDocument()
+      // Check that ImagePreviewLayout was called with the error on the second call
+      const calls = mocks.ImagePreviewLayout.mock.calls
+      const lastCall = calls[calls.length - 1][0] // Get the props from the last call
+      expect(lastCall.error).toBe("Diagram rendering failed, server returned: 418 I'm a teapot")
     })
   })
 
