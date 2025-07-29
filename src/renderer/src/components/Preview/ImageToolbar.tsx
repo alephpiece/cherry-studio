@@ -98,6 +98,10 @@ const ToolbarWrapper = styled.div`
   right: 1em;
   bottom: 1em;
   z-index: 5;
+
+  .ant-btn {
+    line-height: 0;
+  }
 `
 
 const ActionButtonRow = styled.div`
