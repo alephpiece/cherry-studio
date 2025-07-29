@@ -7,6 +7,7 @@ import { memo, startTransition, useCallback, useEffect, useImperativeHandle, use
 import ImageToolbar from './ImageToolbar'
 import { PreviewContainer, PreviewError } from './styles'
 import { BasicPreviewHandles } from './types'
+import { renderSvgInShadowHost } from './utils'
 
 interface SvgPreviewProps {
   children: string
@@ -48,54 +49,8 @@ const SvgPreview = ({ children, enableToolbar = false, className, ref }: SvgPrev
 
     try {
       setIsLoading(true)
-
-      const container = svgContainerRef.current
-      const shadowRoot = container.shadowRoot || container.attachShadow({ mode: 'open' })
-
-      // 添加基础样式
-      const style = document.createElement('style')
-      style.textContent = `
-        :host {
-          padding: 1em;
-          background-color: white;
-          overflow: auto;
-          border: 0.5px solid var(--color-code-background);
-          border-top-left-radius: 0;
-          border-top-right-radius: 0;
-          display: block;
-          position: relative;
-          width: 100%;
-          height: 100%;
-        }
-        svg {
-          max-width: 100%;
-          height: auto;
-        }
-      `
-
-      // 清空并重新添加内容
-      shadowRoot.innerHTML = ''
-      shadowRoot.appendChild(style)
-
-      // 解析和附加 SVG
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(content, 'image/svg+xml')
-
-      // 检查解析错误
-      const parserError = doc.querySelector('parsererror')
-      if (parserError) {
-        throw new Error(`SVG parsing error: ${parserError.textContent}`)
-      }
-
-      const svgElement = doc.documentElement
-      if (svgElement.nodeName === 'svg') {
-        shadowRoot.appendChild(svgElement.cloneNode(true))
-      } else {
-        throw new Error('Invalid SVG content')
-      }
-
-      // 渲染成功，清除错误记录
-      setError(null)
+      renderSvgInShadowHost(svgContainerRef.current, content)
+      setError(null) // 渲染成功，清除错误记录
     } catch (error) {
       setError((error as Error).message || 'Unknown error')
     } finally {

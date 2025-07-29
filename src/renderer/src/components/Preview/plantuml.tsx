@@ -1,13 +1,24 @@
 import { loggerService } from '@logger'
+import { useImageTools } from '@renderer/components/ActionTools'
 import { Spin } from 'antd'
 import { debounce } from 'lodash'
 import pako from 'pako'
-import React, { memo, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
+import React, {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
 
 import SvgSpinners180Ring from '../Icons/SvgSpinners180Ring'
+import ImageToolbar from './ImageToolbar'
 import { PreviewContainer, PreviewError } from './styles'
-import SvgPreview from './svg'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
+import { renderSvgInShadowHost } from './utils'
 
 const logger = loggerService.withContext('PlantUmlPreview')
 
@@ -86,28 +97,41 @@ const PlantUmlPreview = ({
   enableToolbar = false,
   ref
 }: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
-  const [svgContent, setSvgContent] = useState<string | null>(null)
+  const svgContainerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const { pan, zoom, copy, download, dialog } = useImageTools(svgContainerRef, {
+    imgSelector: 'svg',
+    prefix: 'plantuml-image',
+    enableDrag: true,
+    enableWheelZoom: true
+  })
+
+  useImperativeHandle(ref, () => ({
+    pan,
+    zoom,
+    copy,
+    download,
+    dialog
+  }))
+
   // 实际的渲染函数
   const renderPlantUml = useCallback(async (content: string) => {
-    if (!content) return
+    if (!content || !svgContainerRef.current) return
 
     try {
       setIsLoading(true)
-      setSvgContent(null)
-      setError(null)
 
       const url = getPlantUMLImageUrl('svg', content, false)
-
       const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Error: there may be some syntax errors in the diagram.')
       }
 
       const text = await response.text()
-      setSvgContent(text)
+      renderSvgInShadowHost(svgContainerRef.current, text)
+      setError(null) // 渲染成功，清除错误记录
     } catch (error) {
       logger.warn('Failed to fetch PlantUML diagram', error as Error)
       setError((error as Error).message)
@@ -121,7 +145,7 @@ const PlantUmlPreview = ({
     () =>
       debounce((content: string) => {
         startTransition(() => renderPlantUml(content))
-      }, 150),
+      }, 300),
     [renderPlantUml]
   )
 
@@ -133,7 +157,6 @@ const PlantUmlPreview = ({
     } else {
       debouncedRender.cancel()
       setIsLoading(false)
-      setSvgContent(null)
     }
 
     return () => {
@@ -141,20 +164,14 @@ const PlantUmlPreview = ({
     }
   }, [children, debouncedRender])
 
-  if (isLoading || error) {
-    return (
-      <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
-        <PreviewContainer vertical className="special-preview">
-          {error ? <PreviewError>{error}</PreviewError> : ' '}
-        </PreviewContainer>
-      </Spin>
-    )
-  }
-
   return (
-    <SvgPreview ref={ref} enableToolbar={enableToolbar} className="plantuml-preview special-preview">
-      {svgContent || ''}
-    </SvgPreview>
+    <Spin spinning={isLoading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
+      <PreviewContainer vertical>
+        {error && <PreviewError>{error}</PreviewError>}
+        <div ref={svgContainerRef} className="plantuml-preview special-preview" />
+        {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} dialog={dialog} />}
+      </PreviewContainer>
+    </Spin>
   )
 }
 
