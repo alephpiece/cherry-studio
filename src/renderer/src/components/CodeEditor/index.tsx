@@ -1,4 +1,3 @@
-import { ActionTool } from '@renderer/components/ActionTools'
 import { MAX_COLLAPSED_CODE_HEIGHT } from '@renderer/config/constant'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useSettings } from '@renderer/hooks/useSettings'
@@ -25,7 +24,6 @@ interface CodeEditorProps {
   onChange?: (newContent: string) => void
   onBlur?: (newContent: string) => void
   onHeightChange?: (scrollHeight: number) => void
-  setTools?: (value: React.SetStateAction<ActionTool[]>) => void
   height?: string
   minHeight?: string
   maxHeight?: string

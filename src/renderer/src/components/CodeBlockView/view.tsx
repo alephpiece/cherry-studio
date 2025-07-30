@@ -227,7 +227,6 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
           onSave={onSave}
           onHeightChange={handleHeightChange}
           options={{ stream: true }}
-          setTools={setTools}
           expanded={shouldExpand}
           unwrapped={shouldUnwrap}
         />
