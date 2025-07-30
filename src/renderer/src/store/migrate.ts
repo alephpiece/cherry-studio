@@ -1937,6 +1937,15 @@ const migrateConfig = {
   },
   '125': (state: RootState) => {
     try {
+      // Initialize API server configuration if not present
+      if (!state.settings.apiServer) {
+        state.settings.apiServer = {
+          host: 'localhost',
+          port: 23333,
+          apiKey: `cs-sk-${uuid()}`
+        }
+      }
+
       // Migrate codePreview to codeViewer
       // @ts-ignore eslint-disable-next-line
       if (state.settings.codePreview) {
