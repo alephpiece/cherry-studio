@@ -1,15 +1,15 @@
 import { nanoid } from '@reduxjs/toolkit'
 import { useMermaid } from '@renderer/hooks/useMermaid'
-import { debounce } from 'lodash'
-import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 
+import { useDebouncedRender } from './hooks/useDebouncedRender'
 import ImagePreviewLayout from './ImagePreviewLayout'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
 
 /** 预览 Mermaid 图表
- * 通过防抖渲染提供比较统一的体验，减少闪烁。
- * FIXME: 等将来容易判断代码块结束位置时再重构。
+ * 使用 usePreviewRenderer hook 重构，同时保留必要的可见性检测逻辑
+ * FIXME: 等将来 mermaid-js 修复可见性问题后可以进一步简化
  */
 const MermaidPreview = ({
   children,
@@ -17,48 +17,38 @@ const MermaidPreview = ({
   ref
 }: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
   const { mermaid, isLoading: isLoadingMermaid, error: mermaidError } = useMermaid()
-  const mermaidRef = useRef<HTMLDivElement>(null)
   const diagramId = useRef<string>(`mermaid-${nanoid(6)}`).current
-  const [error, setError] = useState<string | null>(null)
-  const [isRendering, setIsRendering] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
 
-  // 实际的渲染函数
+  // 定义渲染函数
   const renderMermaid = useCallback(
-    async (content: string) => {
-      if (!content || !mermaidRef.current) return
+    async (content: string, container: HTMLDivElement) => {
+      // 验证语法，提前抛出异常
+      await mermaid.parse(content)
 
-      try {
-        setIsRendering(true)
+      const { svg } = await mermaid.render(diagramId, content, container)
 
-        // 验证语法，提前抛出异常
-        await mermaid.parse(content)
-
-        const { svg } = await mermaid.render(diagramId, content, mermaidRef.current)
-
-        // 避免不可见时产生 undefined 和 NaN
-        const fixedSvg = svg.replace(/translate\(undefined,\s*NaN\)/g, 'translate(0, 0)')
-        mermaidRef.current.innerHTML = fixedSvg
-
-        // 渲染成功，清除错误记录
-        setError(null)
-      } catch (error) {
-        setError((error as Error).message)
-      } finally {
-        setIsRendering(false)
-      }
+      // 避免不可见时产生 undefined 和 NaN
+      const fixedSvg = svg.replace(/translate\(undefined,\s*NaN\)/g, 'translate(0, 0)')
+      container.innerHTML = fixedSvg
     },
     [diagramId, mermaid]
   )
 
-  // debounce 渲染
-  const debouncedRender = useMemo(
-    () =>
-      debounce((content: string) => {
-        startTransition(() => renderMermaid(content))
-      }, 300),
-    [renderMermaid]
-  )
+  // 可见性检测函数
+  const shouldRender = useCallback(() => {
+    return !isLoadingMermaid && isVisible
+  }, [isLoadingMermaid, isVisible])
+
+  // 使用预览渲染器 hook
+  const {
+    containerRef,
+    error: renderError,
+    isLoading: isRendering
+  } = useDebouncedRender(children, renderMermaid, {
+    debounceDelay: 300,
+    shouldRender
+  })
 
   /**
    * 监听可见性变化，用于触发重新渲染。
@@ -67,10 +57,10 @@ const MermaidPreview = ({
    * FIXME: 将来 mermaid-js 修复此问题后可以移除这里的相关逻辑。
    */
   useEffect(() => {
-    if (!mermaidRef.current) return
+    if (!containerRef.current) return
 
     const checkVisibility = () => {
-      const element = mermaidRef.current
+      const element = containerRef.current
       if (!element) return
 
       const currentlyVisible = element.offsetParent !== null
@@ -84,7 +74,7 @@ const MermaidPreview = ({
       checkVisibility()
     })
 
-    let targetElement = mermaidRef.current.parentElement
+    let targetElement = containerRef.current.parentElement
     while (targetElement) {
       observer.observe(targetElement, {
         attributes: true,
@@ -101,38 +91,21 @@ const MermaidPreview = ({
     return () => {
       observer.disconnect()
     }
-  }, [])
+  }, [containerRef])
 
-  // 触发渲染
-  useEffect(() => {
-    if (isLoadingMermaid) return
-
-    if (mermaidRef.current?.offsetParent === null) return
-
-    if (children) {
-      setIsRendering(true)
-      debouncedRender(children)
-    } else {
-      debouncedRender.cancel()
-      setIsRendering(false)
-    }
-
-    return () => {
-      debouncedRender.cancel()
-    }
-  }, [children, isLoadingMermaid, debouncedRender, isVisible])
-
+  // 合并加载状态和错误状态
   const isLoading = isLoadingMermaid || isRendering
+  const error = mermaidError || renderError
 
   return (
     <ImagePreviewLayout
       loading={isLoading}
-      error={mermaidError || error}
+      error={error}
       enableToolbar={enableToolbar}
       ref={ref}
-      imageRef={mermaidRef}
+      imageRef={containerRef}
       source="mermaid">
-      <StyledMermaid ref={mermaidRef} className="mermaid special-preview" />
+      <StyledMermaid ref={containerRef} className="mermaid special-preview" />
     </ImagePreviewLayout>
   )
 }

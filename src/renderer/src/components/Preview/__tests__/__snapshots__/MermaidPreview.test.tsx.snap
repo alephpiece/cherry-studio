@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`MermaidPreview > rendering > should match snapshot 1`] = `
+exports[`MermaidPreview > basic rendering > should match snapshot 1`] = `
 .c0 {
   overflow: auto;
   position: relative;
@@ -10,11 +10,21 @@ exports[`MermaidPreview > rendering > should match snapshot 1`] = `
 
 <div>
   <div
+    data-source="mermaid"
     data-testid="image-preview-layout"
   >
     <div
-      class="c0 mermaid special-preview"
-    />
+      data-testid="toolbar"
+    >
+      Toolbar
+    </div>
+    <div
+      data-testid="preview-content"
+    >
+      <div
+        class="c0 mermaid special-preview"
+      />
+    </div>
   </div>
 </div>
 `;

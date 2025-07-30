@@ -85,6 +85,8 @@ graph TD
 - **SvgPreview**: SVG 图像预览
 - **GraphvizPreview**: Graphviz 图表预览
 
+所有特殊视图组件共享通用架构，以确保一致的用户体验和功能。有关这些组件及其实现的详细信息，请参阅 [图像预览组件文档](./ImagePreview-zh.md)。
+
 #### StatusBar 状态栏
 
 - 显示 Python 代码执行结果

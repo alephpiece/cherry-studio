@@ -1,75 +1,149 @@
-import SvgPreview from '@renderer/components/Preview/svg'
-import { render, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import SvgPreview from '@renderer/components/Preview/SvgPreview'
+import { render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Use vi.hoisted to manage mocks
 const mocks = vi.hoisted(() => ({
-  ImagePreviewLayout: vi.fn(({ children }) => <div data-testid="image-preview-layout">{children}</div>),
-  renderSvgInShadowHost: vi.fn()
-}))
-
-vi.mock('lodash', () => ({
-  debounce: vi.fn((fn) => {
-    const debounced = (...args: any[]) => fn(...args)
-    debounced.cancel = vi.fn()
-    return debounced
-  })
+  ImagePreviewLayout: vi.fn(({ children, loading, error, enableToolbar, source }) => (
+    <div data-testid="image-preview-layout" data-source={source}>
+      {enableToolbar && <div data-testid="toolbar">Toolbar</div>}
+      {loading && <div data-testid="loading">Loading...</div>}
+      {error && <div data-testid="error">{error}</div>}
+      <div data-testid="preview-content">{children}</div>
+    </div>
+  )),
+  renderSvgInShadowHost: vi.fn(),
+  useDebouncedRender: vi.fn()
 }))
 
 vi.mock('@renderer/components/Preview/ImagePreviewLayout', () => ({
   default: mocks.ImagePreviewLayout
 }))
 
-// Mock the utils module
-vi.mock('@renderer/components/Preview/utils', async () => {
-  const actual = await import('@renderer/components/Preview/utils')
-  return {
-    ...actual,
-    renderSvgInShadowHost: mocks.renderSvgInShadowHost
-  }
-})
+vi.mock('@renderer/components/Preview/utils', () => ({
+  renderSvgInShadowHost: mocks.renderSvgInShadowHost
+}))
+
+vi.mock('@renderer/components/Preview/hooks/useDebouncedRender', () => ({
+  useDebouncedRender: mocks.useDebouncedRender
+}))
 
 describe('SvgPreview', () => {
   const svgContent = '<svg><rect width="100" height="100" /></svg>'
+  const mockContainerRef = { current: document.createElement('div') }
+
+  // Helper function to create mock useDebouncedRender return value
+  const createMockHookReturn = (overrides = {}) => ({
+    containerRef: mockContainerRef,
+    error: null,
+    isLoading: false,
+    triggerRender: vi.fn(),
+    cancelRender: vi.fn(),
+    clearError: vi.fn(),
+    setLoading: vi.fn(),
+    ...overrides
+  })
 
   beforeEach(() => {
+    // Setup default successful state
+    mocks.useDebouncedRender.mockReturnValue(createMockHookReturn())
+  })
+
+  afterEach(() => {
     vi.clearAllMocks()
   })
 
-  describe('rendering', () => {
+  describe('basic rendering', () => {
     it('should match snapshot', () => {
       const { container } = render(<SvgPreview enableToolbar>{svgContent}</SvgPreview>)
       expect(container).toMatchSnapshot()
     })
 
-    it('should call renderSvgInShadowHost with the correct content', async () => {
-      const { container } = render(<SvgPreview>{svgContent}</SvgPreview>)
-      const previewElement = container.querySelector('.svg-preview')
+    it('should handle valid svg content', () => {
+      render(<SvgPreview>{svgContent}</SvgPreview>)
 
-      expect(previewElement).not.toBeNull()
+      // Component should render without throwing
+      expect(screen.getByTestId('image-preview-layout')).toBeInTheDocument()
+      expect(mocks.useDebouncedRender).toHaveBeenCalledWith(
+        svgContent,
+        expect.any(Function),
+        expect.objectContaining({ debounceDelay: 300 })
+      )
+    })
 
-      await waitFor(() => {
-        expect(mocks.renderSvgInShadowHost).toHaveBeenCalledWith(previewElement, svgContent)
-      })
+    it('should handle empty content', () => {
+      render(<SvgPreview>{''}</SvgPreview>)
+
+      // Component should render without throwing
+      expect(screen.getByTestId('image-preview-layout')).toBeInTheDocument()
+      expect(mocks.useDebouncedRender).toHaveBeenCalledWith('', expect.any(Function), expect.any(Object))
     })
   })
 
-  describe('debounced rendering', () => {
-    it('should not call renderer again when content becomes empty', async () => {
-      const { rerender } = render(<SvgPreview>{svgContent}</SvgPreview>)
+  describe('loading state', () => {
+    it('should show loading indicator when rendering', () => {
+      mocks.useDebouncedRender.mockReturnValue(createMockHookReturn({ isLoading: true }))
 
-      await waitFor(() => {
-        expect(mocks.renderSvgInShadowHost).toHaveBeenCalledTimes(1)
-      })
+      render(<SvgPreview>{svgContent}</SvgPreview>)
 
-      // Change to empty content
-      rerender(<SvgPreview>{''}</SvgPreview>)
+      expect(screen.getByTestId('loading')).toBeInTheDocument()
+    })
 
-      // Wait a bit to ensure debounced function does not run
-      await new Promise((r) => setTimeout(r, 350))
+    it('should not show loading indicator when not rendering', () => {
+      mocks.useDebouncedRender.mockReturnValue(createMockHookReturn({ isLoading: false }))
 
-      // The mock should still only have been called once from the initial render
-      expect(mocks.renderSvgInShadowHost).toHaveBeenCalledTimes(1)
+      render(<SvgPreview>{svgContent}</SvgPreview>)
+
+      expect(screen.queryByTestId('loading')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('error handling', () => {
+    it('should show error message when rendering fails', () => {
+      const errorMessage = 'Invalid SVG content'
+      mocks.useDebouncedRender.mockReturnValue(createMockHookReturn({ error: errorMessage }))
+
+      render(<SvgPreview>{svgContent}</SvgPreview>)
+
+      const errorElement = screen.getByTestId('error')
+      expect(errorElement).toBeInTheDocument()
+      expect(errorElement).toHaveTextContent(errorMessage)
+    })
+
+    it('should not show error when rendering is successful', () => {
+      mocks.useDebouncedRender.mockReturnValue(createMockHookReturn({ error: null }))
+
+      render(<SvgPreview>{svgContent}</SvgPreview>)
+
+      expect(screen.queryByTestId('error')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('custom styling', () => {
+    it('should use custom className when provided', () => {
+      render(<SvgPreview className="custom-svg-class">{svgContent}</SvgPreview>)
+
+      const content = screen.getByTestId('preview-content')
+      const svgContainer = content.querySelector('.custom-svg-class')
+      expect(svgContainer).toBeInTheDocument()
+    })
+
+    it('should use default className when not provided', () => {
+      render(<SvgPreview>{svgContent}</SvgPreview>)
+
+      const content = screen.getByTestId('preview-content')
+      const svgContainer = content.querySelector('.svg-preview.special-preview')
+      expect(svgContainer).toBeInTheDocument()
+    })
+  })
+
+  describe('ref forwarding', () => {
+    it('should forward ref to ImagePreviewLayout', () => {
+      const ref = { current: null }
+      render(<SvgPreview ref={ref}>{svgContent}</SvgPreview>)
+
+      // The ref should be passed to ImagePreviewLayout
+      expect(mocks.ImagePreviewLayout).toHaveBeenCalledWith(expect.objectContaining({ ref }), undefined)
     })
   })
 })

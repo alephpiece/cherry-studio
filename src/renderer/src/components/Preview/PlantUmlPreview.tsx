@@ -1,8 +1,8 @@
 import { loggerService } from '@logger'
-import { debounce } from 'lodash'
 import pako from 'pako'
-import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { memo, useCallback, useEffect } from 'react'
 
+import { useDebouncedRender } from './hooks/useDebouncedRender'
 import ImagePreviewLayout from './ImagePreviewLayout'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
 import { renderSvgInShadowHost } from './utils'
@@ -84,73 +84,41 @@ const PlantUmlPreview = ({
   enableToolbar = false,
   ref
 }: BasicPreviewProps & { ref?: React.RefObject<BasicPreviewHandles | null> }) => {
-  const svgContainerRef = useRef<HTMLDivElement>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  // 实际的渲染函数
-  const renderPlantUml = useCallback(async (content: string) => {
-    if (!content || !svgContainerRef.current) return
-
-    try {
-      setIsLoading(true)
-
-      const url = getPlantUMLImageUrl('svg', content, false)
-      const response = await fetch(url)
-      if (!response.ok) {
-        if (response.status === 400) {
-          throw new Error(
-            'Diagram rendering failed (400): This is likely due to a syntax error in the diagram. Please check your code.'
-          )
-        }
-        if (response.status >= 500) {
-          throw new Error(
-            `Diagram rendering failed (${response.status}): The PlantUML server is temporarily unavailable. Please try again later.`
-          )
-        }
-        throw new Error(`Diagram rendering failed, server returned: ${response.status} ${response.statusText}`)
+  // 定义渲染函数
+  const renderPlantUml = useCallback(async (content: string, container: HTMLDivElement) => {
+    const url = getPlantUMLImageUrl('svg', content, false)
+    const response = await fetch(url)
+    if (!response.ok) {
+      if (response.status === 400) {
+        throw new Error(
+          'Diagram rendering failed (400): This is likely due to a syntax error in the diagram. Please check your code.'
+        )
       }
-
-      const text = await response.text()
-      renderSvgInShadowHost(svgContainerRef.current, text)
-      setError(null) // 渲染成功，清除错误记录
-    } catch (error) {
-      let errorMessage = (error as Error).message
-      // Handle network errors specifically
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        errorMessage = 'Network Error: Unable to connect to PlantUML server. Please check your network connection.'
+      if (response.status >= 500) {
+        throw new Error(
+          `Diagram rendering failed (${response.status}): The PlantUML server is temporarily unavailable. Please try again later.`
+        )
       }
-
-      logger.warn(errorMessage)
-      setError(errorMessage)
-    } finally {
-      setIsLoading(false)
+      throw new Error(`Diagram rendering failed, server returned: ${response.status} ${response.statusText}`)
     }
+
+    const text = await response.text()
+    renderSvgInShadowHost(container, text)
   }, [])
 
-  // debounce 渲染
-  const debouncedRender = useMemo(
-    () =>
-      debounce((content: string) => {
-        startTransition(() => renderPlantUml(content))
-      }, 300),
-    [renderPlantUml]
-  )
+  // 使用预览渲染器 hook
+  const { containerRef, error, isLoading } = useDebouncedRender(children, renderPlantUml, {
+    debounceDelay: 300
+  })
 
-  // 触发渲染
+  // 记录网络错误
   useEffect(() => {
-    if (children) {
-      setIsLoading(true)
-      debouncedRender(children)
-    } else {
-      debouncedRender.cancel()
-      setIsLoading(false)
+    if (error && error.includes('Failed to fetch')) {
+      logger.warn('Network Error: Unable to connect to PlantUML server. Please check your network connection.')
+    } else if (error) {
+      logger.warn(error)
     }
-
-    return () => {
-      debouncedRender.cancel()
-    }
-  }, [children, debouncedRender])
+  }, [error])
 
   return (
     <ImagePreviewLayout
@@ -158,9 +126,9 @@ const PlantUmlPreview = ({
       error={error}
       enableToolbar={enableToolbar}
       ref={ref}
-      imageRef={svgContainerRef}
+      imageRef={containerRef}
       source="plantuml">
-      <div ref={svgContainerRef} className="plantuml-preview special-preview" />
+      <div ref={containerRef} className="plantuml-preview special-preview" />
     </ImagePreviewLayout>
   )
 }

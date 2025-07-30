@@ -85,6 +85,8 @@ Main responsibilities:
 - **SvgPreview**: SVG image preview
 - **GraphvizPreview**: Graphviz diagram preview
 
+All special view components share a common architecture for consistent user experience and functionality. For detailed information about these components and their implementation, see [Image Preview Components Documentation](./ImagePreview-en.md).
+
 #### StatusBar
 
 - Displays Python code execution results
