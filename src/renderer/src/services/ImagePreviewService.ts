@@ -28,7 +28,7 @@ export class ImagePreviewService {
       const imageUrl = await this.processInput(input, options)
 
       // 动态导入 ImageViewer 避免循环依赖
-      const { default: ImageViewer } = await import('../components/ImageViewer')
+      const { default: ImageViewer } = await import('@renderer/components/ImageViewer')
 
       const handleVisibilityChange = (visible: boolean) => {
         if (!visible) {

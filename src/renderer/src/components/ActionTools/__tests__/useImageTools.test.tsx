@@ -131,7 +131,8 @@ describe('useImageTools', () => {
       style: {
         transform: '',
         transformOrigin: ''
-      }
+      },
+      cloneNode: vi.fn().mockReturnThis()
     } as unknown as SVGElement
 
     return mockSvg
@@ -389,7 +390,7 @@ describe('useImageTools', () => {
         await result.current.dialog()
       })
 
-      expect(mocks.ImagePreviewService.show).toHaveBeenCalledWith(mockSvg, { format: 'png', scale: 3 })
+      expect(mocks.ImagePreviewService.show).toHaveBeenCalledWith(mockSvg, { format: 'svg' })
     })
 
     it('should handle preview failure', async () => {

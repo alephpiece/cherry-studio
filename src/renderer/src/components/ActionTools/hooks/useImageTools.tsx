@@ -38,6 +38,17 @@ export const useImageTools = (
     return containerRef.current.querySelector(imgSelector) as SVGElement | null
   }, [containerRef, imgSelector])
 
+  // 获取原始图像元素（移除所有变换）
+  const getCleanImgElement = useCallback((): SVGElement | null => {
+    const imgElement = getImgElement()
+    if (!imgElement) return null
+
+    const clonedElement = imgElement.cloneNode(true) as SVGElement
+    clonedElement.style.transform = ''
+    clonedElement.style.transformOrigin = ''
+    return clonedElement
+  }, [getImgElement])
+
   // 查询当前位置
   const getCurrentPosition = useCallback(() => {
     const imgElement = getImgElement()
@@ -148,7 +159,7 @@ export const useImageTools = (
   }, [containerRef, getImgElement, applyTransform, getCurrentPosition, enableDrag])
 
   /**
-   * 缩放处理函数
+   * 缩放
    * @param delta 缩放增量（正值放大，负值缩小）
    */
   const zoom = useCallback(
@@ -185,10 +196,14 @@ export const useImageTools = (
     return () => container.removeEventListener('wheel', handleWheel)
   }, [containerRef, zoom, enableWheelZoom])
 
-  // 复制图像处理函数
+  /**
+   * 复制图像
+   *
+   * 目前使用了清理变换后的图像，因此不适用于画布
+   */
   const copy = useCallback(async () => {
     try {
-      const imgElement = getImgElement()
+      const imgElement = getCleanImgElement()
       if (!imgElement) return
 
       const blob = await svgToPngBlob(imgElement)
@@ -198,13 +213,17 @@ export const useImageTools = (
       logger.error('Copy failed:', error as Error)
       window.message.error(t('message.copy.failed'))
     }
-  }, [getImgElement, t])
+  }, [getCleanImgElement, t])
 
-  // 下载处理函数
+  /**
+   * 下载图像
+   *
+   * 目前使用了清理变换后的图像，因此不适用于画布
+   */
   const download = useCallback(
     async (format: 'svg' | 'png') => {
       try {
-        const imgElement = getImgElement()
+        const imgElement = getCleanImgElement()
         if (!imgElement) return
 
         const timestamp = Date.now()
@@ -225,21 +244,25 @@ export const useImageTools = (
         window.message.error(t('message.download.failed'))
       }
     },
-    [getImgElement, prefix, t]
+    [getCleanImgElement, prefix, t]
   )
 
-  // 预览 dialog 处理函数
+  /**
+   * 预览 dialog
+   *
+   * 目前使用了清理变换后的图像，因此不适用于画布
+   */
   const dialog = useCallback(async () => {
     try {
-      const imgElement = getImgElement()
+      const imgElement = getCleanImgElement()
       if (!imgElement) return
 
-      await ImagePreviewService.show(imgElement, { format: 'png', scale: 3 })
+      await ImagePreviewService.show(imgElement, { format: 'svg' })
     } catch (error) {
       logger.error('Dialog preview failed:', error as Error)
       window.message.error(t('message.dialog.failed'))
     }
-  }, [getImgElement, t])
+  }, [getCleanImgElement, t])
 
   // 获取当前变换状态
   const getCurrentTransform = useCallback(() => {
