@@ -1946,19 +1946,6 @@ const migrateConfig = {
           apiKey: `cs-sk-${uuid()}`
         }
       }
-
-      // Migrate codePreview to codeViewer
-      // @ts-ignore eslint-disable-next-line
-      if (state.settings.codePreview) {
-        // @ts-ignore eslint-disable-next-line
-        state.settings.codeViewer = state.settings.codePreview
-      } else {
-        state.settings.codeViewer = {
-          themeLight: 'auto',
-          themeDark: 'auto'
-        }
-      }
-
       return state
     } catch (error) {
       logger.error('migrate 125 error', error as Error)
@@ -1984,6 +1971,24 @@ const migrateConfig = {
       return state
     } catch (error) {
       logger.error('migrate 126 error', error as Error)
+      return state
+    }
+  },
+  '127': (state: RootState) => {
+    try {
+      // @ts-ignore eslint-disable-next-line
+      if (state.settings.codePreview) {
+        // @ts-ignore eslint-disable-next-line
+        state.settings.codeViewer = state.settings.codePreview
+      } else {
+        state.settings.codeViewer = {
+          themeLight: 'auto',
+          themeDark: 'auto'
+        }
+      }
+      return state
+    } catch (error) {
+      logger.error('migrate 127 error', error as Error)
       return state
     }
   }
