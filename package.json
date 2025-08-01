@@ -1,6 +1,6 @@
 {
   "name": "CherryStudio",
-  "version": "1.5.4-rc.1",
+  "version": "1.5.4-rc.2",
   "private": true,
   "description": "A powerful AI assistant for producer.",
   "main": "./out/main/index.js",
@@ -139,8 +139,6 @@
     "@testing-library/user-event": "^14.6.1",
     "@tryfabric/martian": "^1.2.4",
     "@types/cli-progress": "^3",
-    "@types/content-type": "^1.1.9",
-    "@types/cors": "^2.8.19",
     "@types/diff": "^7",
     "@types/fs-extra": "^11",
     "@types/lodash": "^4.17.5",
