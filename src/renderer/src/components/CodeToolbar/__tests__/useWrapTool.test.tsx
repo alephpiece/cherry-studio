@@ -17,25 +17,16 @@ const mocks = vi.hoisted(() => ({
   }
 }))
 
-vi.mock('react-i18next', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-i18next')>()
-  return {
-    ...actual,
-    useTranslation: () => ({
-      t: mocks.i18n.t
-    })
-  }
-})
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: mocks.i18n.t
+  })
+}))
 
-// Mock TOOL_SPECS and useToolManager
-vi.mock('@renderer/components/ActionTools', async () => {
-  const actual = await vi.importActual('@renderer/components/ActionTools')
-  return {
-    ...actual,
-    TOOL_SPECS: mocks.TOOL_SPECS,
-    useToolManager: mocks.useToolManager
-  }
-})
+vi.mock('@renderer/components/ActionTools', () => ({
+  TOOL_SPECS: mocks.TOOL_SPECS,
+  useToolManager: mocks.useToolManager
+}))
 
 // Mock useToolManager
 const mockRegisterTool = vi.fn()
@@ -45,15 +36,10 @@ mocks.useToolManager.mockImplementation(() => ({
   removeTool: mockRemoveTool
 }))
 
-// Mock icons using importOriginal to avoid missing exports
-vi.mock('lucide-react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('lucide-react')>()
-  return {
-    ...actual,
-    Text: () => <div data-testid="text-icon" />,
-    WrapText: () => <div data-testid="wrap-text-icon" />
-  }
-})
+vi.mock('lucide-react', () => ({
+  Text: () => <div data-testid="text-icon" />,
+  WrapText: () => <div data-testid="wrap-text-icon" />
+}))
 
 describe('useWrapTool', () => {
   beforeEach(() => {
@@ -91,7 +77,7 @@ describe('useWrapTool', () => {
         id: 'wrap',
         type: 'quick',
         order: 13,
-        tooltip: 'code_block.wrap.on',
+        tooltip: 'code_block.wrap.off',
         onClick: expect.any(Function),
         visible: expect.any(Function)
       })
@@ -155,7 +141,7 @@ describe('useWrapTool', () => {
 
       expect(mockRegisterTool).toHaveBeenCalledTimes(1)
       const firstCall = mockRegisterTool.mock.calls[0][0]
-      expect(firstCall.tooltip).toBe('code_block.wrap.on')
+      expect(firstCall.tooltip).toBe('code_block.wrap.off')
 
       // Change unwrapped to true and rerender
       const newProps = { ...props, unwrapped: true }
@@ -163,7 +149,7 @@ describe('useWrapTool', () => {
 
       expect(mockRegisterTool).toHaveBeenCalledTimes(2)
       const secondCall = mockRegisterTool.mock.calls[1][0]
-      expect(secondCall.tooltip).toBe('code_block.wrap.off')
+      expect(secondCall.tooltip).toBe('code_block.wrap.on')
     })
 
     it('should register tool when enabled changes from false to true', () => {

@@ -23,24 +23,16 @@ const mocks = vi.hoisted(() => ({
   }
 }))
 
-vi.mock('react-i18next', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-i18next')>()
-  return {
-    ...actual,
-    useTranslation: () => ({
-      t: mocks.i18n.t
-    })
-  }
-})
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: mocks.i18n.t
+  })
+}))
 
-vi.mock('@renderer/components/ActionTools', async () => {
-  const actual = await vi.importActual('@renderer/components/ActionTools')
-  return {
-    ...actual,
-    TOOL_SPECS: mocks.TOOL_SPECS,
-    useToolManager: mocks.useToolManager
-  }
-})
+vi.mock('@renderer/components/ActionTools', () => ({
+  TOOL_SPECS: mocks.TOOL_SPECS,
+  useToolManager: mocks.useToolManager
+}))
 
 const mockRegisterTool = vi.fn()
 const mockRemoveTool = vi.fn()

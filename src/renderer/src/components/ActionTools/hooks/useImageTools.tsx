@@ -1,4 +1,5 @@
 import { loggerService } from '@logger'
+import { useTheme } from '@renderer/context/ThemeProvider'
 import { ImagePreviewService } from '@renderer/services/ImagePreviewService'
 import { download as downloadFile } from '@renderer/utils/download'
 import { svgToPngBlob, svgToSvgBlob } from '@renderer/utils/image'
@@ -23,6 +24,7 @@ export const useImageTools = (
   const transformRef = useRef({ scale: 1, x: 0, y: 0 }) // 管理变换状态
   const { imgSelector, prefix, enableDrag, enableWheelZoom } = options
   const { t } = useTranslation()
+  const { theme } = useTheme()
 
   // 创建选择器函数
   const getImgElement = useCallback(() => {
@@ -272,6 +274,12 @@ export const useImageTools = (
       y: transformRef.current.y
     }
   }, [transformRef])
+
+  // 切换主题时重置变换
+  useEffect(() => {
+    pan(0, 0, true)
+    zoom(1, true)
+  }, [pan, zoom, theme])
 
   return {
     zoom,

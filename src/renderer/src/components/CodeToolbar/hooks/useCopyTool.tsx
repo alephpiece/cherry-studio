@@ -1,7 +1,7 @@
 import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
 import { BasicPreviewHandles } from '@renderer/components/Preview'
 import { useTemporaryValue } from '@renderer/hooks/useTemporaryValue'
-import { Check, Copy, FileCode, FileImage } from 'lucide-react'
+import { Check, Copy, Image } from 'lucide-react'
 import { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -14,6 +14,7 @@ interface UseCopyToolProps {
 
 export const useCopyTool = ({ showPreviewTools, previewRef, onCopySource, setTools }: UseCopyToolProps) => {
   const [copied, setCopiedTemporarily] = useTemporaryValue(false)
+  const [copiedImage, setCopiedImageTemporarily] = useTemporaryValue(false)
   const { t } = useTranslation()
   const { registerTool, removeTool } = useToolManager(setTools)
 
@@ -30,12 +31,12 @@ export const useCopyTool = ({ showPreviewTools, previewRef, onCopySource, setToo
   const handleCopyImage = useCallback(() => {
     try {
       previewRef.current?.copy()
-      setCopiedTemporarily(true)
+      setCopiedImageTemporarily(true)
     } catch (error) {
-      setCopiedTemporarily(false)
+      setCopiedImageTemporarily(false)
       throw error
     }
-  }, [previewRef, setCopiedTemporarily])
+  }, [previewRef, setCopiedImageTemporarily])
 
   useEffect(() => {
     const includePreviewTools = showPreviewTools && previewRef.current !== null
@@ -47,41 +48,38 @@ export const useCopyTool = ({ showPreviewTools, previewRef, onCopySource, setToo
       ) : (
         <Copy className="tool-icon" />
       ),
-      tooltip: includePreviewTools ? undefined : t('code_block.copy.source')
+      tooltip: t('code_block.copy.source'),
+      onClick: handleCopySource
     }
+
+    const copyImageTool = {
+      ...TOOL_SPECS['copy-image'],
+      icon: copiedImage ? (
+        <Check className="tool-icon" color="var(--color-status-success)" />
+      ) : (
+        <Image className="tool-icon" />
+      ),
+      tooltip: t('preview.copy.image'),
+      onClick: handleCopyImage
+    }
+
+    registerTool(baseTool)
 
     if (includePreviewTools) {
-      registerTool({
-        ...baseTool,
-        children: [
-          {
-            ...TOOL_SPECS.copy,
-            icon: <FileCode size={'1rem'} />,
-            tooltip: t('code_block.copy.source'),
-            onClick: handleCopySource
-          },
-          {
-            ...TOOL_SPECS['copy-image'],
-            icon: <FileImage size={'1rem'} />,
-            tooltip: t('preview.copy.image'),
-            onClick: handleCopyImage
-          }
-        ]
-      })
-    } else {
-      registerTool({
-        ...baseTool,
-        onClick: handleCopySource
-      })
+      registerTool(copyImageTool)
     }
 
-    return () => removeTool(TOOL_SPECS.copy.id)
+    return () => {
+      removeTool(TOOL_SPECS.copy.id)
+      removeTool(TOOL_SPECS['copy-image'].id)
+    }
   }, [
     onCopySource,
     registerTool,
     removeTool,
     t,
     copied,
+    copiedImage,
     handleCopySource,
     handleCopyImage,
     showPreviewTools,

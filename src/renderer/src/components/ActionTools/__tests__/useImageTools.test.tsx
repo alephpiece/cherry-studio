@@ -34,6 +34,12 @@ vi.mock('@renderer/services/ImagePreviewService', () => ({
   ImagePreviewService: mocks.ImagePreviewService
 }))
 
+vi.mock('@renderer/context/ThemeProvider', () => ({
+  useTheme: () => ({
+    theme: 'light'
+  })
+}))
+
 // Mock navigator.clipboard
 const mockWrite = vi.fn()
 

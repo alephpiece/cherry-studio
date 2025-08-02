@@ -16,6 +16,7 @@ interface CodeViewerProps {
   expanded?: boolean
   unwrapped?: boolean
   onHeightChange?: (scrollHeight: number) => void
+  className?: string
 }
 
 /**
@@ -24,7 +25,7 @@ interface CodeViewerProps {
  * - 使用虚拟滚动和按需高亮，改善页面内有大量长代码块时的响应
  * - 并发安全
  */
-const CodeViewer = ({ children, language, expanded, unwrapped, onHeightChange }: CodeViewerProps) => {
+const CodeViewer = ({ children, language, expanded, unwrapped, onHeightChange, className }: CodeViewerProps) => {
   const { codeShowLineNumbers, fontSize } = useSettings()
   const { getShikiPreProperties, isShikiThemeDark } = useCodeStyle()
   const shikiThemeRef = useRef<HTMLDivElement>(null)
@@ -46,7 +47,7 @@ const CodeViewer = ({ children, language, expanded, unwrapped, onHeightChange }:
       if (!mounted) return
       const shikiTheme = shikiThemeRef.current
       if (shikiTheme) {
-        shikiTheme.className = `${properties.class || 'shiki'}`
+        shikiTheme.className = `${properties.class || 'shiki'} code-viewer ${className ?? ''}`
         // 滚动条适应 shiki 主题变化而非应用主题
         shikiTheme.classList.add(isShikiThemeDark ? 'shiki-dark' : 'shiki-light')
 
@@ -59,7 +60,7 @@ const CodeViewer = ({ children, language, expanded, unwrapped, onHeightChange }:
     return () => {
       mounted = false
     }
-  }, [language, getShikiPreProperties, isShikiThemeDark])
+  }, [language, getShikiPreProperties, isShikiThemeDark, className])
 
   // Virtualizer 配置
   const getScrollElement = useCallback(() => scrollerRef.current, [])

@@ -7,18 +7,17 @@ import { useTranslation } from 'react-i18next'
 interface UseSplitViewToolProps {
   enabled: boolean
   viewMode: ViewMode
-  onViewModeChange: (mode: ViewMode) => void
+  onToggleSplitView: () => void
   setTools: React.Dispatch<React.SetStateAction<ActionTool[]>>
 }
 
-export const useSplitViewTool = ({ enabled, viewMode, onViewModeChange, setTools }: UseSplitViewToolProps) => {
+export const useSplitViewTool = ({ enabled, viewMode, onToggleSplitView, setTools }: UseSplitViewToolProps) => {
   const { t } = useTranslation()
   const { registerTool, removeTool } = useToolManager(setTools)
 
   const handleToggleSplitView = useCallback(() => {
-    const newMode = viewMode === 'split' ? 'special' : 'split'
-    onViewModeChange?.(newMode)
-  }, [viewMode, onViewModeChange])
+    onToggleSplitView?.()
+  }, [onToggleSplitView])
 
   useEffect(() => {
     if (!enabled) return

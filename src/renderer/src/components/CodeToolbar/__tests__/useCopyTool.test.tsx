@@ -24,29 +24,22 @@ const mocks = vi.hoisted(() => ({
   }
 }))
 
-vi.mock('react-i18next', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-i18next')>()
-  return {
-    ...actual,
-    useTranslation: () => ({
-      t: mocks.i18n.t
-    })
-  }
-})
+vi.mock('lucide-react', () => ({
+  Check: () => <div data-testid="check-icon" />,
+  Copy: () => <div data-testid="copy-icon" />,
+  Image: () => <div data-testid="image-icon" />
+}))
 
-// Mock TOOL_SPECS
-vi.mock('@renderer/components/ActionTools', async () => {
-  const actual = await vi.importActual('@renderer/components/ActionTools')
-  return {
-    ...actual,
-    TOOL_SPECS: mocks.TOOL_SPECS,
-    useToolManager: mocks.useToolManager
-  }
-})
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: mocks.i18n.t
+  })
+}))
 
-// Mock useTemporaryValue
-const mockSetTemporaryValue = vi.fn()
-mocks.useTemporaryValue.mockImplementation(() => [false, mockSetTemporaryValue])
+vi.mock('@renderer/components/ActionTools', () => ({
+  TOOL_SPECS: mocks.TOOL_SPECS,
+  useToolManager: mocks.useToolManager
+}))
 
 vi.mock('@renderer/hooks/useTemporaryValue', () => ({
   useTemporaryValue: mocks.useTemporaryValue
@@ -60,26 +53,28 @@ mocks.useToolManager.mockImplementation(() => ({
   removeTool: mockRemoveTool
 }))
 
+// Mock useTemporaryValue setters
+const mockSetCopiedTemporarily = vi.fn()
+const mockSetCopiedImageTemporarily = vi.fn()
+
 describe('useCopyTool', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // We only need to reset to default values here
-    mocks.useTemporaryValue.mockReturnValue([false, mockSetTemporaryValue])
+    // Reset mocks for each test to ensure isolation
+    mocks.useTemporaryValue
+      .mockImplementationOnce(() => [false, mockSetCopiedTemporarily])
+      .mockImplementationOnce(() => [false, mockSetCopiedImageTemporarily])
   })
 
   // Helper function to create mock props
-  const createMockProps = (overrides: Partial<Parameters<typeof useCopyTool>[0]> = {}) => {
-    const defaultProps = {
-      showPreviewTools: false,
-      previewRef: { current: null },
-      onCopySource: vi.fn(),
-      setTools: vi.fn()
-    }
+  const createMockProps = (overrides: Partial<Parameters<typeof useCopyTool>[0]> = {}) => ({
+    showPreviewTools: false,
+    previewRef: { current: null },
+    onCopySource: vi.fn(),
+    setTools: vi.fn(),
+    ...overrides
+  })
 
-    return { ...defaultProps, ...overrides }
-  }
-
-  // Helper function to create mock preview handles
   const createMockPreviewHandles = (): BasicPreviewHandles => ({
     pan: vi.fn(),
     zoom: vi.fn(),
@@ -87,287 +82,80 @@ describe('useCopyTool', () => {
     download: vi.fn()
   })
 
-  // Helper function for tool registration assertions
-  const expectToolRegistration = (times: number, toolConfig?: object) => {
-    expect(mockRegisterTool).toHaveBeenCalledTimes(times)
-    if (times > 0 && toolConfig) {
-      expect(mockRegisterTool).toHaveBeenCalledWith(expect.objectContaining(toolConfig))
-    }
-  }
-
-  const expectNoChildren = () => {
-    const registeredTool = mockRegisterTool.mock.calls[0][0]
-    expect(registeredTool).not.toHaveProperty('children')
-  }
-
   describe('tool registration', () => {
-    it('should register single copy tool when showPreviewTools is false', () => {
+    it('should register only the copy-source tool when showPreviewTools is false', () => {
       const props = createMockProps({ showPreviewTools: false })
       renderHook(() => useCopyTool(props))
 
       expect(mocks.useToolManager).toHaveBeenCalledWith(props.setTools)
-      expectToolRegistration(1, {
-        id: 'copy',
-        type: 'core',
-        order: 11,
-        tooltip: 'code_block.copy.source',
-        onClick: expect.any(Function),
-        icon: expect.any(Object)
-      })
-      expectNoChildren()
+      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
+      expect(mockRegisterTool).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'copy',
+          tooltip: 'code_block.copy.source'
+        })
+      )
     })
 
-    it('should register single copy tool when showPreviewTools is true but previewRef.current is null', () => {
+    it('should register only the copy-source tool when previewRef is null', () => {
       const props = createMockProps({ showPreviewTools: true, previewRef: { current: null } })
       renderHook(() => useCopyTool(props))
 
-      expectToolRegistration(1, {
-        id: 'copy',
-        type: 'core',
-        order: 11,
-        tooltip: 'code_block.copy.source',
-        onClick: expect.any(Function),
-        icon: expect.any(Object)
-      })
-      expectNoChildren()
+      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
+      expect(mockRegisterTool).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'copy'
+        })
+      )
     })
 
-    it('should register copy tool with children when showPreviewTools is true and previewRef.current is not null', () => {
-      const mockPreviewHandles = createMockPreviewHandles()
+    it('should register both copy-source and copy-image tools when preview is available', () => {
       const props = createMockProps({
         showPreviewTools: true,
-        previewRef: { current: mockPreviewHandles }
-      })
-
-      renderHook(() => useCopyTool(props))
-
-      expectToolRegistration(1, {
-        id: 'copy',
-        type: 'core',
-        order: 11,
-        tooltip: undefined,
-        icon: expect.any(Object),
-        children: expect.arrayContaining([
-          expect.objectContaining({
-            id: 'copy',
-            type: 'core',
-            order: 11,
-            tooltip: 'code_block.copy.source',
-            onClick: expect.any(Function),
-            icon: expect.any(Object)
-          }),
-          expect.objectContaining({
-            id: 'copy-image',
-            type: 'quick',
-            order: 30,
-            tooltip: 'preview.copy.image',
-            onClick: expect.any(Function),
-            icon: expect.any(Object)
-          })
-        ])
-      })
-    })
-  })
-
-  describe('copy functionality', () => {
-    it('should execute copy source behavior when tool is activated', () => {
-      const mockOnCopySource = vi.fn()
-      const props = createMockProps({ onCopySource: mockOnCopySource })
-      renderHook(() => useCopyTool(props))
-
-      // Get the onClick handler from the registered tool
-      const registeredTool = mockRegisterTool.mock.calls[0][0]
-      act(() => {
-        registeredTool.onClick()
-      })
-
-      expect(mockOnCopySource).toHaveBeenCalledTimes(1)
-      expect(mockSetTemporaryValue).toHaveBeenCalledWith(true)
-    })
-
-    it('should execute copy image behavior when image copy tool is activated', () => {
-      const mockPreviewHandles = createMockPreviewHandles()
-      const props = createMockProps({
-        showPreviewTools: true,
-        previewRef: { current: mockPreviewHandles }
-      })
-
-      renderHook(() => useCopyTool(props))
-
-      // Get the copy-image child tool
-      const registeredTool = mockRegisterTool.mock.calls[0][0]
-      const copyImageTool = registeredTool.children?.find((child: any) => child.tooltip === 'preview.copy.image')
-
-      expect(copyImageTool).toBeDefined()
-
-      act(() => {
-        copyImageTool.onClick()
-      })
-
-      expect(mockPreviewHandles.copy).toHaveBeenCalledTimes(1)
-      expect(mockSetTemporaryValue).toHaveBeenCalledWith(true)
-    })
-
-    it('should execute copy source behavior from child tool', () => {
-      const mockOnCopySource = vi.fn()
-      const props = createMockProps({
-        showPreviewTools: true,
-        onCopySource: mockOnCopySource,
         previewRef: { current: createMockPreviewHandles() }
       })
 
       renderHook(() => useCopyTool(props))
 
-      // Get the copy source child tool
-      const registeredTool = mockRegisterTool.mock.calls[0][0]
-      const copySourceTool = registeredTool.children?.find((child: any) => child.tooltip === 'code_block.copy.source')
+      expect(mockRegisterTool).toHaveBeenCalledTimes(2)
 
-      expect(copySourceTool).toBeDefined()
+      // Check first tool: copy source
+      expect(mockRegisterTool).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'copy',
+          tooltip: 'code_block.copy.source',
+          onClick: expect.any(Function)
+        })
+      )
 
+      // Check second tool: copy image
+      expect(mockRegisterTool).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'copy-image',
+          tooltip: 'preview.copy.image',
+          onClick: expect.any(Function)
+        })
+      )
+    })
+  })
+
+  describe('copy functionality', () => {
+    it('should execute copy source behavior when copy-source tool is clicked', () => {
+      const mockOnCopySource = vi.fn()
+      const props = createMockProps({ onCopySource: mockOnCopySource })
+      renderHook(() => useCopyTool(props))
+
+      const copySourceTool = mockRegisterTool.mock.calls[0][0]
       act(() => {
         copySourceTool.onClick()
       })
 
       expect(mockOnCopySource).toHaveBeenCalledTimes(1)
-      expect(mockSetTemporaryValue).toHaveBeenCalledWith(true)
-    })
-  })
-
-  describe('state management', () => {
-    it('should re-register tool when copy state changes', () => {
-      const props = createMockProps()
-
-      // Initially not copied
-      mocks.useTemporaryValue.mockImplementation(() => [false, mockSetTemporaryValue])
-      const { rerender } = renderHook(() => useCopyTool(props))
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
-
-      // Change to copied state and rerender
-      mocks.useTemporaryValue.mockImplementation(() => [true, mockSetTemporaryValue])
-      rerender()
-
-      // Should register tool again with updated state
-      expect(mockRegisterTool).toHaveBeenCalledTimes(2)
+      expect(mockSetCopiedTemporarily).toHaveBeenCalledWith(true)
     })
 
-    it('should reflect copy state in tool icon', () => {
-      const props = createMockProps()
-
-      // Test not copied state
-      mocks.useTemporaryValue.mockReturnValue([false, mockSetTemporaryValue])
-      const { rerender } = renderHook(() => useCopyTool(props))
-
-      const notCopiedTool = mockRegisterTool.mock.calls[0][0]
-
-      // Test copied state
-      mocks.useTemporaryValue.mockReturnValue([true, mockSetTemporaryValue])
-      rerender()
-
-      const copiedTool = mockRegisterTool.mock.calls[1][0]
-
-      // Verify different icons are used (without testing implementation details)
-      expect(notCopiedTool.icon).not.toEqual(copiedTool.icon)
-      // Both should have same basic properties
-      expect(notCopiedTool.id).toBe(copiedTool.id)
-      expect(notCopiedTool.type).toBe(copiedTool.type)
-      expect(notCopiedTool.order).toBe(copiedTool.order)
-    })
-
-    it('should maintain state consistency across re-renders', () => {
-      const props = createMockProps()
-
-      // Start with copied state
-      mocks.useTemporaryValue.mockReturnValue([true, mockSetTemporaryValue])
-      const { rerender } = renderHook(() => useCopyTool(props))
-
-      const firstCallIndex = mockRegisterTool.mock.calls.length - 1
-      const firstCopiedTool = mockRegisterTool.mock.calls[firstCallIndex][0]
-
-      // Rerender with same state
-      rerender()
-
-      const lastCallIndex = mockRegisterTool.mock.calls.length - 1
-      const lastTool = mockRegisterTool.mock.calls[lastCallIndex][0]
-
-      // Should have consistent properties for same state
-      expect(firstCopiedTool.id).toBe(lastTool.id)
-      expect(firstCopiedTool.type).toBe(lastTool.type)
-      expect(firstCopiedTool.order).toBe(lastTool.order)
-      expect(firstCopiedTool.tooltip).toBe(lastTool.tooltip)
-      // Icons should have same type (both showing copied state)
-      expect(firstCopiedTool.icon.type).toBe(lastTool.icon.type)
-    })
-  })
-
-  describe('cleanup', () => {
-    it('should remove tool on unmount', () => {
-      const props = createMockProps()
-      const { unmount } = renderHook(() => useCopyTool(props))
-
-      unmount()
-
-      expect(mockRemoveTool).toHaveBeenCalledWith('copy')
-    })
-  })
-
-  describe('edge cases', () => {
-    it('should handle missing setTools gracefully', () => {
-      const props = createMockProps({ setTools: undefined })
-
-      expect(() => {
-        renderHook(() => useCopyTool(props))
-      }).not.toThrow()
-
-      // Should still call useToolManager (but won't actually register)
-      expect(mocks.useToolManager).toHaveBeenCalledWith(undefined)
-    })
-
-    it('should handle missing previewRef.current gracefully', () => {
-      const props = createMockProps({
-        showPreviewTools: true,
-        previewRef: { current: null }
-      })
-
-      expect(() => {
-        renderHook(() => useCopyTool(props))
-      }).not.toThrow()
-
-      // Should register single tool without children
-      expectToolRegistration(1)
-      const registeredTool = mockRegisterTool.mock.calls[0][0]
-      expect(registeredTool).not.toHaveProperty('children')
-    })
-
-    it('should handle copy source operation failures gracefully', () => {
-      const mockOnCopySource = vi.fn().mockImplementation(() => {
-        throw new Error('Copy failed')
-      })
-
-      const props = createMockProps({ onCopySource: mockOnCopySource })
-      renderHook(() => useCopyTool(props))
-
-      const registeredTool = mockRegisterTool.mock.calls[0][0]
-
-      // Errors should be propagated up
-      expect(() => {
-        act(() => {
-          registeredTool.onClick()
-        })
-      }).toThrow('Copy failed')
-
-      // Callback should still be called
-      expect(mockOnCopySource).toHaveBeenCalledTimes(1)
-      // State should be reset to false on error (improved behavior)
-      expect(mockSetTemporaryValue).toHaveBeenCalledWith(false)
-    })
-
-    it('should handle copy image operation failures gracefully', () => {
+    it('should execute copy image behavior when copy-image tool is clicked', () => {
       const mockPreviewHandles = createMockPreviewHandles()
-      mockPreviewHandles.copy = vi.fn().mockImplementation(() => {
-        throw new Error('Image copy failed')
-      })
-
       const props = createMockProps({
         showPreviewTools: true,
         previewRef: { current: mockPreviewHandles }
@@ -375,22 +163,86 @@ describe('useCopyTool', () => {
 
       renderHook(() => useCopyTool(props))
 
-      const registeredTool = mockRegisterTool.mock.calls[0][0]
-      const copyImageTool = registeredTool.children?.find((child: any) => child.tooltip === 'preview.copy.image')
+      // The copy-image tool is the second one registered
+      const copyImageTool = mockRegisterTool.mock.calls[1][0]
+      act(() => {
+        copyImageTool.onClick()
+      })
 
-      expect(copyImageTool).toBeDefined()
+      expect(mockPreviewHandles.copy).toHaveBeenCalledTimes(1)
+      expect(mockSetCopiedImageTemporarily).toHaveBeenCalledWith(true)
+    })
+  })
 
-      // Errors should be propagated up
+  describe('cleanup', () => {
+    it('should remove both tools on unmount when both are registered', () => {
+      const props = createMockProps({
+        showPreviewTools: true,
+        previewRef: { current: createMockPreviewHandles() }
+      })
+      const { unmount } = renderHook(() => useCopyTool(props))
+
+      unmount()
+
+      expect(mockRemoveTool).toHaveBeenCalledTimes(2)
+      expect(mockRemoveTool).toHaveBeenCalledWith('copy')
+      expect(mockRemoveTool).toHaveBeenCalledWith('copy-image')
+    })
+
+    it('should attempt to remove both tools on unmount even if only one is registered', () => {
+      const props = createMockProps({ showPreviewTools: false })
+      const { unmount } = renderHook(() => useCopyTool(props))
+
+      unmount()
+
+      // The cleanup function is static and always tries to remove both
+      expect(mockRemoveTool).toHaveBeenCalledTimes(2)
+      expect(mockRemoveTool).toHaveBeenCalledWith('copy')
+      expect(mockRemoveTool).toHaveBeenCalledWith('copy-image')
+    })
+  })
+
+  describe('edge cases', () => {
+    it('should handle copy source failure gracefully', () => {
+      const mockOnCopySource = vi.fn().mockImplementation(() => {
+        throw new Error('Copy failed')
+      })
+      const props = createMockProps({ onCopySource: mockOnCopySource })
+      renderHook(() => useCopyTool(props))
+
+      const copySourceTool = mockRegisterTool.mock.calls[0][0]
+
+      expect(() => {
+        act(() => {
+          copySourceTool.onClick()
+        })
+      }).toThrow('Copy failed')
+
+      expect(mockOnCopySource).toHaveBeenCalledTimes(1)
+      expect(mockSetCopiedTemporarily).toHaveBeenCalledWith(false)
+    })
+
+    it('should handle copy image failure gracefully', () => {
+      const mockPreviewHandles = createMockPreviewHandles()
+      mockPreviewHandles.copy = vi.fn().mockImplementation(() => {
+        throw new Error('Image copy failed')
+      })
+      const props = createMockProps({
+        showPreviewTools: true,
+        previewRef: { current: mockPreviewHandles }
+      })
+      renderHook(() => useCopyTool(props))
+
+      const copyImageTool = mockRegisterTool.mock.calls[1][0]
+
       expect(() => {
         act(() => {
           copyImageTool.onClick()
         })
       }).toThrow('Image copy failed')
 
-      // Callback should still be called
       expect(mockPreviewHandles.copy).toHaveBeenCalledTimes(1)
-      // State should be reset to false on error (improved behavior)
-      expect(mockSetTemporaryValue).toHaveBeenCalledWith(false)
+      expect(mockSetCopiedImageTemporarily).toHaveBeenCalledWith(false)
     })
   })
 })

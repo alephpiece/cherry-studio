@@ -23,8 +23,8 @@ export const useWrapTool = ({ enabled, unwrapped, wrappable, toggle, setTools }:
     if (enabled) {
       registerTool({
         ...TOOL_SPECS.wrap,
-        icon: unwrapped ? <UnWrapIcon className="tool-icon" /> : <WrapIcon className="tool-icon" />,
-        tooltip: unwrapped ? t('code_block.wrap.off') : t('code_block.wrap.on'),
+        icon: unwrapped ? <WrapIcon className="tool-icon" /> : <UnWrapIcon className="tool-icon" />,
+        tooltip: unwrapped ? t('code_block.wrap.on') : t('code_block.wrap.off'),
         visible: () => wrappable ?? false,
         onClick: handleToggle
       })

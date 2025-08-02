@@ -15,6 +15,7 @@ interface ImagePreviewLayoutProps {
   loading?: boolean
   error?: string | null
   enableToolbar?: boolean
+  className?: string
 }
 
 const ImagePreviewLayout = ({
@@ -24,7 +25,8 @@ const ImagePreviewLayout = ({
   source,
   loading,
   error,
-  enableToolbar
+  enableToolbar,
+  className
 }: ImagePreviewLayoutProps) => {
   // 使用通用图像工具
   const { pan, zoom, copy, download, dialog } = useImageTools(imageRef, {
@@ -46,7 +48,7 @@ const ImagePreviewLayout = ({
 
   return (
     <Spin spinning={loading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
-      <PreviewContainer vertical>
+      <PreviewContainer vertical className={`image-preview-layout ${className ?? ''}`}>
         {error && <PreviewError>{error}</PreviewError>}
         {children}
         {!error && enableToolbar && <ImageToolbar pan={pan} zoom={zoom} dialog={dialog} />}

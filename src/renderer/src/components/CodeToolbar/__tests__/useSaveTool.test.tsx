@@ -18,25 +18,16 @@ const mocks = vi.hoisted(() => ({
   }
 }))
 
-vi.mock('react-i18next', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-i18next')>()
-  return {
-    ...actual,
-    useTranslation: () => ({
-      t: mocks.i18n.t
-    })
-  }
-})
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: mocks.i18n.t
+  })
+}))
 
-// Mock TOOL_SPECS and useToolManager
-vi.mock('@renderer/components/ActionTools', async () => {
-  const actual = await vi.importActual('@renderer/components/ActionTools')
-  return {
-    ...actual,
-    TOOL_SPECS: mocks.TOOL_SPECS,
-    useToolManager: mocks.useToolManager
-  }
-})
+vi.mock('@renderer/components/ActionTools', () => ({
+  TOOL_SPECS: mocks.TOOL_SPECS,
+  useToolManager: mocks.useToolManager
+}))
 
 // Mock useTemporaryValue
 const mockSetTemporaryValue = vi.fn()
@@ -54,15 +45,10 @@ mocks.useToolManager.mockImplementation(() => ({
   removeTool: mockRemoveTool
 }))
 
-// Mock icons using importOriginal to avoid missing exports
-vi.mock('lucide-react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('lucide-react')>()
-  return {
-    ...actual,
-    Check: () => <div data-testid="check-icon" />,
-    SaveIcon: () => <div data-testid="save-icon" />
-  }
-})
+vi.mock('lucide-react', () => ({
+  Check: () => <div data-testid="check-icon" />,
+  SaveIcon: () => <div data-testid="save-icon" />
+}))
 
 describe('useSaveTool', () => {
   beforeEach(() => {

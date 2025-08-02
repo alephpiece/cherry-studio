@@ -18,25 +18,16 @@ const mocks = vi.hoisted(() => ({
   }
 }))
 
-vi.mock('react-i18next', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-i18next')>()
-  return {
-    ...actual,
-    useTranslation: () => ({
-      t: mocks.i18n.t
-    })
-  }
-})
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: mocks.i18n.t
+  })
+}))
 
-// Mock TOOL_SPECS and useToolManager
-vi.mock('@renderer/components/ActionTools', async () => {
-  const actual = await vi.importActual('@renderer/components/ActionTools')
-  return {
-    ...actual,
-    TOOL_SPECS: mocks.TOOL_SPECS,
-    useToolManager: mocks.useToolManager
-  }
-})
+vi.mock('@renderer/components/ActionTools', () => ({
+  TOOL_SPECS: mocks.TOOL_SPECS,
+  useToolManager: mocks.useToolManager
+}))
 
 // Mock useToolManager
 const mockRegisterTool = vi.fn()
@@ -56,7 +47,7 @@ describe('useSplitViewTool', () => {
     const defaultProps = {
       enabled: true,
       viewMode: 'special' as ViewMode,
-      onViewModeChange: vi.fn(),
+      onToggleSplitView: vi.fn(),
       setTools: vi.fn()
     }
 
@@ -114,11 +105,10 @@ describe('useSplitViewTool', () => {
   })
 
   describe('view mode switching', () => {
-    it('should switch from special to split when tool is clicked', () => {
-      const mockOnViewModeChange = vi.fn()
+    it('should call onToggleSplitView when tool is clicked', () => {
+      const mockOnToggleSplitView = vi.fn()
       const props = createMockProps({
-        viewMode: 'special',
-        onViewModeChange: mockOnViewModeChange
+        onToggleSplitView: mockOnToggleSplitView
       })
       renderHook(() => useSplitViewTool(props))
 
@@ -127,23 +117,7 @@ describe('useSplitViewTool', () => {
         registeredTool.onClick()
       })
 
-      expect(mockOnViewModeChange).toHaveBeenCalledWith('split')
-    })
-
-    it('should switch from split to special when tool is clicked', () => {
-      const mockOnViewModeChange = vi.fn()
-      const props = createMockProps({
-        viewMode: 'split',
-        onViewModeChange: mockOnViewModeChange
-      })
-      renderHook(() => useSplitViewTool(props))
-
-      const registeredTool = mockRegisterTool.mock.calls[0][0]
-      act(() => {
-        registeredTool.onClick()
-      })
-
-      expect(mockOnViewModeChange).toHaveBeenCalledWith('special')
+      expect(mockOnToggleSplitView).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -208,8 +182,8 @@ describe('useSplitViewTool', () => {
       expect(mocks.useToolManager).toHaveBeenCalledWith(undefined)
     })
 
-    it('should not break when onViewModeChange is undefined', () => {
-      const props = createMockProps({ onViewModeChange: undefined })
+    it('should not break when onToggleSplitView is undefined', () => {
+      const props = createMockProps({ onToggleSplitView: undefined })
       renderHook(() => useSplitViewTool(props))
 
       const registeredTool = mockRegisterTool.mock.calls[0][0]

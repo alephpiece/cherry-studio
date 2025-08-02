@@ -23,7 +23,7 @@ import { getExtensionByLanguage, isHtmlCode } from '@renderer/utils/markdown'
 import dayjs from 'dayjs'
 import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 
 import { SPECIAL_VIEW_COMPONENTS, SPECIAL_VIEWS } from './constants'
 import HtmlArtifactsCard from './HtmlArtifactsCard'
@@ -58,7 +58,30 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
   const { t } = useTranslation()
   const { codeEditor, codeExecution, codeImageTools, codeCollapsible, codeWrappable } = useSettings()
 
-  const [viewMode, setViewMode] = useState<ViewMode>('special')
+  const [viewState, setViewState] = useState({
+    mode: 'special' as ViewMode,
+    previousMode: 'special' as ViewMode
+  })
+  const { mode: viewMode } = viewState
+
+  const setViewMode = useCallback((newMode: ViewMode) => {
+    setViewState((current) => ({
+      mode: newMode,
+      // 当新模式不是 'split' 时才更新
+      previousMode: newMode !== 'split' ? newMode : current.previousMode
+    }))
+  }, [])
+
+  const toggleSplitView = useCallback(() => {
+    setViewState((current) => {
+      // 如果当前是 split 模式，恢复到上一个模式
+      if (current.mode === 'split') {
+        return { ...current, mode: current.previousMode }
+      }
+      return { mode: 'split', previousMode: current.mode }
+    })
+  }, [])
+
   const [isRunning, setIsRunning] = useState(false)
   const [executionResult, setExecutionResult] = useState<{ text: string; image?: string } | null>(null)
 
@@ -179,7 +202,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
   useSplitViewTool({
     enabled: hasSpecialView,
     viewMode,
-    onViewModeChange: setViewMode,
+    onToggleSplitView: toggleSplitView,
     setTools
   })
 
@@ -221,6 +244,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     () =>
       codeEditor.enabled ? (
         <CodeEditor
+          className="source-view"
           ref={sourceViewRef}
           value={children}
           language={language}
@@ -232,6 +256,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
         />
       ) : (
         <CodeViewer
+          className="source-view"
           language={language}
           expanded={shouldExpand}
           unwrapped={shouldUnwrap}
@@ -266,7 +291,7 @@ export const CodeBlockView: React.FC<Props> = memo(({ children, language, onSave
     const showSourceView = !specialView || viewMode !== 'special'
 
     return (
-      <SplitViewWrapper className="split-view-wrapper">
+      <SplitViewWrapper className="split-view-wrapper" $viewMode={viewMode}>
         {showSpecialView && specialView}
         {showSourceView && sourceView}
       </SplitViewWrapper>
@@ -334,9 +359,10 @@ const CodeHeader = styled.div<{ $isInSpecialView: boolean }>`
   border-top-right-radius: 8px;
   margin-top: ${(props) => (props.$isInSpecialView ? '6px' : '0')};
   height: ${(props) => (props.$isInSpecialView ? '16px' : '34px')};
+  background-color: ${(props) => (props.$isInSpecialView ? 'transparent' : 'var(--color-background-mute)')};
 `
 
-const SplitViewWrapper = styled.div`
+const SplitViewWrapper = styled.div<{ $viewMode?: ViewMode }>`
   display: flex;
 
   > * {
@@ -345,7 +371,27 @@ const SplitViewWrapper = styled.div`
   }
 
   &:not(:has(+ [class*='Container'])) {
-    border-radius: 0 0 8px 8px;
+    // 特殊视图的 header 会隐藏，所以全都使用圆角
+    border-radius: ${(props) => (props.$viewMode === 'special' ? '8px' : '0 0 8px 8px')};
     overflow: hidden;
   }
+
+  // 在 split 模式下添加中间分隔线
+  ${(props) =>
+    props.$viewMode === 'split' &&
+    css`
+      position: relative;
+
+      &:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 1px;
+        background-color: var(--color-background-mute);
+        transform: translateX(-50%);
+        z-index: 1;
+      }
+    `}
 `

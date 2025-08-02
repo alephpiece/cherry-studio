@@ -38,6 +38,7 @@ interface CodeEditorProps {
   extensions?: Extension[]
   /** 用于覆写编辑器的样式，会直接传给 CodeMirror 的 style 属性 */
   style?: React.CSSProperties
+  className?: string
   editable?: boolean
   expanded?: boolean
   unwrapped?: boolean
@@ -64,6 +65,7 @@ const CodeEditor = ({
   options,
   extensions,
   style,
+  className,
   editable = true,
   expanded = true,
   unwrapped = false
@@ -173,6 +175,7 @@ const CodeEditor = ({
         borderRadius: 'inherit',
         ...style
       }}
+      className={`code-editor ${className ?? ''}`}
     />
   )
 }
