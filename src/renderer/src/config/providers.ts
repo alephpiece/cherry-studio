@@ -38,6 +38,7 @@ import OpenAiProviderLogo from '@renderer/assets/images/providers/openai.png'
 import OpenRouterProviderLogo from '@renderer/assets/images/providers/openrouter.png'
 import PerplexityProviderLogo from '@renderer/assets/images/providers/perplexity.png'
 import Ph8ProviderLogo from '@renderer/assets/images/providers/ph8.png'
+import PoeProviderLogo from '@renderer/assets/images/providers/poe.svg'
 import PPIOProviderLogo from '@renderer/assets/images/providers/ppio.png'
 import QiniuProviderLogo from '@renderer/assets/images/providers/qiniu.webp'
 import SiliconFlowProviderLogo from '@renderer/assets/images/providers/silicon.png'
@@ -51,6 +52,7 @@ import VoyageAIProviderLogo from '@renderer/assets/images/providers/voyageai.png
 import XirangProviderLogo from '@renderer/assets/images/providers/xirang.png'
 import ZeroOneProviderLogo from '@renderer/assets/images/providers/zero-one.png'
 import ZhipuProviderLogo from '@renderer/assets/images/providers/zhipu.png'
+import { Provider } from '@renderer/types'
 
 import { TOKENFLUX_HOST } from './constant'
 
@@ -108,7 +110,8 @@ const PROVIDER_LOGO_MAP = {
   lanyun: LanyunProviderLogo,
   vertexai: VertexAIProviderLogo,
   'new-api': NewAPIProviderLogo,
-  'aws-bedrock': AwsProviderLogo
+  'aws-bedrock': AwsProviderLogo,
+  poe: PoeProviderLogo
 } as const
 
 export function getProviderLogo(providerId: string) {
@@ -702,5 +705,20 @@ export const PROVIDER_CONFIG = {
       docs: 'https://docs.aws.amazon.com/bedrock/',
       models: 'https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html'
     }
+  },
+  poe: {
+    api: {
+      url: 'https://api.poe.com/v1'
+    },
+    websites: {
+      official: 'https://poe.com/',
+      apiKey: 'https://poe.com/api_key',
+      docs: 'https://creator.poe.com/docs/external-applications/openai-compatible-api',
+      models: 'https://poe.com/'
+    }
   }
+}
+
+export const isSupportDeveloperRoleProvider = (provider: Provider) => {
+  return provider.id !== 'poe'
 }

@@ -1976,6 +1976,8 @@ const migrateConfig = {
   },
   '127': (state: RootState) => {
     try {
+      addProvider(state, 'poe')
+
       // @ts-ignore eslint-disable-next-line
       if (state.settings.codePreview) {
         // @ts-ignore eslint-disable-next-line

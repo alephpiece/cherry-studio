@@ -21,6 +21,7 @@ import {
   isSupportedThinkingTokenZhipuModel,
   isVisionModel
 } from '@renderer/config/models'
+import { isSupportDeveloperRoleProvider } from '@renderer/config/providers'
 import { processPostsuffixQwen3Model, processReqMessages } from '@renderer/services/ModelMessageService'
 import { estimateTextTokens } from '@renderer/services/TokenService'
 // For Copilot token
@@ -491,7 +492,7 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
 
         if (isSupportedReasoningEffortOpenAIModel(model)) {
           systemMessage = {
-            role: 'developer',
+            role: isSupportDeveloperRoleProvider(this.provider) ? 'developer' : 'system',
             content: `Formatting re-enabled${systemMessage ? '\n' + systemMessage.content : ''}`
           }
         }
