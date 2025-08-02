@@ -5,6 +5,7 @@ import styled from 'styled-components'
 import { useDebouncedRender } from './hooks/useDebouncedRender'
 import ImagePreviewLayout from './ImagePreviewLayout'
 import { BasicPreviewHandles, BasicPreviewProps } from './types'
+import { renderSvgInShadowHost } from './utils'
 
 // 管理 viz 实例
 const vizInitializer = new AsyncInitializer(async () => {
@@ -23,11 +24,8 @@ const GraphvizPreview = ({
   // 定义渲染函数
   const renderGraphviz = useCallback(async (content: string, container: HTMLDivElement) => {
     const viz = await vizInitializer.get()
-    const svgElement = viz.renderSVGElement(content)
-
-    // 清空容器并添加新的 SVG
-    container.innerHTML = ''
-    container.appendChild(svgElement)
+    const svg = viz.renderString(content, { format: 'svg' })
+    renderSvgInShadowHost(svg, container)
   }, [])
 
   // 使用预览渲染器 hook

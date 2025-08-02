@@ -44,7 +44,7 @@ describe('renderSvgInShadowHost', () => {
   })
 
   it('should attach a shadow root if one does not exist', () => {
-    renderSvgInShadowHost(hostElement, '<svg></svg>')
+    renderSvgInShadowHost('<svg></svg>', hostElement)
     expect(Element.prototype.attachShadow).toHaveBeenCalledWith({ mode: 'open' })
   })
 
@@ -53,7 +53,7 @@ describe('renderSvgInShadowHost', () => {
     const existingShadowRoot = hostElement.attachShadow({ mode: 'open' })
     vi.clearAllMocks() // Clear the mock call from the setup
 
-    renderSvgInShadowHost(hostElement, '<svg></svg>')
+    renderSvgInShadowHost('<svg></svg>', hostElement)
 
     expect(Element.prototype.attachShadow).not.toHaveBeenCalled()
     // Verify it works with the existing shadow root
@@ -62,7 +62,7 @@ describe('renderSvgInShadowHost', () => {
 
   it('should inject styles and valid SVG content into the shadow DOM', () => {
     const svgContent = '<svg><rect /></svg>'
-    renderSvgInShadowHost(hostElement, svgContent)
+    renderSvgInShadowHost(svgContent, hostElement)
 
     const shadowRoot = hostElement.shadowRoot
     expect(shadowRoot).not.toBeNull()
@@ -72,33 +72,33 @@ describe('renderSvgInShadowHost', () => {
   })
 
   it('should throw an error if the host element is not available', () => {
-    expect(() => renderSvgInShadowHost(null as any, '<svg></svg>')).toThrow(
+    expect(() => renderSvgInShadowHost('<svg></svg>', null as any)).toThrow(
       'Host element for SVG rendering is not available.'
     )
   })
 
   it('should throw an error for invalid SVG content', () => {
     const invalidSvg = '<svg><rect></svg>' // Malformed
-    expect(() => renderSvgInShadowHost(hostElement, invalidSvg)).toThrow(/SVG parsing error/)
+    expect(() => renderSvgInShadowHost(invalidSvg, hostElement)).toThrow(/SVG parsing error/)
   })
 
   it('should throw an error for non-SVG content', () => {
     const nonSvg = '<div>this is not svg</div>'
-    expect(() => renderSvgInShadowHost(hostElement, nonSvg)).toThrow('Invalid SVG content')
+    expect(() => renderSvgInShadowHost(nonSvg, hostElement)).toThrow('Invalid SVG content')
   })
 
   it('should not throw an error for empty or whitespace content', () => {
-    expect(() => renderSvgInShadowHost(hostElement, '')).not.toThrow()
-    expect(() => renderSvgInShadowHost(hostElement, '   ')).not.toThrow()
+    expect(() => renderSvgInShadowHost('', hostElement)).not.toThrow()
+    expect(() => renderSvgInShadowHost('   ', hostElement)).not.toThrow()
   })
 
   it('should clear previous content before rendering new content', () => {
     const firstSvg = '<svg id="first"></svg>'
-    renderSvgInShadowHost(hostElement, firstSvg)
+    renderSvgInShadowHost(firstSvg, hostElement)
     expect(hostElement.shadowRoot?.querySelector('#first')).not.toBeNull()
 
     const secondSvg = '<svg id="second"></svg>'
-    renderSvgInShadowHost(hostElement, secondSvg)
+    renderSvgInShadowHost(secondSvg, hostElement)
     expect(hostElement.shadowRoot?.querySelector('#first')).toBeNull()
     expect(hostElement.shadowRoot?.querySelector('#second')).not.toBeNull()
   })

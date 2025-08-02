@@ -18,7 +18,7 @@ interface SvgPreviewProps {
 const SvgPreview = ({ children, enableToolbar = false, className, ref }: SvgPreviewProps) => {
   // 定义渲染函数
   const renderSvg = useCallback(async (content: string, container: HTMLDivElement) => {
-    renderSvgInShadowHost(container, content)
+    renderSvgInShadowHost(content, container)
   }, [])
 
   // 使用预览渲染器 hook

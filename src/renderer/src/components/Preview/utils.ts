@@ -3,11 +3,11 @@
  * This function handles creating the shadow root, injecting base styles for the host,
  * and safely parsing and appending the SVG content.
  *
- * @param hostElement The container element that will host the Shadow DOM.
  * @param svgContent The SVG string to render.
+ * @param hostElement The container element that will host the Shadow DOM.
  * @throws An error if the SVG content is invalid or cannot be parsed.
  */
-export function renderSvgInShadowHost(hostElement: HTMLElement, svgContent: string): void {
+export function renderSvgInShadowHost(svgContent: string, hostElement: HTMLElement): void {
   if (!hostElement) {
     throw new Error('Host element for SVG rendering is not available.')
   }
@@ -22,8 +22,7 @@ export function renderSvgInShadowHost(hostElement: HTMLElement, svgContent: stri
       background-color: white;
       overflow: auto;
       border: 0.5px solid var(--color-code-background);
-      border-top-left-radius: 0;
-      border-top-right-radius: 0;
+      border-radius: 8px;
       display: block;
       position: relative;
       width: 100%;
