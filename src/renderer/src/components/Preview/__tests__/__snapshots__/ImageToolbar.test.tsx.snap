@@ -82,7 +82,7 @@ exports[`ImageToolbar > should match snapshot 1`] = `
         type="button"
       >
         <span
-          data-testid="rotate-ccw"
+          data-testid="reset"
         >
           ↻
         </span>

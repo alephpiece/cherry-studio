@@ -27,8 +27,11 @@ vi.mock('lucide-react', () => ({
   ChevronRight: () => <span data-testid="chevron-right">→</span>,
   ZoomIn: () => <span data-testid="zoom-in">+</span>,
   ZoomOut: () => <span data-testid="zoom-out">-</span>,
-  RotateCcw: () => <span data-testid="rotate-ccw">↻</span>,
   Scan: () => <span data-testid="scan">⊞</span>
+}))
+
+vi.mock('@renderer/components/Icons', () => ({
+  ResetIcon: () => <span data-testid="reset">↻</span>
 }))
 
 // Mock utils

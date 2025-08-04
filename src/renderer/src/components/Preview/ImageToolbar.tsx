@@ -1,5 +1,6 @@
+import { ResetIcon } from '@renderer/components/Icons'
 import { classNames } from '@renderer/utils'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RotateCcw, Scan, ZoomIn, ZoomOut } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Scan, ZoomIn, ZoomOut } from 'lucide-react'
 import { memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -47,7 +48,7 @@ const ImageToolbar = ({ pan, zoom, dialog, className }: ImageToolbarProps) => {
           icon={<ChevronLeft size={'1rem'} />}
           onClick={() => pan(-panDistance, 0)}
         />
-        <ImageToolButton tooltip={t('preview.reset')} icon={<RotateCcw size={'1rem'} />} onClick={handleReset} />
+        <ImageToolButton tooltip={t('preview.reset')} icon={<ResetIcon size={'1rem'} />} onClick={handleReset} />
         <ImageToolButton
           tooltip={t('preview.pan_right')}
           icon={<ChevronRight size={'1rem'} />}
