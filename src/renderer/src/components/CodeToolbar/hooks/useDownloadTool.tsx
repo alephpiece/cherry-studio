@@ -1,5 +1,5 @@
 import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
-import { FilePngIcon, FileSvgIcon } from '@renderer/components/Icons/FileIcons'
+import { FilePngIcon, FileSvgIcon } from '@renderer/components/Icons'
 import { BasicPreviewHandles } from '@renderer/components/Preview'
 import { Download, FileCode } from 'lucide-react'
 import { useEffect } from 'react'

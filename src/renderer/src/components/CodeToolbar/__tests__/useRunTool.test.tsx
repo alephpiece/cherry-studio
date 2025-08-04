@@ -23,6 +23,14 @@ vi.mock('react-i18next', () => ({
   })
 }))
 
+vi.mock('lucide-react', () => ({
+  CirclePlay: () => <div>CirclePlay</div>
+}))
+
+vi.mock('@renderer/components/Icons', () => ({
+  LoadingIcon: () => <div>Loading</div>
+}))
+
 vi.mock('@renderer/components/ActionTools', () => ({
   TOOL_SPECS: mocks.TOOL_SPECS,
   useToolManager: mocks.useToolManager
@@ -33,14 +41,6 @@ const mockRemoveTool = vi.fn()
 mocks.useToolManager.mockImplementation(() => ({
   registerTool: mockRegisterTool,
   removeTool: mockRemoveTool
-}))
-
-vi.mock('@renderer/components/Icons', () => ({
-  LoadingIcon: () => <div>Loading</div>
-}))
-
-vi.mock('lucide-react', () => ({
-  CirclePlay: () => <div>CirclePlay</div>
 }))
 
 describe('useRunTool', () => {

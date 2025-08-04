@@ -1,7 +1,8 @@
 import { ActionTool, TOOL_SPECS, useToolManager } from '@renderer/components/ActionTools'
+import { CopyIcon } from '@renderer/components/Icons'
 import { BasicPreviewHandles } from '@renderer/components/Preview'
 import { useTemporaryValue } from '@renderer/hooks/useTemporaryValue'
-import { Check, Copy, Image } from 'lucide-react'
+import { Check, Image } from 'lucide-react'
 import { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -46,7 +47,7 @@ export const useCopyTool = ({ showPreviewTools, previewRef, onCopySource, setToo
       icon: copied ? (
         <Check className="tool-icon" color="var(--color-status-success)" />
       ) : (
-        <Copy className="tool-icon" />
+        <CopyIcon className="tool-icon" />
       ),
       tooltip: t('code_block.copy.source'),
       onClick: handleCopySource

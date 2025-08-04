@@ -34,6 +34,11 @@ vi.mock('react-i18next', () => ({
   })
 }))
 
+vi.mock('@renderer/components/Icons', () => ({
+  FilePngIcon: () => <div data-testid="file-png-icon" />,
+  FileSvgIcon: () => <div data-testid="file-svg-icon" />
+}))
+
 vi.mock('@renderer/components/ActionTools', () => ({
   TOOL_SPECS: mocks.TOOL_SPECS,
   useToolManager: mocks.useToolManager

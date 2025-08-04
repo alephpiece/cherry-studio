@@ -26,7 +26,6 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('lucide-react', () => ({
   Check: () => <div data-testid="check-icon" />,
-  Copy: () => <div data-testid="copy-icon" />,
   Image: () => <div data-testid="image-icon" />
 }))
 
@@ -34,6 +33,10 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: mocks.i18n.t
   })
+}))
+
+vi.mock('@renderer/components/Icons', () => ({
+  CopyIcon: () => <div data-testid="copy-icon" />
 }))
 
 vi.mock('@renderer/components/ActionTools', () => ({
