@@ -22,9 +22,8 @@ vi.mock('antd', () => ({
   )
 }))
 
-// Mock SvgSpinners180Ring
-vi.mock('@renderer/components/Icons/SvgSpinners180Ring', () => ({
-  default: () => <div data-testid="spinner">Spinner</div>
+vi.mock('@renderer/components/Icons', () => ({
+  LoadingIcon: () => <div data-testid="spinner">Spinner</div>
 }))
 
 // Mock ImageToolbar

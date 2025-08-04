@@ -35,6 +35,14 @@ mocks.useToolManager.mockImplementation(() => ({
   removeTool: mockRemoveTool
 }))
 
+vi.mock('@renderer/components/Icons', () => ({
+  LoadingIcon: () => <div>Loading</div>
+}))
+
+vi.mock('lucide-react', () => ({
+  CirclePlay: () => <div>CirclePlay</div>
+}))
+
 describe('useRunTool', () => {
   beforeEach(() => {
     vi.clearAllMocks()

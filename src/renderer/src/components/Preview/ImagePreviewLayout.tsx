@@ -1,5 +1,5 @@
 import { useImageTools } from '@renderer/components/ActionTools/hooks/useImageTools'
-import SvgSpinners180Ring from '@renderer/components/Icons/SvgSpinners180Ring'
+import { LoadingIcon } from '@renderer/components/Icons'
 import { Spin } from 'antd'
 import { memo, useImperativeHandle } from 'react'
 
@@ -47,7 +47,7 @@ const ImagePreviewLayout = ({
   })
 
   return (
-    <Spin spinning={loading} indicator={<SvgSpinners180Ring color="var(--color-text-2)" />}>
+    <Spin spinning={loading} indicator={<LoadingIcon color="var(--color-text-2)" />}>
       <PreviewContainer vertical className={`image-preview-layout ${className ?? ''}`}>
         {error && <PreviewError>{error}</PreviewError>}
         {children}
