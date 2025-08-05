@@ -393,7 +393,7 @@ export const initialState: SettingsState = {
   // Developer mode
   enableDeveloperMode: false,
   // UI
-  navbarPosition: 'left',
+  navbarPosition: 'top',
   // API Server
   apiServer: {
     enabled: false,

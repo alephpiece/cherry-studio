@@ -383,6 +383,15 @@
         "settings": "Paramètres de recherche en ligne"
       }
     },
+    "mcp": {
+      "error": {
+        "parse_tool_call": "Impossible de convertir au format d'appel d'outil valide : {{toolCall}}"
+      },
+      "warning": {
+        "multiple_tools": "Il existe plusieurs outils MCP correspondants, {{tool}} a été sélectionné",
+        "no_tool": "Aucun outil MCP requis {{tool}} n'a été trouvé"
+      }
+    },
     "message": {
       "new": {
         "branch": {
@@ -1454,7 +1463,7 @@
       "function_calling": "Appel de fonction",
       "reasoning": "Raisonnement",
       "rerank": "Reclasser",
-      "select": "Sélectionnez le type de modèle",
+      "select": "Types de modèle",
       "text": "Texte",
       "vision": "Image",
       "websearch": "Recherche web"
@@ -2991,6 +3000,7 @@
           "label": "Ajouter le modèle dans la liste"
         },
         "add_whole_group": "Ajouter tout le groupe",
+        "refetch_list": "Récupérer à nouveau la liste des modèles",
         "remove_listed": "Supprimer un modèle de la liste",
         "remove_model": "Supprimer le modèle",
         "remove_whole_group": "Supprimer tout le groupe"
@@ -3008,7 +3018,6 @@
       "provider_name": "Nom du fournisseur",
       "quick_assistant_default_tag": "Par défaut",
       "quick_assistant_model": "Modèle de l'assistant rapide",
-      "quick_assistant_model_description": "Modèle par défaut utilisé par l'assistant rapide",
       "quick_assistant_selection": "Sélectionner l'assistant",
       "topic_naming_model": "Modèle de renommage des sujets",
       "topic_naming_model_description": "Modèle utilisé pour le renommage automatique des nouveaux sujets",

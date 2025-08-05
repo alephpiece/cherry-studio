@@ -383,6 +383,15 @@
         "settings": "Configuración de búsqueda en red"
       }
     },
+    "mcp": {
+      "error": {
+        "parse_tool_call": "No se puede convertir al formato de llamada de herramienta válido: {{toolCall}}"
+      },
+      "warning": {
+        "multiple_tools": "Existen múltiples herramientas MCP coincidentes, se ha seleccionado {{tool}}",
+        "no_tool": "No se encontró la herramienta MCP requerida {{tool}}"
+      }
+    },
     "message": {
       "new": {
         "branch": {
@@ -1454,7 +1463,7 @@
       "function_calling": "Llamada a función",
       "reasoning": "Razonamiento",
       "rerank": "Reclasificar",
-      "select": "Seleccionar tipo de modelo",
+      "select": "Tipos de modelo",
       "text": "Texto",
       "vision": "Imagen",
       "websearch": "Búsqueda en línea"
@@ -2991,6 +3000,7 @@
           "label": "Agregar modelo en la lista"
         },
         "add_whole_group": "Agregar todo el grupo",
+        "refetch_list": "Volver a obtener la lista de modelos",
         "remove_listed": "Eliminar modelo de la lista",
         "remove_model": "Eliminar modelo",
         "remove_whole_group": "Eliminar todo el grupo"
@@ -3008,7 +3018,6 @@
       "provider_name": "Nombre del proveedor",
       "quick_assistant_default_tag": "Predeterminado",
       "quick_assistant_model": "Modelo del asistente rápido",
-      "quick_assistant_model_description": "Modelo predeterminado utilizado por el asistente rápido",
       "quick_assistant_selection": "Seleccionar asistente",
       "topic_naming_model": "Modelo de nombramiento de temas",
       "topic_naming_model_description": "Modelo utilizado para nombrar temas automáticamente",
