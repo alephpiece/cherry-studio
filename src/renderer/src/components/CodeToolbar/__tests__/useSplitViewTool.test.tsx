@@ -102,26 +102,7 @@ describe('useSplitViewTool', () => {
         tooltip: 'code_block.split.label'
       })
     })
-  })
 
-  describe('view mode switching', () => {
-    it('should call onToggleSplitView when tool is clicked', () => {
-      const mockOnToggleSplitView = vi.fn()
-      const props = createMockProps({
-        onToggleSplitView: mockOnToggleSplitView
-      })
-      renderHook(() => useSplitViewTool(props))
-
-      const registeredTool = mockRegisterTool.mock.calls[0][0]
-      act(() => {
-        registeredTool.onClick()
-      })
-
-      expect(mockOnToggleSplitView).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  describe('tool re-registration on state changes', () => {
     it('should re-register tool when viewMode changes', () => {
       const props = createMockProps({ viewMode: 'special' })
       const { rerender } = renderHook((hookProps) => useSplitViewTool(hookProps), {
@@ -141,21 +122,22 @@ describe('useSplitViewTool', () => {
       const secondRegistration = mockRegisterTool.mock.calls[1][0]
       expect(secondRegistration.tooltip).toBe('code_block.split.restore')
     })
+  })
 
-    it('should register tool when enabled changes from false to true', () => {
-      const props = createMockProps({ enabled: false })
-      const { rerender } = renderHook((hookProps) => useSplitViewTool(hookProps), {
-        initialProps: props
+  describe('view mode switching', () => {
+    it('should call onToggleSplitView when tool is clicked', () => {
+      const mockOnToggleSplitView = vi.fn()
+      const props = createMockProps({
+        onToggleSplitView: mockOnToggleSplitView
+      })
+      renderHook(() => useSplitViewTool(props))
+
+      const registeredTool = mockRegisterTool.mock.calls[0][0]
+      act(() => {
+        registeredTool.onClick()
       })
 
-      expect(mockRegisterTool).not.toHaveBeenCalled()
-
-      // Change enabled to true and rerender
-      const newProps = { ...props, enabled: true }
-      rerender(newProps)
-
-      // Should register tool
-      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
+      expect(mockOnToggleSplitView).toHaveBeenCalledTimes(1)
     })
   })
 

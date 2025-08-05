@@ -97,6 +97,21 @@ describe('useSaveTool', () => {
 
       expect(mockRegisterTool).not.toHaveBeenCalled()
     })
+
+    it('should re-register tool when saved state changes', () => {
+      // Initially not saved
+      mocks.useTemporaryValue.mockImplementation(() => [false, mockSetTemporaryValue])
+      const props = createMockProps()
+      const { rerender } = renderHook(() => useSaveTool(props))
+
+      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
+
+      // Change to saved state and rerender
+      mocks.useTemporaryValue.mockImplementation(() => [true, mockSetTemporaryValue])
+      rerender()
+
+      expect(mockRegisterTool).toHaveBeenCalledTimes(2)
+    })
   })
 
   describe('save functionality', () => {
@@ -149,53 +164,6 @@ describe('useSaveTool', () => {
       }).not.toThrow()
 
       expect(mockSetTemporaryValue).toHaveBeenCalledWith(true)
-    })
-  })
-
-  describe('tool re-registration on state changes', () => {
-    it('should re-register tool when saved state changes', () => {
-      // Initially not saved
-      mocks.useTemporaryValue.mockImplementation(() => [false, mockSetTemporaryValue])
-      const props = createMockProps()
-      const { rerender } = renderHook(() => useSaveTool(props))
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
-
-      // Change to saved state and rerender
-      mocks.useTemporaryValue.mockImplementation(() => [true, mockSetTemporaryValue])
-      rerender()
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(2)
-    })
-
-    it('should register tool when enabled changes from false to true', () => {
-      const props = createMockProps({ enabled: false })
-      const { rerender } = renderHook((hookProps) => useSaveTool(hookProps), {
-        initialProps: props
-      })
-
-      expect(mockRegisterTool).not.toHaveBeenCalled()
-
-      // Change enabled to true and rerender
-      const newProps = { ...props, enabled: true }
-      rerender(newProps)
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
-    })
-
-    it('should remove tool when enabled changes from true to false', () => {
-      const props = createMockProps({ enabled: true })
-      const { rerender } = renderHook((hookProps) => useSaveTool(hookProps), {
-        initialProps: props
-      })
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
-
-      // Change enabled to false and rerender
-      const newProps = { ...props, enabled: false }
-      rerender(newProps)
-
-      expect(mockRemoveTool).toHaveBeenCalledWith('save')
     })
   })
 

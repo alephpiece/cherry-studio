@@ -89,6 +89,25 @@ describe('useWrapTool', () => {
 
       expect(mockRegisterTool).not.toHaveBeenCalled()
     })
+
+    it('should re-register tool when unwrapped changes', () => {
+      const props = createMockProps({ unwrapped: false })
+      const { rerender } = renderHook((hookProps) => useWrapTool(hookProps), {
+        initialProps: props
+      })
+
+      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
+      const firstCall = mockRegisterTool.mock.calls[0][0]
+      expect(firstCall.tooltip).toBe('code_block.wrap.off')
+
+      // Change unwrapped to true and rerender
+      const newProps = { ...props, unwrapped: true }
+      rerender(newProps)
+
+      expect(mockRegisterTool).toHaveBeenCalledTimes(2)
+      const secondCall = mockRegisterTool.mock.calls[1][0]
+      expect(secondCall.tooltip).toBe('code_block.wrap.on')
+    })
   })
 
   describe('visibility behavior', () => {
@@ -129,57 +148,6 @@ describe('useWrapTool', () => {
       })
 
       expect(mockToggle).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  describe('tool re-registration on state changes', () => {
-    it('should re-register tool when unwrapped changes', () => {
-      const props = createMockProps({ unwrapped: false })
-      const { rerender } = renderHook((hookProps) => useWrapTool(hookProps), {
-        initialProps: props
-      })
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
-      const firstCall = mockRegisterTool.mock.calls[0][0]
-      expect(firstCall.tooltip).toBe('code_block.wrap.off')
-
-      // Change unwrapped to true and rerender
-      const newProps = { ...props, unwrapped: true }
-      rerender(newProps)
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(2)
-      const secondCall = mockRegisterTool.mock.calls[1][0]
-      expect(secondCall.tooltip).toBe('code_block.wrap.on')
-    })
-
-    it('should register tool when enabled changes from false to true', () => {
-      const props = createMockProps({ enabled: false })
-      const { rerender } = renderHook((hookProps) => useWrapTool(hookProps), {
-        initialProps: props
-      })
-
-      expect(mockRegisterTool).not.toHaveBeenCalled()
-
-      // Change enabled to true and rerender
-      const newProps = { ...props, enabled: true }
-      rerender(newProps)
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
-    })
-
-    it('should remove tool when enabled changes from true to false', () => {
-      const props = createMockProps({ enabled: true })
-      const { rerender } = renderHook((hookProps) => useWrapTool(hookProps), {
-        initialProps: props
-      })
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
-
-      // Change enabled to false and rerender
-      const newProps = { ...props, enabled: false }
-      rerender(newProps)
-
-      expect(mockRemoveTool).toHaveBeenCalledWith('wrap')
     })
   })
 

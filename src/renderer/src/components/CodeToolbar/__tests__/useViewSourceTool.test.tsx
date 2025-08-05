@@ -101,6 +101,21 @@ describe('useViewSourceTool', () => {
         order: 12
       })
     })
+
+    it('should re-register tool when editable changes', () => {
+      const props = createMockProps({ editable: false })
+      const { rerender } = renderHook((hookProps) => useViewSourceTool(hookProps), {
+        initialProps: props
+      })
+
+      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
+
+      const newProps = { ...props, editable: true }
+      rerender(newProps)
+
+      expect(mockRegisterTool).toHaveBeenCalledTimes(2)
+      expect(mockRemoveTool).toHaveBeenCalledWith('view-source')
+    })
   })
 
   describe('tooltip variations', () => {
@@ -172,23 +187,6 @@ describe('useViewSourceTool', () => {
       })
 
       expect(mockOnViewModeChange).toHaveBeenCalledWith('special')
-    })
-  })
-
-  describe('tool re-registration on state changes', () => {
-    it('should re-register tool when editable changes', () => {
-      const props = createMockProps({ editable: false })
-      const { rerender } = renderHook((hookProps) => useViewSourceTool(hookProps), {
-        initialProps: props
-      })
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
-
-      const newProps = { ...props, editable: true }
-      rerender(newProps)
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(2)
-      expect(mockRemoveTool).toHaveBeenCalledWith('view-source')
     })
   })
 

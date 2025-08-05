@@ -85,6 +85,20 @@ describe('useRunTool', () => {
         tooltip: 'code_block.run'
       })
     })
+
+    it('should re-register tool when isRunning changes', () => {
+      const props = createMockProps({ isRunning: false })
+      const { rerender } = renderHook((hookProps) => useRunTool(hookProps), {
+        initialProps: props
+      })
+
+      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
+
+      const newProps = { ...props, isRunning: true }
+      rerender(newProps)
+
+      expect(mockRegisterTool).toHaveBeenCalledTimes(2)
+    })
   })
 
   describe('run functionality', () => {
@@ -112,22 +126,6 @@ describe('useRunTool', () => {
       })
 
       expect(mockOnRun).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('tool re-registration on state changes', () => {
-    it('should re-register tool when isRunning changes', () => {
-      const props = createMockProps({ isRunning: false })
-      const { rerender } = renderHook((hookProps) => useRunTool(hookProps), {
-        initialProps: props
-      })
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(1)
-
-      const newProps = { ...props, isRunning: true }
-      rerender(newProps)
-
-      expect(mockRegisterTool).toHaveBeenCalledTimes(2)
     })
   })
 
