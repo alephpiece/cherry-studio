@@ -16,6 +16,10 @@ export const PreviewContainer = styled(Flex).attrs({ role: 'alert' })`
   /* Make sure the toolbar is visible */
   min-height: 8rem;
 
+  .special-preview {
+    min-height: 8rem;
+  }
+
   .preview-toolbar {
     transition: opacity 0.3s ease-in-out;
     transform: translateZ(0);
