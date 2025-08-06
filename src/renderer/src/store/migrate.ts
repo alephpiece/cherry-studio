@@ -2012,6 +2012,17 @@ const migrateConfig = {
         }
       }
 
+      if (!state.settings.proxyBypassRules) {
+        state.settings.proxyBypassRules = defaultByPassRules
+      }
+      return state
+    } catch (error) {
+      logger.error('migrate 127 error', error as Error)
+      return state
+    }
+  },
+  '128': (state: RootState) => {
+    try {
       // @ts-ignore eslint-disable-next-line
       if (state.settings.codePreview) {
         // @ts-ignore eslint-disable-next-line
@@ -2022,12 +2033,10 @@ const migrateConfig = {
           themeDark: 'auto'
         }
       }
-      if (!state.settings.proxyBypassRules) {
-        state.settings.proxyBypassRules = defaultByPassRules
-      }
+
       return state
     } catch (error) {
-      logger.error('migrate 127 error', error as Error)
+      logger.error('migrate 128 error', error as Error)
       return state
     }
   }
