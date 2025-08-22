@@ -6,6 +6,8 @@ import DOMPurify from 'dompurify'
  * This function handles creating the shadow root, injecting base styles for the host,
  * and safely parsing and appending the SVG content.
  *
+ * NOTE: The host element is supposed to be isolated from the rest of the page.
+ *
  * @param svgContent The SVG string to render.
  * @param hostElement The container element that will host the Shadow DOM.
  * @throws An error if the SVG content is invalid or cannot be parsed.
@@ -35,7 +37,7 @@ export function renderSvgInShadowHost(svgContent: string, hostElement: HTMLEleme
       border: var(--shadow-host-border);
       border-radius: var(--shadow-host-border-radius);
       padding: 1em;
-      overflow: hidden; /* Prevent scrollbars, as scaling is now handled */
+      contain: content; /* improve isolation for better performance */
       display: block;
       position: relative;
       width: 100%;
