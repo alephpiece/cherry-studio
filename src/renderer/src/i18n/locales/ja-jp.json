@@ -1550,6 +1550,9 @@
       "tooltip": "モデルを検索"
     },
     "stream_output": "ストリーム出力",
+    "trial": {
+      "label": "試用"
+    },
     "type": {
       "embedding": "埋め込み",
       "free": "無料",

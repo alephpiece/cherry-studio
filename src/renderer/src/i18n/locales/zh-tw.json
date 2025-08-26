@@ -1550,6 +1550,9 @@
       "tooltip": "搜尋模型"
     },
     "stream_output": "串流輸出",
+    "trial": {
+      "label": "試用"
+    },
     "type": {
       "embedding": "嵌入",
       "free": "免費",

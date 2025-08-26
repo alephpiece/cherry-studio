@@ -1550,6 +1550,9 @@
       "tooltip": "Rechercher un modèle"
     },
     "stream_output": "Sortie en flux",
+    "trial": {
+      "label": "Essai"
+    },
     "type": {
       "embedding": "Incorporation",
       "free": "Gratuit",

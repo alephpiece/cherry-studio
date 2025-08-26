@@ -1550,6 +1550,9 @@
       "tooltip": "Search models"
     },
     "stream_output": "Stream output",
+    "trial": {
+      "label": "Trial"
+    },
     "type": {
       "embedding": "Embedding",
       "free": "Free",

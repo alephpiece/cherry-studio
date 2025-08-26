@@ -1550,6 +1550,9 @@
       "tooltip": "Buscar modelo"
     },
     "stream_output": "Salida en flujo",
+    "trial": {
+      "label": "Prueba"
+    },
     "type": {
       "embedding": "Incrustación",
       "free": "Gratis",

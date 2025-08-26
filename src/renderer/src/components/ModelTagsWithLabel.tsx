@@ -8,23 +8,25 @@ import {
 } from '@renderer/config/models'
 import i18n from '@renderer/i18n'
 import { Model } from '@renderer/types'
-import { isFreeModel } from '@renderer/utils'
+import { isFreeModel, isTrialModel } from '@renderer/utils'
 import { FC, memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
-import CustomTag from './Tags/CustomTag'
 import {
+  CustomTag,
   EmbeddingTag,
   ReasoningTag,
   RerankerTag,
   ToolsCallingTag,
+  TrialTag,
   VisionTag,
   WebSearchTag
-} from './Tags/ModelCapabilities'
+} from './Tags'
 
 interface ModelTagsProps {
   model: Model
+  showTrial?: boolean
   showFree?: boolean
   showReasoning?: boolean
   showToolsCalling?: boolean
@@ -36,6 +38,7 @@ interface ModelTagsProps {
 
 const ModelTagsWithLabel: FC<ModelTagsProps> = ({
   model,
+  showTrial = true,
   showFree = true,
   showReasoning = true,
   showToolsCalling = true,
@@ -86,8 +89,9 @@ const ModelTagsWithLabel: FC<ModelTagsProps> = ({
         <ToolsCallingTag size={size} showTooltip={showTooltip} showLabel={shouldShowLabel} />
       )}
       {isEmbeddingModel(model) && <EmbeddingTag size={size} />}
-      {showFree && isFreeModel(model) && <CustomTag size={size} color="#7cb305" icon={t('models.type.free')} />}
       {isRerankModel(model) && <RerankerTag size={size} />}
+      {showFree && isFreeModel(model) && <CustomTag size={size} color="#7cb305" icon={t('models.type.free')} />}
+      {showTrial && isTrialModel(model) && <TrialTag size={size} showTooltip={showTooltip} />}
     </Container>
   )
 }

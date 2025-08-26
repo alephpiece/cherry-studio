@@ -370,6 +370,9 @@ export type Model = {
   endpoint_type?: EndpointType
   supported_endpoint_types?: EndpointType[]
   supported_text_delta?: boolean
+
+  /** Trial models are free to use without API key. */
+  isTrial?: boolean
 }
 
 export type Suggestion = {

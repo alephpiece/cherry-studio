@@ -1,4 +1,4 @@
-import { ToolOutlined } from '@ant-design/icons'
+import { HammerIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import CustomTag, { CustomTagProps } from '../CustomTag'
@@ -11,11 +11,12 @@ type Props = {
 
 export const ToolsCallingTag = ({ size, showTooltip, showLabel, ...restProps }: Props) => {
   const { t } = useTranslation()
+  const color = '#f18737'
   return (
     <CustomTag
       size={size}
-      color="#f18737"
-      icon={<ToolOutlined style={{ fontSize: size }} />}
+      color={color}
+      icon={<HammerIcon size={size} color={color} />}
       tooltip={showTooltip ? t('models.type.function_calling') : undefined}
       {...restProps}>
       {showLabel ? t('models.type.function_calling') : ''}

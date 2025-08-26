@@ -1550,6 +1550,10 @@
       "tooltip": "搜索模型"
     },
     "stream_output": "流式输出",
+    "trial": {
+      "label": "试用",
+      "tooltip": "开箱即用，无需 API key"
+    },
     "type": {
       "embedding": "嵌入",
       "free": "免费",
