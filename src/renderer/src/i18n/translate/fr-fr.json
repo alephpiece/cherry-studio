@@ -1572,6 +1572,9 @@
     "hide_sidebar": "Cacher la barre latérale",
     "show_sidebar": "Afficher la barre latérale"
   },
+  "navigate": {
+    "provider_settings": "Aller aux paramètres du fournisseur"
+  },
   "notification": {
     "assistant": "Réponse de l'assistant",
     "knowledge": {
