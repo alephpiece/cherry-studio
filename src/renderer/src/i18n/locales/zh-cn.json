@@ -1552,7 +1552,8 @@
     "stream_output": "流式输出",
     "trial": {
       "label": "试用",
-      "tooltip": "开箱即用，无需 API key，点击跳转到设置界面"
+      "tooltip": "开箱即用，无需 API key",
+      "tooltip_with_goto": "开箱即用，无需 API key，点击跳转到设置界面"
     },
     "type": {
       "embedding": "嵌入",

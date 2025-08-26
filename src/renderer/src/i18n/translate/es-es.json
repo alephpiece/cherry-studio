@@ -1552,7 +1552,8 @@
     "stream_output": "Salida en flujo",
     "trial": {
       "label": "Prueba",
-      "tooltip": "Listo para usar, no se requiere API key, haga clic para ir a la configuración del proveedor"
+      "tooltip": "Listo para usar, no se requiere API key",
+      "tooltip_with_goto": "Listo para usar, no se requiere API key, haga clic para ir a la configuración del proveedor"
     },
     "type": {
       "embedding": "Incrustación",

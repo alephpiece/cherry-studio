@@ -11,12 +11,21 @@ vi.mock('@renderer/components/Avatar/ModelAvatar', () => ({
   )
 }))
 
+vi.mock('@renderer/components/Tags', () => ({
+  TrialTag: ({ size, style }: any) => (
+    <span data-testid="trial-tag" style={{ fontSize: size, ...style }}>
+      🎁
+    </span>
+  )
+}))
+
 vi.mock('@renderer/services/ModelService', () => ({
   getModelUniqId: (model: any) => `${model.provider}-${model.id}`
 }))
 
 vi.mock('@renderer/utils', () => ({
-  matchKeywordsInString: (input: string, target: string) => target.toLowerCase().includes(input.toLowerCase())
+  matchKeywordsInString: (input: string, target: string) => target.toLowerCase().includes(input.toLowerCase()),
+  isTrialModel: (model: any) => model.isTrial || false
 }))
 
 vi.mock('@renderer/utils/naming', () => ({

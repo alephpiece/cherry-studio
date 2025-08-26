@@ -1,13 +1,15 @@
 import ModelAvatar from '@renderer/components/Avatar/ModelAvatar'
 import { getModelUniqId } from '@renderer/services/ModelService'
 import { Model, Provider } from '@renderer/types'
-import { matchKeywordsInString } from '@renderer/utils'
+import { isTrialModel, matchKeywordsInString } from '@renderer/utils'
 import { getFancyProviderName } from '@renderer/utils/naming'
 import { Avatar, Select, SelectProps } from 'antd'
 import { sortBy } from 'lodash'
 import { BaseSelectRef } from 'rc-select'
 import { memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { TrialTag } from './Tags'
 
 interface ModelOption {
   label: React.ReactNode
@@ -29,6 +31,7 @@ interface ModelSelectorProps extends SelectProps {
   grouped?: boolean
   showAvatar?: boolean
   showSuffix?: boolean
+  showTrial?: boolean
 }
 
 /**
@@ -41,6 +44,7 @@ interface ModelSelectorProps extends SelectProps {
  * @param grouped 是否按服务商分组
  * @param showAvatar 是否显示模型图标
  * @param showSuffix 是否在模型名称后显示服务商作为后缀
+ * @param showTrial 是否显示试用标签
  */
 const ModelSelector = ({
   providers,
@@ -48,6 +52,7 @@ const ModelSelector = ({
   grouped = true,
   showAvatar = true,
   showSuffix = true,
+  showTrial = true,
   ref,
   ...props
 }: ModelSelectorProps & { ref?: React.Ref<BaseSelectRef> | null }) => {
@@ -63,8 +68,9 @@ const ModelSelector = ({
           label: (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {showAvatar && <ModelAvatar model={m} size={18} />}
-              <span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'pre' }}>
                 {m.name}
+                {showTrial && isTrialModel(m) && <TrialTag size={14} style={{ marginLeft: 2 }} />}
                 {suffix}
               </span>
             </div>
@@ -73,7 +79,7 @@ const ModelSelector = ({
           value: getModelUniqId(m)
         }))
     },
-    [predicate, showAvatar, showSuffix]
+    [predicate, showAvatar, showSuffix, showTrial]
   )
 
   // 所有 provider 的模型选项

@@ -1552,7 +1552,8 @@
     "stream_output": "Stream output",
     "trial": {
       "label": "Trial",
-      "tooltip": "Out-of-the-box, no API key required, click to go to provider settings"
+      "tooltip": "Out-of-the-box, no API key required",
+      "tooltip_with_goto": "Out-of-the-box, no API key required, click to go to provider settings"
     },
     "type": {
       "embedding": "Embedding",

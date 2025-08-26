@@ -1552,7 +1552,8 @@
     "stream_output": "Sortie en flux",
     "trial": {
       "label": "Essai",
-      "tooltip": "Prêt à l'emploi, pas besoin de clé API, cliquez pour aller aux paramètres du fournisseur"
+      "tooltip": "Prêt à l'emploi, pas besoin de clé API",
+      "tooltip_with_goto": "Prêt à l'emploi, pas besoin de clé API, cliquez pour aller aux paramètres du fournisseur"
     },
     "type": {
       "embedding": "Incorporation",

@@ -12,7 +12,7 @@ type Props = {
 export const TrialTag = ({ size = '1rem', color = '#ff3b3b', onClick, style }: Props) => {
   const { t } = useTranslation()
   return (
-    <Tooltip title={t('models.trial.tooltip')}>
+    <Tooltip title={onClick ? t('models.trial.tooltip_with_goto') : t('models.trial.tooltip')}>
       <GiftIcon size={size} color={color} onClick={onClick} style={style} />
     </Tooltip>
   )
