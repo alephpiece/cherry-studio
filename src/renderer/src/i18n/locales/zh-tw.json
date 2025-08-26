@@ -1551,7 +1551,8 @@
     },
     "stream_output": "串流輸出",
     "trial": {
-      "label": "試用"
+      "label": "試用",
+      "tooltip": "開箱即用，無需 API key"
     },
     "type": {
       "embedding": "嵌入",

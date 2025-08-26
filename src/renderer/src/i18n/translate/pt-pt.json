@@ -1551,7 +1551,8 @@
     },
     "stream_output": "Saída em fluxo",
     "trial": {
-      "label": "Teste"
+      "label": "Teste",
+      "tooltip": "Pronto para usar, não é necessário API key"
     },
     "type": {
       "embedding": "inserção",

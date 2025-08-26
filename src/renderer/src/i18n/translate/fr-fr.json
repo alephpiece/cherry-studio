@@ -1551,7 +1551,8 @@
     },
     "stream_output": "Sortie en flux",
     "trial": {
-      "label": "Essai"
+      "label": "Essai",
+      "tooltip": "Prêt à l'emploi, pas besoin de clé API"
     },
     "type": {
       "embedding": "Incorporation",
