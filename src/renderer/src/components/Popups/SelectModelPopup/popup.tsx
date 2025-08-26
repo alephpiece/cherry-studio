@@ -1,5 +1,6 @@
 import { PushpinOutlined } from '@ant-design/icons'
 import ModelTagsWithLabel from '@renderer/components/ModelTagsWithLabel'
+import { TrialTag } from '@renderer/components/Tags'
 import { TopView } from '@renderer/components/TopView'
 import { DynamicVirtualList, type DynamicVirtualListRef } from '@renderer/components/VirtualList'
 import { getModelLogo, isEmbeddingModel, isRerankModel } from '@renderer/config/models'
@@ -7,7 +8,7 @@ import { usePinnedModels } from '@renderer/hooks/usePinnedModels'
 import { useProviders } from '@renderer/hooks/useProvider'
 import { getModelUniqId } from '@renderer/services/ModelService'
 import { Model, Provider } from '@renderer/types'
-import { classNames, filterModelsByKeywords, getFancyProviderName } from '@renderer/utils'
+import { classNames, filterModelsByKeywords, getFancyProviderName, isTrialModel } from '@renderer/utils'
 import { Avatar, Divider, Empty, Modal } from 'antd'
 import { first, sortBy } from 'lodash'
 import React, {
@@ -88,6 +89,18 @@ const PopupContainer: React.FC<Props> = ({ model, resolve, modelFilter }) => {
         name: (
           <ModelName>
             {model.name}
+            {isTrialModel(model) && (
+              <TrialTag
+                size={14}
+                style={{ marginLeft: 2 }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setOpen(false)
+                  resolve(undefined)
+                  window.navigate(`/settings/provider?id=${provider.id}`)
+                }}
+              />
+            )}
             {isPinned && <span style={{ color: 'var(--color-text-3)' }}> | {groupName}</span>}
           </ModelName>
         ),
@@ -106,7 +119,7 @@ const PopupContainer: React.FC<Props> = ({ model, resolve, modelFilter }) => {
         isSelected: modelId === currentModelId
       }
     },
-    [currentModelId]
+    [currentModelId, resolve]
   )
 
   // 构建扁平化列表数据，并派生出可选择的模型项
@@ -461,7 +474,9 @@ const ModelItemLeft = styled.div`
 `
 
 const ModelName = styled.span`
-  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  white-space: pre;
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;

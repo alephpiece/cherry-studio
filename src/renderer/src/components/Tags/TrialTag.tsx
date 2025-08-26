@@ -1,25 +1,19 @@
+import { Tooltip } from 'antd'
 import { GiftIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import CustomTag, { CustomTagProps } from './CustomTag'
-
 type Props = {
-  size?: number
-  showTooltip?: boolean
-  showLabel?: boolean
-} & Omit<CustomTagProps, 'size' | 'tooltip' | 'icon' | 'color' | 'children'>
+  size?: string | number
+  color?: string
+  onClick?: (e: React.MouseEvent<SVGSVGElement>) => void
+  style?: Omit<React.CSSProperties, 'color' | 'onClick' | 'height' | 'width'>
+}
 
-export const TrialTag = ({ size, showTooltip, showLabel, ...restProps }: Props) => {
+export const TrialTag = ({ size = '1rem', color = '#ff3b3b', onClick, style }: Props) => {
   const { t } = useTranslation()
-  const color = '#ff3b3b'
   return (
-    <CustomTag
-      size={size}
-      color={color}
-      icon={<GiftIcon size={size} color={color} />}
-      tooltip={showTooltip ? t('models.trial.tooltip') : undefined}
-      {...restProps}>
-      {showLabel ? t('models.trial.label') : ''}
-    </CustomTag>
+    <Tooltip title={t('models.trial.tooltip')}>
+      <GiftIcon size={size} color={color} onClick={onClick} style={style} />
+    </Tooltip>
   )
 }

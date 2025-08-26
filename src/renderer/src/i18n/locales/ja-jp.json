@@ -1552,7 +1552,7 @@
     "stream_output": "ストリーム出力",
     "trial": {
       "label": "試用",
-      "tooltip": "すぐに使える、APIキー不要"
+      "tooltip": "すぐに使える、APIキー不要、クリックしてプロバイダー設定に移動"
     },
     "type": {
       "embedding": "埋め込み",

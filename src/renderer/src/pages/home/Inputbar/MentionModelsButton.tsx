@@ -1,12 +1,13 @@
 import ModelTagsWithLabel from '@renderer/components/ModelTagsWithLabel'
 import { useQuickPanel } from '@renderer/components/QuickPanel'
 import { QuickPanelListItem } from '@renderer/components/QuickPanel/types'
+import { TrialTag } from '@renderer/components/Tags'
 import { getModelLogo, isEmbeddingModel, isRerankModel, isVisionModel } from '@renderer/config/models'
 import db from '@renderer/databases'
 import { useProviders } from '@renderer/hooks/useProvider'
 import { getModelUniqId } from '@renderer/services/ModelService'
-import { FileType, Model } from '@renderer/types'
-import { getFancyProviderName } from '@renderer/utils'
+import { FileType, Model, Provider } from '@renderer/types'
+import { getFancyProviderName, isTrialModel } from '@renderer/utils'
 import { Avatar, Tooltip } from 'antd'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { first, sortBy } from 'lodash'
@@ -15,6 +16,15 @@ import { FC, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef 
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import styled from 'styled-components'
+
+interface ModelItem {
+  label: React.ReactNode
+  description: React.ReactNode
+  icon: React.ReactNode
+  filterText: string
+  action: () => void
+  isSelected: boolean
+}
 
 export interface MentionModelsButtonRef {
   openQuickPanel: (triggerInfo?: { type: 'input' | 'button'; position?: number; originalText?: string }) => void
@@ -118,6 +128,42 @@ const MentionModelsButton: FC<Props> = ({
     []
   )
 
+  const createModelItem = useCallback(
+    (model: Model, provider: Provider): ModelItem => {
+      return {
+        label: (
+          <div style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'pre' }}>
+            <ProviderName>{getFancyProviderName(provider)}</ProviderName>
+            <span style={{ opacity: 0.8 }}> | {model.name}</span>
+            {isTrialModel(model) && (
+              <TrialTag
+                size={14}
+                style={{ marginLeft: 2 }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  window.navigate(`/settings/provider?id=${provider.id}`)
+                }}
+              />
+            )}
+          </div>
+        ),
+        description: <ModelTagsWithLabel model={model} showLabel={false} size={10} style={{ opacity: 0.8 }} />,
+        icon: (
+          <Avatar src={getModelLogo(model.id)} size={20}>
+            {first(model.name)}
+          </Avatar>
+        ),
+        filterText: getFancyProviderName(provider) + model.name,
+        action: () => {
+          hasModelActionRef.current = true // 标记有模型动作发生
+          onMentionModel(model)
+        },
+        isSelected: mentionedModels.some((selected) => getModelUniqId(selected) === getModelUniqId(model))
+      }
+    },
+    [mentionedModels, onMentionModel]
+  )
+
   const modelItems = useMemo(() => {
     const items: QuickPanelListItem[] = []
 
@@ -127,26 +173,7 @@ const MentionModelsButton: FC<Props> = ({
           .filter((m) => !isEmbeddingModel(m) && !isRerankModel(m))
           .filter((m) => pinnedModels.includes(getModelUniqId(m)))
           .filter((m) => couldMentionNotVisionModel || (!couldMentionNotVisionModel && isVisionModel(m)))
-          .map((m) => ({
-            label: (
-              <>
-                <ProviderName>{getFancyProviderName(p)}</ProviderName>
-                <span style={{ opacity: 0.8 }}> | {m.name}</span>
-              </>
-            ),
-            description: <ModelTagsWithLabel model={m} showLabel={false} size={10} style={{ opacity: 0.8 }} />,
-            icon: (
-              <Avatar src={getModelLogo(m.id)} size={20}>
-                {first(m.name)}
-              </Avatar>
-            ),
-            filterText: getFancyProviderName(p) + m.name,
-            action: () => {
-              hasModelActionRef.current = true // 标记有模型动作发生
-              onMentionModel(m)
-            },
-            isSelected: mentionedModels.some((selected) => getModelUniqId(selected) === getModelUniqId(m))
-          }))
+          .map((m) => createModelItem(m, p))
       )
 
       if (pinnedItems.length > 0) {
@@ -155,34 +182,13 @@ const MentionModelsButton: FC<Props> = ({
     }
 
     providers.forEach((p) => {
-      const providerModels = sortBy(
+      const providerModelItems = sortBy(
         p.models
           .filter((m) => !isEmbeddingModel(m) && !isRerankModel(m))
           .filter((m) => !pinnedModels.includes(getModelUniqId(m)))
           .filter((m) => couldMentionNotVisionModel || (!couldMentionNotVisionModel && isVisionModel(m))),
         ['group', 'name']
-      )
-
-      const providerModelItems = providerModels.map((m) => ({
-        label: (
-          <>
-            <ProviderName>{getFancyProviderName(p)}</ProviderName>
-            <span style={{ opacity: 0.8 }}> | {m.name}</span>
-          </>
-        ),
-        description: <ModelTagsWithLabel model={m} showLabel={false} size={10} style={{ opacity: 0.8 }} />,
-        icon: (
-          <Avatar src={getModelLogo(m.id)} size={20}>
-            {first(m.name)}
-          </Avatar>
-        ),
-        filterText: getFancyProviderName(p) + m.name,
-        action: () => {
-          hasModelActionRef.current = true // 标记有模型动作发生
-          onMentionModel(m)
-        },
-        isSelected: mentionedModels.some((selected) => getModelUniqId(selected) === getModelUniqId(m))
-      }))
+      ).map((m) => createModelItem(m, p))
 
       if (providerModelItems.length > 0) {
         items.push(...providerModelItems)
@@ -224,11 +230,10 @@ const MentionModelsButton: FC<Props> = ({
     providers,
     t,
     couldMentionNotVisionModel,
-    mentionedModels,
-    onMentionModel,
+    createModelItem,
     navigate,
-    quickPanel,
     onClearMentionModels,
+    quickPanel,
     setText,
     removeAtSymbolAndText
   ])

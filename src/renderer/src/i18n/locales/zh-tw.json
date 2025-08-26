@@ -1552,7 +1552,7 @@
     "stream_output": "串流輸出",
     "trial": {
       "label": "試用",
-      "tooltip": "開箱即用，無需 API key"
+      "tooltip": "開箱即用，無需 API key，點擊跳轉到服務商設置界面"
     },
     "type": {
       "embedding": "嵌入",
