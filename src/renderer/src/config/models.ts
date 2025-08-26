@@ -537,35 +537,31 @@ export const SYSTEM_MODELS: Record<SystemProviderId | 'defaultModel', Model[]> =
   defaultModel: [
     {
       // 默认助手模型
-      id: 'glm-4.5-flash',
-      provider: 'zhipu',
-      name: 'GLM-4.5-Flash',
-      group: 'GLM-4.5',
-      isTrial: true
+      id: 'deepseek-ai/DeepSeek-V3',
+      name: 'deepseek-ai/DeepSeek-V3',
+      provider: 'silicon',
+      group: 'deepseek-ai'
     },
     {
-      // 默认快速模型
-      id: 'glm-4.5-flash',
-      provider: 'zhipu',
-      name: 'GLM-4.5-Flash',
-      group: 'GLM-4.5',
-      isTrial: true
+      // 默认话题命名模型
+      id: 'Qwen/Qwen3-8B',
+      name: 'Qwen/Qwen3-8B',
+      provider: 'silicon',
+      group: 'Qwen'
     },
     {
       // 默认翻译模型
-      id: 'glm-4.5-flash',
-      provider: 'zhipu',
-      name: 'GLM-4.5-Flash',
-      group: 'GLM-4.5',
-      isTrial: true
+      id: 'deepseek-ai/DeepSeek-V3',
+      name: 'deepseek-ai/DeepSeek-V3',
+      provider: 'silicon',
+      group: 'deepseek-ai'
     },
     {
       // 默认快捷助手模型
-      id: 'glm-4.5-flash',
-      provider: 'zhipu',
-      name: 'GLM-4.5-Flash',
-      group: 'GLM-4.5',
-      isTrial: true
+      id: 'deepseek-ai/DeepSeek-V3',
+      name: 'deepseek-ai/DeepSeek-V3',
+      provider: 'silicon',
+      group: 'deepseek-ai'
     }
   ],
   vertexai: [],
