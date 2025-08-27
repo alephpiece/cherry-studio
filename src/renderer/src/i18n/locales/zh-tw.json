@@ -1550,11 +1550,6 @@
       "tooltip": "搜尋模型"
     },
     "stream_output": "串流輸出",
-    "trial": {
-      "label": "試用",
-      "tooltip": "開箱即用，無需 API key",
-      "tooltip_with_goto": "開箱即用，無需 API key，點擊跳轉到服務商設置界面"
-    },
     "type": {
       "embedding": "嵌入",
       "free": "免費",
@@ -3848,6 +3843,16 @@
     "quit": "結束",
     "show_mini_window": "快捷助手",
     "show_window": "顯示視窗"
+  },
+  "trial": {
+    "label": "試用",
+    "model": {
+      "tooltip": "開箱即用，無 API key 時消耗免費額度",
+      "tooltip_with_goto": "開箱即用，無 API key 時消耗免費額度，點擊跳轉到設置界面"
+    },
+    "provider": {
+      "tooltip": "該服務商包含開箱即用的試用模型"
+    }
   },
   "update": {
     "install": "立即安裝",

@@ -1550,11 +1550,6 @@
       "tooltip": "Rechercher un modèle"
     },
     "stream_output": "Sortie en flux",
-    "trial": {
-      "label": "Essai",
-      "tooltip": "Prêt à l'emploi, pas besoin de clé API",
-      "tooltip_with_goto": "Prêt à l'emploi, pas besoin de clé API, cliquez pour aller aux paramètres du fournisseur"
-    },
     "type": {
       "embedding": "Incorporation",
       "free": "Gratuit",
@@ -3847,6 +3842,16 @@
     "quit": "Quitter",
     "show_mini_window": "Assistant Rapide",
     "show_window": "Afficher la fenêtre"
+  },
+  "trial": {
+    "label": "Essai",
+    "model": {
+      "tooltip": "Prêt à l'emploi, consomme le quota gratuit lorsqu'aucune clé API n'est fournie",
+      "tooltip_with_goto": "Prêt à l'emploi, consomme le quota gratuit lorsqu'aucune clé API n'est fournie, cliquez pour aller aux paramètres"
+    },
+    "provider": {
+      "tooltip": "Ce fournisseur contient des modèles de test prêts à l'emploi"
+    }
   },
   "update": {
     "install": "Installer",

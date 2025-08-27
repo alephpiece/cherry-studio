@@ -70,7 +70,7 @@ export function isTrialModel(model: Model) {
  * @param provider 模型服务商
  * @returns 是否包含试用模型
  */
-export function hasTrialModel(provider: Provider) {
+export function containsTrialModel(provider: Provider) {
   return provider.models.some((model) => model.isTrial)
 }
 

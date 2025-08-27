@@ -2,6 +2,7 @@ import OpenAIAlert from '@renderer/components/Alert/OpenAIAlert'
 import { LoadingIcon } from '@renderer/components/Icons'
 import { HStack } from '@renderer/components/Layout'
 import { ApiKeyListPopup } from '@renderer/components/Popups/ApiKeyListPopup'
+import { TrialTag } from '@renderer/components/Tags'
 import { isEmbeddingModel, isRerankModel } from '@renderer/config/models'
 import { PROVIDER_URLS } from '@renderer/config/providers'
 import { useTheme } from '@renderer/context/ThemeProvider'
@@ -13,7 +14,13 @@ import { checkApi } from '@renderer/services/ApiService'
 import { isProviderSupportAuth } from '@renderer/services/ProviderService'
 import { isSystemProvider } from '@renderer/types'
 import { ApiKeyConnectivity, HealthStatus } from '@renderer/types/healthCheck'
-import { formatApiHost, formatApiKeys, getFancyProviderName, isOpenAIProvider } from '@renderer/utils'
+import {
+  containsTrialModel,
+  formatApiHost,
+  formatApiKeys,
+  getFancyProviderName,
+  isOpenAIProvider
+} from '@renderer/utils'
 import { formatErrorMessage } from '@renderer/utils/error'
 import { Button, Divider, Flex, Input, Space, Switch, Tooltip } from 'antd'
 import Link from 'antd/es/typography/Link'
@@ -232,11 +239,14 @@ const ProviderSetting: FC<Props> = ({ providerId }) => {
     setApiHost(provider.apiHost)
   }, [provider.apiHost, provider.id])
 
+  const hasTrialModel = useMemo(() => containsTrialModel(provider), [provider])
+
   return (
     <SettingContainer theme={theme} style={{ background: 'var(--color-background)' }}>
       <SettingTitle>
         <Flex align="center" gap={8}>
           <ProviderName>{fancyProviderName}</ProviderName>
+          {hasTrialModel && <TrialTag size={14} style={{ margin: '0 -2px' }} tooltip={t('trial.provider.tooltip')} />}
           {officialWebsite && (
             <Link target="_blank" href={providerConfig.websites.official} style={{ display: 'flex' }}>
               <Button type="text" size="small" icon={<SquareArrowOutUpRight size={14} />} />

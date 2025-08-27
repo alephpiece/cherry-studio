@@ -1550,11 +1550,6 @@
       "tooltip": "Search models"
     },
     "stream_output": "Stream output",
-    "trial": {
-      "label": "Trial",
-      "tooltip": "Out-of-the-box, no API key required",
-      "tooltip_with_goto": "Out-of-the-box, no API key required, click to go to provider settings"
-    },
     "type": {
       "embedding": "Embedding",
       "free": "Free",
@@ -3848,6 +3843,16 @@
     "quit": "Quit",
     "show_mini_window": "Quick Assistant",
     "show_window": "Show Window"
+  },
+  "trial": {
+    "label": "Trial",
+    "model": {
+      "tooltip": "Out-of-the-box, consumes free quota when no API key is provided",
+      "tooltip_with_goto": "Out-of-the-box, consumes free quota when no API key is provided, click to go to settings"
+    },
+    "provider": {
+      "tooltip": "The provider contains out-of-the-box trial models"
+    }
   },
   "update": {
     "install": "Install",

@@ -1550,11 +1550,6 @@
       "tooltip": "Buscar modelo"
     },
     "stream_output": "Salida en flujo",
-    "trial": {
-      "label": "Prueba",
-      "tooltip": "Listo para usar, no se requiere API key",
-      "tooltip_with_goto": "Listo para usar, no se requiere API key, haga clic para ir a la configuración del proveedor"
-    },
     "type": {
       "embedding": "Incrustación",
       "free": "Gratis",
@@ -3847,6 +3842,16 @@
     "quit": "Salir",
     "show_mini_window": "Asistente rápido",
     "show_window": "Mostrar ventana"
+  },
+  "trial": {
+    "label": "Prueba",
+    "model": {
+      "tooltip": "Listo para usar, consume cuota gratuita cuando no se proporciona API key",
+      "tooltip_with_goto": "Listo para usar, consume cuota gratuita cuando no se proporciona API key, haga clic para ir a la configuración"
+    },
+    "provider": {
+      "tooltip": "Este proveedor contiene modelos de prueba listos para usar"
+    }
   },
   "update": {
     "install": "Instalar",

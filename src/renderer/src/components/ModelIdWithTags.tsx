@@ -1,4 +1,6 @@
+import { TrialTag } from '@renderer/components/Tags'
 import { Model } from '@renderer/types'
+import { isTrialModel } from '@renderer/utils'
 import { Tooltip, Typography } from 'antd'
 import { memo } from 'react'
 import styled from 'styled-components'
@@ -36,6 +38,7 @@ const ModelIdWithTags = ({
         placement="top">
         <NameSpan>{model.name}</NameSpan>
       </Tooltip>
+      {isTrialModel(model) && <TrialTag size={fontSize} style={{ margin: '0 -2px 0 -4px' }} />}
       <ModelTagsWithLabel model={model} size={11} style={{ flexShrink: 0 }} />
     </ListItemName>
   )
@@ -45,7 +48,7 @@ const ListItemName = styled.div<{ $fontSize?: number }>`
   display: flex;
   align-items: center;
   flex-direction: row;
-  gap: 10px;
+  gap: 6px;
   color: var(--color-text);
   line-height: 1;
   font-weight: 600;
