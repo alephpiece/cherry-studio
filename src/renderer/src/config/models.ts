@@ -1230,6 +1230,24 @@ export const SYSTEM_MODELS: Record<SystemProviderId | 'defaultModel', Model[]> =
       group: 'GLM-4.5'
     },
     {
+      id: 'glm-4.5-x',
+      provider: 'zhipu',
+      name: 'GLM-4.5-X',
+      group: 'GLM-4.5'
+    },
+    {
+      id: 'glm-4.5-air',
+      provider: 'zhipu',
+      name: 'GLM-4.5-Air',
+      group: 'GLM-4.5'
+    },
+    {
+      id: 'glm-4.5-airx',
+      provider: 'zhipu',
+      name: 'GLM-4.5-AirX',
+      group: 'GLM-4.5'
+    },
+    {
       id: 'glm-4.5-flash',
       provider: 'zhipu',
       name: 'GLM-4.5-Flash',
@@ -1237,39 +1255,21 @@ export const SYSTEM_MODELS: Record<SystemProviderId | 'defaultModel', Model[]> =
       isTrial: true
     },
     {
-      id: 'glm-4.5-air',
+      id: 'glm-4.5v',
       provider: 'zhipu',
-      name: 'GLM-4.5-AIR',
-      group: 'GLM-4.5'
-    },
-    {
-      id: 'glm-4.5-airx',
-      provider: 'zhipu',
-      name: 'GLM-4.5-AIRX',
-      group: 'GLM-4.5'
-    },
-    {
-      id: 'glm-4.5-x',
-      provider: 'zhipu',
-      name: 'GLM-4.5-X',
-      group: 'GLM-4.5'
+      name: 'GLM-4.5V',
+      group: 'GLM-4.5V'
     },
     {
       id: 'glm-z1-air',
       provider: 'zhipu',
-      name: 'GLM-Z1-AIR',
+      name: 'GLM-Z1-Air',
       group: 'GLM-Z1'
     },
     {
       id: 'glm-z1-airx',
       provider: 'zhipu',
-      name: 'GLM-Z1-AIRX',
-      group: 'GLM-Z1'
-    },
-    {
-      id: 'glm-z1-flash',
-      provider: 'zhipu',
-      name: 'GLM-Z1-FLASH',
+      name: 'GLM-Z1-AirX',
       group: 'GLM-Z1'
     },
     {
@@ -1297,12 +1297,6 @@ export const SYSTEM_MODELS: Record<SystemProviderId | 'defaultModel', Model[]> =
       group: 'GLM-4'
     },
     {
-      id: 'glm-4-flash-250414',
-      provider: 'zhipu',
-      name: 'GLM-4-Flash-250414',
-      group: 'GLM-4'
-    },
-    {
       id: 'glm-4-flashx',
       provider: 'zhipu',
       name: 'GLM-4-FlashX',
@@ -1311,20 +1305,28 @@ export const SYSTEM_MODELS: Record<SystemProviderId | 'defaultModel', Model[]> =
     {
       id: 'glm-4v',
       provider: 'zhipu',
-      name: 'GLM 4V',
-      group: 'GLM-4v'
+      name: 'GLM-4V',
+      group: 'GLM-4V'
     },
     {
       id: 'glm-4v-flash',
       provider: 'zhipu',
       name: 'GLM-4V-Flash',
-      group: 'GLM-4v'
+      group: 'GLM-4V',
+      isTrial: true
     },
     {
       id: 'glm-4v-plus-0111',
       provider: 'zhipu',
       name: 'GLM-4V-Plus-0111',
-      group: 'GLM-4v'
+      group: 'GLM-4V'
+    },
+    {
+      id: 'glm-4.1v-thinking-flash',
+      provider: 'zhipu',
+      name: 'GLM-4.1V-Thinking-Flash',
+      group: 'GLM-4V',
+      isTrial: true
     },
     {
       id: 'glm-4-alltools',
