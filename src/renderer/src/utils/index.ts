@@ -66,6 +66,15 @@ export function isTrialModel(model: Model) {
 }
 
 /**
+ * 判断服务商是否包含试用模型
+ * @param provider 模型服务商
+ * @returns 是否包含试用模型
+ */
+export function hasTrialModel(provider: Provider) {
+  return provider.models.some((model) => model.isTrial)
+}
+
+/**
  * 从错误对象中提取错误信息。
  * @param {any} error 错误对象或字符串
  * @returns {string} 提取的错误信息，如果没有则返回空字符串

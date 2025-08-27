@@ -1,5 +1,5 @@
+import { GiftIcon } from '@renderer/components/Icons'
 import { Tooltip } from 'antd'
-import { GiftIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 type Props = {
@@ -13,7 +13,7 @@ export const TrialTag = ({ size = '1rem', color = '#ff3b3b', onClick, style }: P
   const { t } = useTranslation()
   return (
     <Tooltip title={onClick ? t('models.trial.tooltip_with_goto') : t('models.trial.tooltip')}>
-      <GiftIcon size={size} color={color} onClick={onClick} style={style} />
+      <GiftIcon size={size} color={color} onClick={onClick} active style={style} />
     </Tooltip>
   )
 }
