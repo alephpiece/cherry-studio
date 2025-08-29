@@ -114,7 +114,11 @@ const Chat: FC<Props> = (props) => {
     : 'calc(100vh - var(--navbar-height))'
 
   return (
-    <Container id="chat" className={classNames([messageStyle, { 'multi-select-mode': isMultiSelectMode }])}>
+    <Container
+      id="chat"
+      role="region"
+      aria-label="Chat"
+      className={classNames([messageStyle, { 'multi-select-mode': isMultiSelectMode }])}>
       {isTopNavbar && (
         <ChatNavbar
           activeAssistant={props.assistant}

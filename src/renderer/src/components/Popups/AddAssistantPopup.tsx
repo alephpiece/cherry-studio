@@ -175,6 +175,8 @@ const PopupContainer: React.FC<Props> = ({ resolve }) => {
       footer={null}>
       <HStack style={{ padding: '0 12px', marginTop: 5 }}>
         <Input
+          role="searchbox"
+          aria-label="Search agent"
           prefix={
             <SearchIcon>
               <Search size={14} />
@@ -192,9 +194,11 @@ const PopupContainer: React.FC<Props> = ({ resolve }) => {
         />
       </HStack>
       <Divider style={{ margin: 0, marginTop: 4, borderBlockStartWidth: 0.5 }} />
-      <Container ref={containerRef}>
+      <Container ref={containerRef} role="list" aria-label="Agent list">
         {take(agents, 100).map((agent, index) => (
           <AgentItem
+            role="listitem"
+            aria-label={`Agent: ${agent.name}`}
             key={agent.id}
             onClick={() => onCreateAssistant(agent)}
             className={`agent-item ${agent.id === 'default' ? 'default' : ''} ${index === selectedIndex ? 'keyboard-selected' : ''}`}
