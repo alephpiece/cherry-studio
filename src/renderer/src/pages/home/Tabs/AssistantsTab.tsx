@@ -1,11 +1,13 @@
 import { DownOutlined, RightOutlined } from '@ant-design/icons'
 import { DraggableList } from '@renderer/components/DraggableList'
+import AddAssistantPopup from '@renderer/components/Popups/AddAssistantPopup'
 import Scrollbar from '@renderer/components/Scrollbar'
 import { useAgents } from '@renderer/hooks/useAgents'
-import { useAssistants } from '@renderer/hooks/useAssistant'
+import { useAssistants, useDefaultAssistant } from '@renderer/hooks/useAssistant'
 import { useAssistantsTabSortType } from '@renderer/hooks/useStore'
 import { useTags } from '@renderer/hooks/useTags'
 import { Assistant, AssistantsSortType } from '@renderer/types'
+import { uuid } from '@renderer/utils'
 import { Tooltip, Typography } from 'antd'
 import { Plus } from 'lucide-react'
 import { FC, useCallback, useMemo, useRef, useState } from 'react'
@@ -17,16 +19,10 @@ import AssistantItem from './components/AssistantItem'
 interface AssistantsTabProps {
   activeAssistant: Assistant
   setActiveAssistant: (assistant: Assistant) => void
-  onCreateAssistant: () => void
-  onCreateDefaultAssistant: () => void
 }
-const Assistants: FC<AssistantsTabProps> = ({
-  activeAssistant,
-  setActiveAssistant,
-  onCreateAssistant,
-  onCreateDefaultAssistant
-}) => {
-  const { assistants, removeAssistant, copyAssistant, updateAssistants } = useAssistants()
+const Assistants: FC<AssistantsTabProps> = ({ activeAssistant, setActiveAssistant }) => {
+  const { assistants, removeAssistant, addAssistant, copyAssistant, updateAssistants } = useAssistants()
+  const { defaultAssistant } = useDefaultAssistant()
   const [dragging, setDragging] = useState(false)
   const { addAgent } = useAgents()
   const { t } = useTranslation()
@@ -34,16 +30,32 @@ const Assistants: FC<AssistantsTabProps> = ({
   const { assistantsTabSortType = 'list', setAssistantsTabSortType } = useAssistantsTabSortType()
   const containerRef = useRef<HTMLDivElement>(null)
 
+  const isActiveAssistant = useCallback(
+    (assistant: Assistant) => assistant.id === activeAssistant?.id,
+    [activeAssistant]
+  )
+
+  const onCreateAssistant = useCallback(async () => {
+    const assistant = await AddAssistantPopup.show()
+    assistant && setActiveAssistant(assistant)
+  }, [setActiveAssistant])
+
+  const onCreateDefaultAssistant = useCallback(() => {
+    const assistant = { ...defaultAssistant, id: uuid() }
+    addAssistant(assistant)
+    setActiveAssistant(assistant)
+  }, [addAssistant, defaultAssistant, setActiveAssistant])
+
   const onDelete = useCallback(
     (assistant: Assistant) => {
       const remaining = assistants.filter((a) => a.id !== assistant.id)
-      if (assistant.id === activeAssistant?.id) {
+      if (isActiveAssistant(assistant)) {
         const newActive = remaining[remaining.length - 1]
         newActive ? setActiveAssistant(newActive) : onCreateDefaultAssistant()
       }
       removeAssistant(assistant.id)
     },
-    [activeAssistant, assistants, removeAssistant, setActiveAssistant, onCreateDefaultAssistant]
+    [assistants, isActiveAssistant, onCreateDefaultAssistant, removeAssistant, setActiveAssistant]
   )
 
   const handleSortByChange = useCallback(
@@ -113,9 +125,12 @@ const Assistants: FC<AssistantsTabProps> = ({
                     onDragEnd={() => setDragging(false)}>
                     {(assistant) => (
                       <AssistantItem
+                        role="listitem"
+                        aria-label={`Assistant: ${assistant.name}`}
+                        aria-selected={isActiveAssistant(assistant)}
                         key={assistant.id}
                         assistant={assistant}
-                        isActive={assistant.id === activeAssistant.id}
+                        isActive={isActiveAssistant(assistant)}
                         sortBy={assistantsTabSortType}
                         onSwitch={setActiveAssistant}
                         onDelete={onDelete}
@@ -137,17 +152,22 @@ const Assistants: FC<AssistantsTabProps> = ({
   }
 
   return (
-    <Container className="assistants-tab" ref={containerRef}>
+    <Container className="assistants-tab" role="region" aria-label="Assistants" ref={containerRef}>
       <DraggableList
+        role="list"
+        aria-label="Assistant list"
         list={assistants}
         onUpdate={updateAssistants}
         onDragStart={() => setDragging(true)}
         onDragEnd={() => setDragging(false)}>
         {(assistant) => (
           <AssistantItem
+            role="listitem"
+            aria-label={`Assistant: ${assistant.name}`}
+            aria-selected={isActiveAssistant(assistant)}
             key={assistant.id}
             assistant={assistant}
-            isActive={assistant.id === activeAssistant.id}
+            isActive={isActiveAssistant(assistant)}
             sortBy={assistantsTabSortType}
             onSwitch={setActiveAssistant}
             onDelete={onDelete}

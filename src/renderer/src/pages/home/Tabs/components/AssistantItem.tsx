@@ -33,7 +33,7 @@ import * as tinyPinyin from 'tiny-pinyin'
 
 import AssistantTagsPopup from './AssistantTagsPopup'
 
-interface AssistantItemProps {
+interface AssistantItemProps extends React.HTMLAttributes<HTMLDivElement> {
   assistant: Assistant
   isActive: boolean
   sortBy: AssistantsSortType
@@ -54,7 +54,8 @@ const AssistantItem: FC<AssistantItemProps> = ({
   onDelete,
   addAgent,
   copyAssistant,
-  handleSortByChange
+  handleSortByChange,
+  ...rest
 }) => {
   const { t } = useTranslation()
   const { allTags } = useTags()
@@ -141,7 +142,7 @@ const AssistantItem: FC<AssistantItemProps> = ({
       menu={{ items: menuItems }}
       trigger={['contextMenu']}
       popupRender={(menu) => <div onPointerDown={(e) => e.stopPropagation()}>{menu}</div>}>
-      <Container onClick={handleSwitch} className={isActive ? 'active' : ''}>
+      <Container {...rest} onClick={handleSwitch} className={isActive ? 'active' : ''}>
         <AssistantNameRow className="name" title={fullAssistantName}>
           {assistantIconType === 'model' ? (
             <ModelAvatar
@@ -161,7 +162,9 @@ const AssistantItem: FC<AssistantItemProps> = ({
         </AssistantNameRow>
         {isActive && (
           <MenuButton onClick={() => EventEmitter.emit(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR)}>
-            <TopicCount className="topics-count">{assistant.topics.length}</TopicCount>
+            <TopicCount role="status" aria-label={`${assistant.topics.length} topics`}>
+              {assistant.topics.length}
+            </TopicCount>
           </MenuButton>
         )}
       </Container>

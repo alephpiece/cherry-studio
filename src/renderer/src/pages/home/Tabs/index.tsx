@@ -1,10 +1,8 @@
-import AddAssistantPopup from '@renderer/components/Popups/AddAssistantPopup'
-import { useAssistants, useDefaultAssistant } from '@renderer/hooks/useAssistant'
 import { useNavbarPosition, useSettings } from '@renderer/hooks/useSettings'
 import { useShowTopics } from '@renderer/hooks/useStore'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import { Assistant, Topic } from '@renderer/types'
-import { classNames, uuid } from '@renderer/utils'
+import { classNames } from '@renderer/utils'
 import { FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -36,10 +34,8 @@ const HomeTabs: FC<Props> = ({
   forceToSeeAllTab,
   style
 }) => {
-  const { addAssistant } = useAssistants()
   const [tab, setTab] = useState<Tab>(position === 'left' ? _tab || 'assistants' : 'topic')
   const { topicPosition } = useSettings()
-  const { defaultAssistant } = useDefaultAssistant()
   const { toggleShowTopics } = useShowTopics()
   const { isLeftNavbar } = useNavbarPosition()
 
@@ -56,17 +52,6 @@ const HomeTabs: FC<Props> = ({
   }
 
   const showTab = position === 'left' && topicPosition === 'left'
-
-  const onCreateAssistant = async () => {
-    const assistant = await AddAssistantPopup.show()
-    assistant && setActiveAssistant(assistant)
-  }
-
-  const onCreateDefaultAssistant = () => {
-    const assistant = { ...defaultAssistant, id: uuid() }
-    addAssistant(assistant)
-    setActiveAssistant(assistant)
-  }
 
   useEffect(() => {
     const unsubscribes = [
@@ -129,12 +114,7 @@ const HomeTabs: FC<Props> = ({
 
       <TabContent className="home-tabs-content">
         {tab === 'assistants' && (
-          <Assistants
-            activeAssistant={activeAssistant}
-            setActiveAssistant={setActiveAssistant}
-            onCreateAssistant={onCreateAssistant}
-            onCreateDefaultAssistant={onCreateDefaultAssistant}
-          />
+          <Assistants activeAssistant={activeAssistant} setActiveAssistant={setActiveAssistant} />
         )}
         {tab === 'topic' && (
           <Topics
