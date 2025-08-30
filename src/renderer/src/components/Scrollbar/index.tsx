@@ -49,11 +49,11 @@ const Scrollbar: FC<Props> = ({ ref: passedRef, children, onScroll: externalOnSc
 
   return (
     <ScrollBarContainer
-      {...htmlProps} // Pass other HTML attributes
       role="region"
       aria-label="Scrollbar"
       aria-busy={isScrolling}
       aria-live="polite"
+      {...htmlProps} // Pass other HTML attributes
       $isScrolling={isScrolling}
       onScroll={combinedOnScroll} // Use the combined handler
       ref={passedRef}>

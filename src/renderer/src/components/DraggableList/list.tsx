@@ -33,7 +33,7 @@ const DraggableList: FC<Props<any>> = ({
   onDragStart,
   onUpdate,
   onDragEnd,
-  ...rest
+  ...restProps
 }) => {
   const _onDragEnd = (result: DropResult, provided: ResponderProvided) => {
     onDragEnd?.(result, provided)
@@ -51,7 +51,7 @@ const DraggableList: FC<Props<any>> = ({
     <DragDropContext onDragStart={onDragStart} onDragEnd={_onDragEnd}>
       <Droppable droppableId="droppable" {...droppableProps}>
         {(provided) => (
-          <div {...rest} {...provided.droppableProps} ref={provided.innerRef} style={style}>
+          <div {...restProps} {...provided.droppableProps} ref={provided.innerRef} style={style}>
             <div {...listProps} className="draggable-list-container">
               {list.map((item, index) => {
                 const id = item.id || item

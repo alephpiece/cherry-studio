@@ -97,7 +97,7 @@ const Assistants: FC<AssistantsTabProps> = ({ activeAssistant, setActiveAssistan
 
   if (assistantsTabSortType === 'tags') {
     return (
-      <Container className="assistants-tab" ref={containerRef}>
+      <Container className="assistants-tab" role="region" aria-label="Assistants" ref={containerRef}>
         <div style={{ marginBottom: '8px' }}>
           {getGroupedAssistants.map((group) => (
             <TagsContainer key={group.tag}>
