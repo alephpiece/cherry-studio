@@ -96,6 +96,7 @@ export async function locateToMessage(navigate: NavigateFunction, message: Messa
  * @returns An object containing the created message and its blocks.
  */
 export function getUserMessage({
+  messageId: _messageId,
   assistant,
   topic,
   type,
@@ -105,6 +106,7 @@ export function getUserMessage({
   mentions,
   usage
 }: {
+  messageId?: string
   assistant: Assistant
   topic: Topic
   type?: Message['type']
@@ -116,7 +118,7 @@ export function getUserMessage({
 }): { message: Message; blocks: MessageBlock[] } {
   const defaultModel = getDefaultModel()
   const model = assistant.model || defaultModel
-  const messageId = uuid() // Generate ID here
+  const messageId = _messageId ?? uuid() // Generate ID here
   const blocks: MessageBlock[] = []
   const blockIds: string[] = []
 

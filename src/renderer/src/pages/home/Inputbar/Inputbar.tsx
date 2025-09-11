@@ -25,20 +25,17 @@ import { useTimer } from '@renderer/hooks/useTimer'
 import useTranslate from '@renderer/hooks/useTranslate'
 import { getDefaultTopic } from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
-import FileManager from '@renderer/services/FileManager'
-import { checkRateLimit, getUserMessage } from '@renderer/services/MessagesService'
 import { getModelUniqId } from '@renderer/services/ModelService'
 import PasteService from '@renderer/services/PasteService'
-import { spanManagerService } from '@renderer/services/SpanManagerService'
-import { estimateTextTokens as estimateTxtTokens, estimateUserPromptUsage } from '@renderer/services/TokenService'
+import { estimateTextTokens as estimateTxtTokens } from '@renderer/services/TokenService'
 import { translateText } from '@renderer/services/TranslateService'
 import WebSearchService from '@renderer/services/WebSearchService'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
-import { setSearching } from '@renderer/store/runtime'
-import { sendMessage as _sendMessage } from '@renderer/store/thunk/messageThunk'
+import { addAssistantTodo } from '@renderer/store/assistants'
+import { addActiveTodoExecutor, setSearching } from '@renderer/store/runtime'
 import { Assistant, FileType, FileTypes, KnowledgeBase, KnowledgeItem, Model, Topic } from '@renderer/types'
-import type { MessageInputBaseParams } from '@renderer/types/newMessage'
-import { classNames, delay, filterSupportedFiles, formatFileSize } from '@renderer/utils'
+import { PendingUserMessage, TodoAction, TodoStatus, UserMessageTodo } from '@renderer/types/todos'
+import { classNames, delay, filterSupportedFiles, formatFileSize, uuid } from '@renderer/utils'
 import { formatQuotedText } from '@renderer/utils/formats'
 import {
   getFilesFromDropEvent,
@@ -216,49 +213,57 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     if (inputEmpty) {
       return
     }
-    if (checkRateLimit(assistant)) {
-      return
-    }
 
-    logger.info('Starting to send message')
-
-    const parent = spanManagerService.startTrace(
-      { topicId: topic.id, name: 'sendMessage', inputs: text },
-      mentionedModels && mentionedModels.length > 0 ? mentionedModels : [assistant.model]
-    )
-    EventEmitter.emit(EVENT_NAMES.SEND_MESSAGE, { topicId: topic.id, traceId: parent?.spanContext().traceId })
+    logger.info('Creating send message todo')
 
     try {
-      // Dispatch the sendMessage action with all options
-      const uploadedFiles = await FileManager.uploadFiles(files)
+      const todoId = uuid()
 
-      const baseUserMessage: MessageInputBaseParams = { assistant, topic, content: text }
-
-      // getUserMessage()
-      if (uploadedFiles) {
-        baseUserMessage.files = uploadedFiles
+      // Create pending user message
+      const pendingMessage: PendingUserMessage = {
+        id: todoId,
+        content: text,
+        files: files.length > 0 ? files : undefined,
+        mentions: mentionedModels.length > 0 ? mentionedModels : undefined
       }
 
-      if (mentionedModels) {
-        baseUserMessage.mentions = mentionedModels
+      // Create todo
+      const todo: UserMessageTodo = {
+        id: todoId,
+        title: `Send: ${text.slice(0, 50)}${text.length > 50 ? '...' : ''}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        action: TodoAction.SendMessage,
+        status: TodoStatus.Pending,
+        assistant,
+        context: {
+          topic,
+          message: pendingMessage
+        }
       }
 
-      baseUserMessage.usage = await estimateUserPromptUsage(baseUserMessage)
+      // Register todo - the AssistantTodoService will handle the actual sending
+      dispatch(
+        addAssistantTodo({
+          assistantId: assistant.id,
+          topicId: topic.id,
+          todo
+        })
+      )
 
-      const { message, blocks } = getUserMessage(baseUserMessage)
-      message.traceId = parent?.spanContext().traceId
+      // Activate runtime gate if first time for this assistant in this session
+      dispatch(addActiveTodoExecutor(assistant.id))
 
-      dispatch(_sendMessage(message, blocks, assistant, topic.id))
+      logger.info(`Created a todo for sending message ${todoId}`)
 
-      // Clear input
+      // Clear input immediately for better UX
       setText('')
       setFiles([])
       setTimeoutTimer('sendMessage_1', () => setText(''), 500)
       setTimeoutTimer('sendMessage_2', () => resizeTextArea(true), 0)
       setExpand(false)
     } catch (error) {
-      logger.warn('Failed to send message:', error as Error)
-      parent?.recordException(error as Error)
+      logger.warn('Failed to create a todo for sending message:', error as Error)
     }
   }, [assistant, dispatch, files, inputEmpty, mentionedModels, resizeTextArea, setTimeoutTimer, text, topic])
 
