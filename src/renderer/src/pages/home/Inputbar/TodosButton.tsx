@@ -27,8 +27,10 @@ const TodosButton = ({ ref, ToolbarButton, assistantId, topicId }: Props) => {
   const { assistant } = useAssistant(assistantId)
   const dispatch = useAppDispatch()
 
+  const panelSymbol = 'todos'
+  const todos = useMemo(() => [...(assistant.todos?.[topicId] || [])], [assistant.todos, topicId])
+
   const panelItems = useMemo<QuickPanelListItem[]>(() => {
-    const todos = [...(assistant.todos?.[topicId] || [])]
     const items: QuickPanelListItem[] = todos.map((todo) => ({
       label: (
         <div className="flex items-center gap-2">
@@ -53,10 +55,10 @@ const TodosButton = ({ ref, ToolbarButton, assistantId, topicId }: Props) => {
     })
 
     return items
-  }, [assistant.id, assistant.todos, dispatch, t, topicId])
+  }, [assistant.id, dispatch, t, todos, topicId])
 
   const openOptions = useMemo<QuickPanelOpenOptions>(
-    () => ({ title: t('todos.title'), list: panelItems, symbol: 'todos' }),
+    () => ({ title: t('todos.title'), list: panelItems, symbol: panelSymbol }),
     [panelItems, t]
   )
 
@@ -65,7 +67,7 @@ const TodosButton = ({ ref, ToolbarButton, assistantId, topicId }: Props) => {
   }, [quickPanel, openOptions])
 
   const handleToggle = useCallback(() => {
-    if (quickPanel.isVisible && quickPanel.symbol === 'todos') {
+    if (quickPanel.isVisible && quickPanel.symbol === panelSymbol) {
       quickPanel.close()
     } else {
       openQuickPanel()
@@ -73,7 +75,7 @@ const TodosButton = ({ ref, ToolbarButton, assistantId, topicId }: Props) => {
   }, [openQuickPanel, quickPanel])
 
   useEffect(() => {
-    if (quickPanel.isVisible && quickPanel.symbol === 'todos') {
+    if (quickPanel.isVisible && quickPanel.symbol === panelSymbol) {
       quickPanel.updateList(panelItems)
     }
   }, [panelItems, quickPanel])

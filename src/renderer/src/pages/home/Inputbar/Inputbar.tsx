@@ -214,7 +214,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       return
     }
 
-    logger.info('Creating send message todo')
+    logger.info('Creating a user message todo')
 
     try {
       const todoId = uuid()
@@ -254,7 +254,10 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       // Activate runtime gate if first time for this assistant in this session
       dispatch(addActiveTodoExecutor(assistant.id))
 
-      logger.info(`Created a todo for sending message ${todoId}`)
+      // Open the todos panel
+      inputbarToolsRef.current?.openTodosPanel()
+
+      logger.verbose(`Created a todo for sending message ${todoId}`)
 
       // Clear input immediately for better UX
       setText('')

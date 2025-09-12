@@ -1,4 +1,5 @@
 import { loggerService } from '@logger'
+import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import FileManager from '@renderer/services/FileManager'
 import { checkRateLimit, getUserMessage } from '@renderer/services/MessagesService'
 import { spanManagerService } from '@renderer/services/SpanManagerService'
@@ -80,40 +81,45 @@ export class AssistantTodoService {
         updateAssistantTodo({ assistantId, topicId, todoId: next.id, changes: { status: TodoStatus.Processing } })
       )
 
-      // upload files lazily
-      const uploadedFiles = await FileManager.uploadFiles(next.context.message.files || [])
+      // UserMessageTodo
+      if (next.action === TodoAction.SendMessage) {
+        // upload files lazily
+        const uploadedFiles = await FileManager.uploadFiles(next.context.message.files || [])
 
-      const baseUserMessage = {
-        assistant: next.assistant,
-        topic: next.context.topic,
-        content: next.context.message.content,
-        files: uploadedFiles || undefined,
-        mentions: next.context.message.mentions,
-        messageId: next.context.message.id,
-        usage: await estimateUserPromptUsage({
+        const baseUserMessage = {
+          assistant: next.assistant,
+          topic: next.context.topic,
           content: next.context.message.content,
-          files: uploadedFiles || undefined
-        })
+          files: uploadedFiles || undefined,
+          mentions: next.context.message.mentions,
+          messageId: next.context.message.id,
+          usage: await estimateUserPromptUsage({
+            content: next.context.message.content,
+            files: uploadedFiles || undefined
+          })
+        }
+
+        const parent = spanManagerService.startTrace(
+          { topicId, name: next.action, inputs: baseUserMessage.content },
+          baseUserMessage.mentions && baseUserMessage.mentions.length > 0
+            ? baseUserMessage.mentions
+            : next.assistant.model
+              ? [next.assistant.model]
+              : []
+        )
+
+        const { message, blocks } = getUserMessage(baseUserMessage)
+        message.traceId = parent?.spanContext().traceId
+
+        EventEmitter.emit(EVENT_NAMES.SEND_MESSAGE, { topicId: topicId, traceId: message.traceId })
+
+        // Await full completion (queue drains in sendMessage's finally)
+        await store.dispatch(_sendMessage(message, blocks, next.assistant, topicId))
+
+        // Wait until all assistant messages for this askId are completed (success or error)
+        const askId = message.id
+        await this.waitForAskIdCompletion(topicId, askId, undefined, 250)
       }
-
-      const parent = spanManagerService.startTrace(
-        { topicId, name: next.action, inputs: baseUserMessage.content },
-        baseUserMessage.mentions && baseUserMessage.mentions.length > 0
-          ? baseUserMessage.mentions
-          : next.assistant.model
-            ? [next.assistant.model]
-            : []
-      )
-
-      const { message, blocks } = getUserMessage(baseUserMessage)
-      message.traceId = parent?.spanContext().traceId
-
-      // Await full completion (queue drains in sendMessage's finally)
-      await store.dispatch(_sendMessage(message, blocks, next.assistant, topicId))
-
-      // Wait until all assistant messages for this askId are completed (success or error)
-      const askId = message.id
-      await this.waitForAskIdCompletion(topicId, askId, undefined, 250)
 
       // done -> mark as completed (do not remove)
       store.dispatch(
