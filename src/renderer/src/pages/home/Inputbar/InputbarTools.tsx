@@ -5,7 +5,7 @@ import { isSupportUrlContextProvider } from '@renderer/config/providers'
 import { getProviderByModel } from '@renderer/services/AssistantService'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { setIsCollapsed, setToolOrder } from '@renderer/store/inputTools'
-import { Assistant, FileType, KnowledgeBase, Model } from '@renderer/types'
+import { Assistant, FileType, KnowledgeBase, Model, Topic } from '@renderer/types'
 import { classNames } from '@renderer/utils'
 import { Divider, Dropdown, Tooltip } from 'antd'
 import { ItemType } from 'antd/es/menu/interface'
@@ -39,6 +39,7 @@ import MentionModelsButton, { MentionModelsButtonRef } from './MentionModelsButt
 import NewContextButton from './NewContextButton'
 import QuickPhrasesButton, { QuickPhrasesButtonRef } from './QuickPhrasesButton'
 import ThinkingButton, { ThinkingButtonRef } from './ThinkingButton'
+import TodosButton, { TodosButtonRef } from './TodosButton'
 import UrlContextButton, { UrlContextButtonRef } from './UrlContextbutton'
 import WebSearchButton, { WebSearchButtonRef } from './WebSearchButton'
 
@@ -58,6 +59,7 @@ export interface InputbarToolsRef {
 export interface InputbarToolsProps {
   assistant: Assistant
   model: Model
+  topic: Topic
   files: FileType[]
   setFiles: (files: FileType[]) => void
   extensions: string[]
@@ -102,6 +104,7 @@ const InputbarTools = ({
   ref,
   assistant,
   model,
+  topic,
   files,
   setFiles,
   showThinkingButton,
@@ -137,6 +140,7 @@ const InputbarTools = ({
   const webSearchButtonRef = useRef<WebSearchButtonRef | null>(null)
   const thinkingButtonRef = useRef<ThinkingButtonRef | null>(null)
   const urlContextButtonRef = useRef<UrlContextButtonRef | null>(null)
+  const todosButtonRef = useRef<TodosButtonRef>(null)
 
   const toolOrder = useAppSelector((state) => state.inputTools.toolOrder)
   const isCollapse = useAppSelector((state) => state.inputTools.isCollapsed)
@@ -411,6 +415,18 @@ const InputbarTools = ({
         )
       },
       {
+        key: 'todos',
+        label: t('todos.title'),
+        component: (
+          <TodosButton
+            ref={todosButtonRef}
+            assistantId={assistant.id}
+            topicId={topic.id}
+            ToolbarButton={ToolbarButton}
+          />
+        )
+      },
+      {
         key: 'quick_phrases',
         label: t('settings.quickPhrase.title'),
         component: (
@@ -485,6 +501,7 @@ const InputbarTools = ({
     showKnowledgeIcon,
     showMcpTools,
     showThinkingButton,
+    topic.id,
     t
   ])
 

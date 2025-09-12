@@ -4194,6 +4194,11 @@
     "settings": "Settings",
     "translate": "Translate"
   },
+  "todos": {
+    "clear_all": "Clear all todos",
+    "clear_ended": "Clear ended todos",
+    "title": "Todos"
+  },
   "trace": {
     "backList": "Back To List",
     "edasSupport": "Powered by Alibaba Cloud EDAS",

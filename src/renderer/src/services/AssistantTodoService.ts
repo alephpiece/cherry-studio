@@ -8,7 +8,7 @@ import { updateAssistantTodo } from '@renderer/store/assistants'
 import { selectMessagesForTopic } from '@renderer/store/newMessage'
 import { selectActiveTodoExecutorSet } from '@renderer/store/runtime'
 import { sendMessage as _sendMessage } from '@renderer/store/thunk/messageThunk'
-import { TodoStatus, type UserMessageTodo } from '@renderer/types/todos'
+import { TodoAction, TodoStatus, type UserMessageTodo } from '@renderer/types/todos'
 
 const logger = loggerService.withContext('AssistantTodoService')
 
@@ -58,7 +58,9 @@ export class AssistantTodoService {
     const assistant = (state.assistants.assistants || []).find((a) => a.id === assistantId)
     const todosByAssistant = assistant?.todos
     const list = todosByAssistant?.[topicId] || []
-    const next = list.find((t) => t.action === 'sendMessage' && t.status === 'pending') as UserMessageTodo | undefined
+    const next = list.find((t) => t.action === TodoAction.SendMessage && t.status === TodoStatus.Pending) as
+      | UserMessageTodo
+      | undefined
 
     if (!next) {
       // No pending todo: release the in-flight flag immediately
@@ -95,7 +97,7 @@ export class AssistantTodoService {
       }
 
       const parent = spanManagerService.startTrace(
-        { topicId, name: 'sendMessage', inputs: baseUserMessage.content },
+        { topicId, name: next.action, inputs: baseUserMessage.content },
         baseUserMessage.mentions && baseUserMessage.mentions.length > 0
           ? baseUserMessage.mentions
           : next.assistant.model

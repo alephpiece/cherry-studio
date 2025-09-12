@@ -4195,6 +4195,11 @@
     "settings": "设置",
     "translate": "翻译"
   },
+  "todos": {
+    "clear_all": "清除所有待办事项",
+    "clear_ended": "清除已经结束的待办事项",
+    "title": "待办事项"
+  },
   "trace": {
     "backList": "返回列表",
     "edasSupport": "Powered by Alibaba Cloud EDAS",

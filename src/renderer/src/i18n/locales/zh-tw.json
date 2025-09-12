@@ -4194,6 +4194,11 @@
     "settings": "設定",
     "translate": "翻譯"
   },
+  "todos": {
+    "clear_all": "清除所有待辦事項",
+    "clear_ended": "清除已經結束的待辦事項",
+    "title": "待辦事項"
+  },
   "trace": {
     "backList": "返回清單",
     "edasSupport": "Powered by Alibaba Cloud EDAS",

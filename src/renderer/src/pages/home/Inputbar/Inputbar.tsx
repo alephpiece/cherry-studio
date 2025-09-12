@@ -230,7 +230,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       // Create todo
       const todo: UserMessageTodo = {
         id: todoId,
-        title: `Send: ${text.slice(0, 50)}${text.length > 50 ? '...' : ''}`,
+        title: `${text.slice(0, 50)}${text.length > 50 ? '...' : ''}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         action: TodoAction.SendMessage,
@@ -259,7 +259,6 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       // Clear input immediately for better UX
       setText('')
       setFiles([])
-      setTimeoutTimer('sendMessage_1', () => setText(''), 500)
       setTimeoutTimer('sendMessage_2', () => resizeTextArea(true), 0)
       setExpand(false)
     } catch (error) {
@@ -925,6 +924,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
               ref={inputbarToolsRef}
               assistant={assistant}
               model={model}
+              topic={topic}
               files={files}
               extensions={supportedExts}
               setFiles={setFiles}
