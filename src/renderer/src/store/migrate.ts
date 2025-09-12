@@ -2475,6 +2475,12 @@ const migrateConfig = {
         }
       }
 
+      if (state.settings) {
+        state.settings.assistantTodos = {
+          autoPoppedPanel: true
+        }
+      }
+
       return state
     } catch (error) {
       logger.error('migrate 154 error', error as Error)

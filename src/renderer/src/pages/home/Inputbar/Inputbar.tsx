@@ -87,7 +87,8 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     showInputEstimatedTokens,
     autoTranslateWithSpace,
     enableQuickPanelTriggers,
-    enableSpellCheck
+    enableSpellCheck,
+    assistantTodos
   } = useSettings()
   const [expanded, setExpand] = useState(false)
   const [estimateTokenCount, setEstimateTokenCount] = useState(0)
@@ -255,7 +256,9 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       dispatch(addActiveTodoExecutor(assistant.id))
 
       // Open the todos panel
-      inputbarToolsRef.current?.openTodosPanel()
+      if (assistantTodos.autoPoppedPanel) {
+        inputbarToolsRef.current?.openTodosPanel()
+      }
 
       logger.verbose(`Created a todo for sending message ${todoId}`)
 
@@ -267,7 +270,18 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     } catch (error) {
       logger.warn('Failed to create a todo for sending message:', error as Error)
     }
-  }, [assistant, dispatch, files, inputEmpty, mentionedModels, resizeTextArea, setTimeoutTimer, text, topic])
+  }, [
+    assistant,
+    assistantTodos.autoPoppedPanel,
+    dispatch,
+    files,
+    inputEmpty,
+    mentionedModels,
+    resizeTextArea,
+    setTimeoutTimer,
+    text,
+    topic
+  ])
 
   const translate = useCallback(async () => {
     if (isTranslating) {
