@@ -52,7 +52,7 @@ import MentionModelsButton, { MentionModelsButtonRef } from './MentionModelsButt
 import NewContextButton from './NewContextButton'
 import QuickPhrasesButton, { QuickPhrasesButtonRef } from './QuickPhrasesButton'
 import ThinkingButton, { ThinkingButtonRef } from './ThinkingButton'
-import UrlContextButton, { UrlContextButtonRef } from './UrlContextbutton'
+import UrlContextButton, { UrlContextButtonRef } from './UrlContextButton'
 import WebSearchButton, { WebSearchButtonRef } from './WebSearchButton'
 
 const logger = loggerService.withContext('InputbarTools')
