@@ -25,6 +25,7 @@ import { useTimer } from '@renderer/hooks/useTimer'
 import useTranslate from '@renderer/hooks/useTranslate'
 import { getDefaultTopic } from '@renderer/services/AssistantService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
+import { checkRateLimit, sendUserMessage } from '@renderer/services/MessagesService'
 import { getModelUniqId } from '@renderer/services/ModelService'
 import PasteService from '@renderer/services/PasteService'
 import { estimateTextTokens as estimateTxtTokens } from '@renderer/services/TokenService'
@@ -215,52 +216,66 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
       return
     }
 
-    logger.info('Creating a user message todo')
+    logger.info('Preparing to send user message')
 
     try {
-      const todoId = uuid()
-
-      // Create pending user message
-      const pendingMessage: PendingUserMessage = {
-        id: todoId,
-        content: text,
-        files: files.length > 0 ? files : undefined,
-        mentions: mentionedModels.length > 0 ? mentionedModels : undefined
-      }
-
-      // Create todo
-      const todo: UserMessageTodo = {
-        id: todoId,
-        title: `${text.slice(0, 50)}${text.length > 50 ? '...' : ''}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        action: TodoAction.SendMessage,
-        status: TodoStatus.Pending,
-        assistant,
-        context: {
+      if (!loading) {
+        if (checkRateLimit(assistant)) {
+          return
+        }
+        logger.info('Sending user message directly')
+        await sendUserMessage({
+          assistant,
           topic,
-          message: pendingMessage
+          content: text,
+          files,
+          mentions: mentionedModels,
+          messageId: uuid()
+        })
+      } else {
+        logger.info('Creating a user message todo')
+        const todoId = uuid()
+
+        // Create pending user message
+        const pendingMessage: PendingUserMessage = {
+          id: todoId,
+          content: text,
+          files: files.length > 0 ? files : undefined,
+          mentions: mentionedModels.length > 0 ? mentionedModels : undefined
+        }
+
+        // Create todo
+        const todo: UserMessageTodo = {
+          id: todoId,
+          title: `${text.slice(0, 50)}${text.length > 50 ? '...' : ''}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          action: TodoAction.SendMessage,
+          status: TodoStatus.Pending,
+          assistant,
+          context: {
+            topic,
+            message: pendingMessage
+          }
+        }
+
+        // Register todo - the AssistantTodoService will handle the actual sending
+        dispatch(
+          addAssistantTodo({
+            assistantId: assistant.id,
+            topicId: topic.id,
+            todo
+          })
+        )
+
+        // Activate runtime gate if first time for this assistant in this session
+        dispatch(addActiveTodoExecutor(assistant.id))
+
+        // Open the todos panel
+        if (assistantTodos.autoPoppedPanel) {
+          inputbarToolsRef.current?.openTodosPanel()
         }
       }
-
-      // Register todo - the AssistantTodoService will handle the actual sending
-      dispatch(
-        addAssistantTodo({
-          assistantId: assistant.id,
-          topicId: topic.id,
-          todo
-        })
-      )
-
-      // Activate runtime gate if first time for this assistant in this session
-      dispatch(addActiveTodoExecutor(assistant.id))
-
-      // Open the todos panel
-      if (assistantTodos.autoPoppedPanel) {
-        inputbarToolsRef.current?.openTodosPanel()
-      }
-
-      logger.verbose(`Created a todo for sending message ${todoId}`)
 
       // Clear input immediately for better UX
       setText('')
@@ -276,6 +291,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
     dispatch,
     files,
     inputEmpty,
+    loading,
     mentionedModels,
     resizeTextArea,
     setTimeoutTimer,

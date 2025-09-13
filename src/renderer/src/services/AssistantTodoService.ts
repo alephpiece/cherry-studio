@@ -1,14 +1,9 @@
 import { loggerService } from '@logger'
-import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
-import FileManager from '@renderer/services/FileManager'
-import { checkRateLimit, getUserMessage } from '@renderer/services/MessagesService'
-import { spanManagerService } from '@renderer/services/SpanManagerService'
-import { estimateUserPromptUsage } from '@renderer/services/TokenService'
+import { selectNewTopicLoading } from '@renderer/hooks/useMessageOperations'
+import { checkRateLimit, sendUserMessage } from '@renderer/services/MessagesService'
 import store from '@renderer/store'
 import { updateAssistantTodo } from '@renderer/store/assistants'
-import { selectMessagesForTopic } from '@renderer/store/newMessage'
 import { selectActiveTodoExecutorSet } from '@renderer/store/runtime'
-import { sendMessage as _sendMessage } from '@renderer/store/thunk/messageThunk'
 import { TodoAction, TodoStatus, type UserMessageTodo } from '@renderer/types/todos'
 
 const logger = loggerService.withContext('AssistantTodoService')
@@ -56,6 +51,13 @@ export class AssistantTodoService {
       this.inFlight.delete(key)
       return
     }
+    // If topic is currently loading, delay and retry later
+    const isTopicLoading = selectNewTopicLoading(state, topicId)
+    if (isTopicLoading) {
+      this.inFlight.delete(key)
+      setTimeout(() => this.processNext(assistantId, topicId), 300)
+      return
+    }
     const assistant = (state.assistants.assistants || []).find((a) => a.id === assistantId)
     const todosByAssistant = assistant?.todos
     const list = todosByAssistant?.[topicId] || []
@@ -83,42 +85,14 @@ export class AssistantTodoService {
 
       // UserMessageTodo
       if (next.action === TodoAction.SendMessage) {
-        // upload files lazily
-        const uploadedFiles = await FileManager.uploadFiles(next.context.message.files || [])
-
-        const baseUserMessage = {
+        await sendUserMessage({
           assistant: next.assistant,
           topic: next.context.topic,
           content: next.context.message.content,
-          files: uploadedFiles || undefined,
+          files: next.context.message.files || [],
           mentions: next.context.message.mentions,
-          messageId: next.context.message.id,
-          usage: await estimateUserPromptUsage({
-            content: next.context.message.content,
-            files: uploadedFiles || undefined
-          })
-        }
-
-        const parent = spanManagerService.startTrace(
-          { topicId, name: next.action, inputs: baseUserMessage.content },
-          baseUserMessage.mentions && baseUserMessage.mentions.length > 0
-            ? baseUserMessage.mentions
-            : next.assistant.model
-              ? [next.assistant.model]
-              : []
-        )
-
-        const { message, blocks } = getUserMessage(baseUserMessage)
-        message.traceId = parent?.spanContext().traceId
-
-        EventEmitter.emit(EVENT_NAMES.SEND_MESSAGE, { topicId: topicId, traceId: message.traceId })
-
-        // Await full completion (queue drains in sendMessage's finally)
-        await store.dispatch(_sendMessage(message, blocks, next.assistant, topicId))
-
-        // Wait until all assistant messages for this askId are completed (success or error)
-        const askId = message.id
-        await this.waitForAskIdCompletion(topicId, askId, undefined, 250)
+          messageId: next.context.message.id
+        })
       }
 
       // done -> mark as completed (do not remove)
@@ -142,41 +116,22 @@ export class AssistantTodoService {
       // Chain next if any
       try {
         const stateAfter = store.getState()
+        const isTopicLoading = selectNewTopicLoading(stateAfter, topicId)
         const assistantAfter = (stateAfter.assistants.assistants || []).find((a) => a.id === assistantId)
         const listAfter = assistantAfter?.todos?.[topicId] || []
-        const hasPending = listAfter.some((t) => t.status === 'pending')
+        const hasPending = listAfter.some((t) => t.status === TodoStatus.Pending)
         if (hasPending) {
           // Fire-and-forget; guard inFlight prevents overlap
-          this.processNext(assistantId, topicId)
+          if (isTopicLoading) {
+            setTimeout(() => this.processNext(assistantId, topicId), 300)
+          } else {
+            this.processNext(assistantId, topicId)
+          }
         }
       } catch (_) {
         // swallow
       }
     }
-  }
-
-  /**
-   * Wait until all assistant messages for the askId are no longer in-progress states
-   */
-  private async waitForAskIdCompletion(topicId: string, askId: string, timeoutMs?: number, intervalMs = 300) {
-    const start = Date.now()
-    const isInProgressStatus = (status?: string) => !!status && status.includes('ing')
-
-    // If timeoutMs is undefined, wait indefinitely until completion
-    while (timeoutMs === undefined || Date.now() - start < timeoutMs) {
-      const state = store.getState()
-      const all = selectMessagesForTopic(state, topicId)
-      const assistants = all.filter((m) => m && m.role === 'assistant' && m.askId === askId)
-      // Wait if no assistant messages have been generated yet
-      if (assistants.length === 0) {
-        await new Promise((r) => setTimeout(r, intervalMs))
-        continue
-      }
-      const anyInProgress = assistants.some((m) => isInProgressStatus(m.status))
-      if (!anyInProgress) return
-      await new Promise((r) => setTimeout(r, intervalMs))
-    }
-    // timeout: treat as completion to avoid deadlock
   }
 }
 

@@ -7,6 +7,7 @@ import { fetchMessagesSummary } from '@renderer/services/ApiService'
 import store from '@renderer/store'
 import { messageBlocksSelectors, removeManyBlocks } from '@renderer/store/messageBlock'
 import { selectMessagesForTopic } from '@renderer/store/newMessage'
+import { sendMessage as _sendMessage } from '@renderer/store/thunk/messageThunk'
 import type { Assistant, FileMetadata, Model, Topic, Usage } from '@renderer/types'
 import { FileTypes } from '@renderer/types'
 import type { Message, MessageBlock } from '@renderer/types/newMessage'
@@ -30,6 +31,8 @@ import { NavigateFunction } from 'react-router'
 import { getAssistantById, getAssistantProvider, getDefaultModel } from './AssistantService'
 import { EVENT_NAMES, EventEmitter } from './EventService'
 import FileManager from './FileManager'
+import { spanManagerService } from './SpanManagerService'
+import { estimateUserPromptUsage } from './TokenService'
 
 const logger = loggerService.withContext('MessagesService')
 
@@ -165,6 +168,53 @@ export function getUserMessage({
 
   // 不再需要手动合并ID
   return { message, blocks }
+}
+
+/**
+ * Unified user message sending flow
+ */
+export async function sendUserMessage(params: {
+  assistant: Assistant
+  topic: Topic
+  content?: string
+  files?: FileMetadata[]
+  mentions?: Model[]
+  messageId?: string
+}): Promise<{ message: Message }> {
+  const { assistant, topic, content, files, mentions, messageId } = params
+
+  // Upload files lazily (if provided as raw FileType)
+  const uploadedFiles = await FileManager.uploadFiles(files || [])
+
+  // Estimate usage
+  const usage = await estimateUserPromptUsage({
+    content,
+    files: uploadedFiles || undefined
+  })
+
+  // Start trace
+  const parent = spanManagerService.startTrace(
+    { topicId: topic.id, name: 'sendMessage', inputs: content },
+    mentions && mentions.length > 0 ? mentions : assistant.model ? [assistant.model] : []
+  )
+
+  // Create user message
+  const { message, blocks } = getUserMessage({
+    messageId,
+    assistant,
+    topic,
+    content,
+    files: uploadedFiles || undefined,
+    mentions,
+    usage
+  })
+  message.traceId = parent?.spanContext().traceId
+
+  // Emit event and dispatch thunk
+  EventEmitter.emit(EVENT_NAMES.SEND_MESSAGE, { topicId: topic.id, traceId: message.traceId })
+  await store.dispatch(_sendMessage(message, blocks, assistant, topic.id))
+
+  return { message }
 }
 
 export function getAssistantMessage({ assistant, topic }: { assistant: Assistant; topic: Topic }): Message {
