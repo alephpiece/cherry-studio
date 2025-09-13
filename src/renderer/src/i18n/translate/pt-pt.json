@@ -539,8 +539,8 @@
         "title": "Execução de Código"
       },
       "code_fancy_block": {
-        "label": "[to be translated]:花式代码块",
-        "tip": "[to be translated]:使用更美观的代码块样式，例如 HTML 卡片"
+        "label": "Bloco de código estilizado",
+        "tip": "Use um estilo de bloco de código mais agradável, como cartões HTML"
       },
       "code_image_tools": {
         "label": "Habilitar ferramenta de visualização",
@@ -1708,7 +1708,7 @@
     "delete_confirm": "Tem a certeza de que deseja eliminar este {{type}}?",
     "delete_folder_confirm": "Tem a certeza de que deseja eliminar a pasta \"{{name}}\" e todos os seus conteúdos?",
     "delete_note_confirm": "Tem a certeza de que deseja eliminar a nota \"{{name}}\"?",
-    "drop_markdown_hint": "Arraste e solte arquivos ou pastas Markdown aqui para importar",
+    "drop_markdown_hint": "Arraste e solte arquivos ou pastas .md aqui para importar",
     "empty": "Ainda não existem notas",
     "expand": "expandir",
     "export_failed": "Falha ao exportar para a base de conhecimento",
@@ -1745,15 +1745,15 @@
         "compress_content": "reduzir a largura da coluna",
         "compress_content_description": "Ativando isso limitará o número de caracteres por linha, reduzindo o conteúdo exibido na tela.",
         "default_font": "fonte padrão",
-        "font_size": "[to be translated]:字体大小",
-        "font_size_description": "[to be translated]:调整字体大小以获得更好的阅读体验 (10-30px)",
-        "font_size_large": "[to be translated]:大",
-        "font_size_medium": "[to be translated]:中",
-        "font_size_small": "[to be translated]:小",
+        "font_size": "tamanho da fonte",
+        "font_size_description": "Ajuste o tamanho da fonte para uma melhor experiência de leitura (10-30px)",
+        "font_size_large": "Grande",
+        "font_size_medium": "中",
+        "font_size_small": "pequeno",
         "font_title": "configuração de fonte",
         "serif_font": "fonte com serifa",
-        "show_table_of_contents": "[to be translated]:显示目录大纲",
-        "show_table_of_contents_description": "[to be translated]:显示目录大纲侧边栏，方便文档内导航",
+        "show_table_of_contents": "Mostrar esboço do diretório",
+        "show_table_of_contents_description": "Mostrar barra lateral do índice, facilitando a navegação dentro do documento",
         "title": "configurações de exibição"
       },
       "editor": {
@@ -1781,7 +1781,7 @@
     "sort_updated_asc": "Tempo de atualização (do mais antigo para o mais recente)",
     "sort_updated_desc": "atualização de tempo (do mais novo para o mais antigo)",
     "sort_z2a": "Nome do arquivo (Z-A)",
-    "star": "coleções",
+    "star": "Notas favoritas",
     "starred_notes": "notas salvas",
     "title": "nota",
     "unsaved_changes": "Você tem conteúdo não salvo, tem certeza que deseja sair?",
