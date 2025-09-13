@@ -275,4 +275,18 @@ export const selectTopicsMap = createSelector([selectAllTopics], (topics) => {
   }, new Map())
 })
 
+// Todos selectors
+export const selectAssistantTodosByTopic = createSelector(
+  [
+    (state: RootState) => state.assistants.assistants,
+    (_: RootState, assistantId: string) => assistantId,
+    (_: RootState, __: string, topicId: string) => topicId
+  ],
+  (assistants, assistantId, topicId) => {
+    const assistant = assistants.find((a) => a.id === assistantId)
+    const list = assistant?.todos?.[topicId] || []
+    return list
+  }
+)
+
 export default assistantsSlice.reducer

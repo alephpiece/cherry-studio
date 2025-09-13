@@ -2,7 +2,7 @@ import { loggerService } from '@logger'
 import { selectNewTopicLoading } from '@renderer/hooks/useMessageOperations'
 import { checkRateLimit, sendUserMessage } from '@renderer/services/MessagesService'
 import store from '@renderer/store'
-import { updateAssistantTodo } from '@renderer/store/assistants'
+import { selectAssistantTodosByTopic, updateAssistantTodo } from '@renderer/store/assistants'
 import { selectActiveTodoExecutorSet } from '@renderer/store/runtime'
 import { TodoAction, TodoStatus, type UserMessageTodo } from '@renderer/types/todos'
 
@@ -58,9 +58,7 @@ export class AssistantTodoService {
       setTimeout(() => this.processNext(assistantId, topicId), 300)
       return
     }
-    const assistant = (state.assistants.assistants || []).find((a) => a.id === assistantId)
-    const todosByAssistant = assistant?.todos
-    const list = todosByAssistant?.[topicId] || []
+    const list = selectAssistantTodosByTopic(state, assistantId, topicId)
     const next = list.find((t) => t.action === TodoAction.SendMessage && t.status === TodoStatus.Pending) as
       | UserMessageTodo
       | undefined
