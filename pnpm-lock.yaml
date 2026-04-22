@@ -374,7 +374,7 @@ importers:
         version: 0.1.3
       '@langchain/community':
         specifier: ^1.0.0
-        version: 1.1.1(85a135bf2fd7c48b5323d86c6d655bd0)
+        version: 1.1.1(3bba964449060bd176fc73da062d305c)
       '@langchain/core':
         specifier: 1.0.2
         version: 1.0.2(patch_hash=8dc787a82cebafe8b23c8826f25f29aca64fc8b43a0a1878e0010782e4da96ed)(@opentelemetry/api@1.9.0)(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(openai@6.15.0(ws@8.20.0)(zod@4.3.4))
@@ -751,8 +751,8 @@ importers:
         specifier: ^9.0.2
         version: 9.5.1
       dompurify:
-        specifier: ^3.2.6
-        version: 3.3.1
+        specifier: ^3.4.0
+        version: 3.4.0
       dotenv:
         specifier: 16.6.1
         version: 16.6.1
@@ -1946,8 +1946,8 @@ packages:
   '@braintree/sanitize-url@7.1.1':
     resolution: {integrity: sha512-i1L7noDNxtFyL5DmZafWy1wRVhGehQmzZaz1HiN5e7iylJMSZR7ekOV7NsIqa5qBldlLrsKv4HbgFUVlQrz8Mw==}
 
-  '@browserbasehq/sdk@2.9.0':
-    resolution: {integrity: sha512-Xzm1+6suzQypXjley4Phqer++pjnYyST6S7CArUn3kWyGA8aruXjAV5wkmqE21lgXo9K3/OQJvCu48bKEZFNDQ==}
+  '@browserbasehq/sdk@2.10.0':
+    resolution: {integrity: sha512-pOL4yW8P8AI2+N5y6zEP6XXKqIXtYyKunr1JXppqQDOyKLxxvZEDqQCHJXWUzqgx3R1tGWpn7m9AjXN7MeYInA==}
 
   '@browserbasehq/stagehand@1.14.0':
     resolution: {integrity: sha512-Hi/EzgMFWz+FKyepxHTrqfTPjpsuBS4zRy3e9sbMpBgLPv+9c0R+YZEvS7Bw4mTS66QtvvURRT6zgDGFotthVQ==}
@@ -6195,8 +6195,8 @@ packages:
   axios@1.13.6:
     resolution: {integrity: sha512-ChTCHMouEe2kn713WHbQGcuYrr6fXTBiu460OTwWrWob16g1bXn4vtz07Ope7ewMozJAnEquLk5lWQWtBig9DQ==}
 
-  axios@1.14.0:
-    resolution: {integrity: sha512-3Y8yrqLSwjuzpXuZ0oIYZ/XGgLwUIBU3uLvbcpb0pidD9ctpShJd43KSlEEkVQg6DS0G9NKyzOvBfUtDKEyHvQ==}
+  axios@1.15.2:
+    resolution: {integrity: sha512-wLrXxPtcrPTsNlJmKjkPnNPK2Ihe0hn0wGSaTEiHRPxwjvJwT3hKmXF4dpqxmPO9SoNb2FsYXj/xEo0gHN+D5A==}
 
   b4a@1.7.3:
     resolution: {integrity: sha512-5Q2mfq2WfGuFp3uS//0s6baOJLMoVduPYVeNmDYxu5OUA1/cBfvr2RIS7vi62LdNj/urk1hfmj867I3qt6uZ7Q==}
@@ -6243,6 +6243,7 @@ packages:
   basic-ftp@5.2.0:
     resolution: {integrity: sha512-VoMINM2rqJwJgfdHq6RiUudKt2BV+FY5ZFezP/ypmwayk68+NzzAQy4XXLlqsGD4MCzq3DrmNFD/uUmBJuGoXw==}
     engines: {node: '>=10.0.0'}
+    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
 
   bcp-47-match@2.0.3:
     resolution: {integrity: sha512-JtTezzbAibu8G0R9op9zb3vcWZd9JF6M0xOYGPn0fNCd7wOpRB1mU2mH9T8gaBGbAAyIIVgB2G7xG0GP98zMAQ==}
@@ -7265,8 +7266,8 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
-  dompurify@3.3.1:
-    resolution: {integrity: sha512-qkdCKzLNtrgPFP1Vo+98FRzJnBRGe4ffyCea9IwHB1fyxPOeNTHpLKYGd4Uk9xvNoH0ZoOjwZxNptyMwqrId1Q==}
+  dompurify@3.4.0:
+    resolution: {integrity: sha512-nolgK9JcaUXMSmW+j1yaSvaEaoXYHwWyGJlkoCTghc97KgGDDSnpoU/PlEnw63Ah+TGKFOyY+X5LnxaWbCSfXg==}
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
@@ -8011,6 +8012,15 @@ packages:
 
   follow-redirects@1.15.11:
     resolution: {integrity: sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+
+  follow-redirects@1.16.0:
+    resolution: {integrity: sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -8901,6 +8911,9 @@ packages:
 
   jsonfile@6.2.0:
     resolution: {integrity: sha512-FGuPw30AdOIUTRMC2OMRtQV+jkVj2cfPqSeWXv1NEAJ1qZ5zb1X6z1mFhbfOB/iy3ssJCD+3KuZ8r8C3uVFlAg==}
+
+  jsonfile@6.2.1:
+    resolution: {integrity: sha512-zwOTdL3rFQ/lRdBnntKVOX6k5cKJwEc1HdilT71BWEu7J41gXIB2MRp+vxduPSwZJPWBxEzv4yH1wYLJGUHX4Q==}
 
   jsonpointer@5.0.1:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
@@ -13785,7 +13798,7 @@ snapshots:
 
   '@braintree/sanitize-url@7.1.1': {}
 
-  '@browserbasehq/sdk@2.9.0(encoding@0.1.13)':
+  '@browserbasehq/sdk@2.10.0(encoding@0.1.13)':
     dependencies:
       '@types/node': 18.19.130
       '@types/node-fetch': 2.6.13
@@ -13800,7 +13813,7 @@ snapshots:
   '@browserbasehq/stagehand@1.14.0(@playwright/test@1.57.0)(deepmerge@4.3.1)(dotenv@16.6.1)(encoding@0.1.13)(openai@6.15.0(ws@8.20.0)(zod@4.3.4))(zod@4.3.4)':
     dependencies:
       '@anthropic-ai/sdk': 0.27.3(encoding@0.1.13)
-      '@browserbasehq/sdk': 2.9.0(encoding@0.1.13)
+      '@browserbasehq/sdk': 2.10.0(encoding@0.1.13)
       '@playwright/test': 1.57.0
       deepmerge: 4.3.1
       dotenv: 16.6.1
@@ -15238,7 +15251,7 @@ snapshots:
       - openai
       - ws
 
-  '@langchain/community@1.1.1(85a135bf2fd7c48b5323d86c6d655bd0)':
+  '@langchain/community@1.1.1(3bba964449060bd176fc73da062d305c)':
     dependencies:
       '@browserbasehq/stagehand': 1.14.0(@playwright/test@1.57.0)(deepmerge@4.3.1)(dotenv@16.6.1)(encoding@0.1.13)(openai@6.15.0(ws@8.20.0)(zod@4.3.4))(zod@4.3.4)
       '@ibm-cloud/watsonx-ai': 1.7.5
@@ -15257,7 +15270,7 @@ snapshots:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-sdk/client-s3': 3.998.0
       '@aws-sdk/credential-provider-node': 3.972.13
-      '@browserbasehq/sdk': 2.9.0(encoding@0.1.13)
+      '@browserbasehq/sdk': 2.10.0(encoding@0.1.13)
       '@libsql/client': 0.14.0
       '@mozilla/readability': 0.6.0
       '@notionhq/client': 2.3.0(encoding@0.1.13)
@@ -18825,7 +18838,7 @@ snapshots:
 
   axios@1.13.2:
     dependencies:
-      follow-redirects: 1.15.11(debug@4.4.3)
+      follow-redirects: 1.15.11
       form-data: 4.0.4
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -18833,15 +18846,15 @@ snapshots:
 
   axios@1.13.6:
     dependencies:
-      follow-redirects: 1.15.11(debug@4.4.3)
+      follow-redirects: 1.15.11
       form-data: 4.0.5
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
 
-  axios@1.14.0(debug@4.4.3):
+  axios@1.15.2(debug@4.4.3):
     dependencies:
-      follow-redirects: 1.15.11(debug@4.4.3)
+      follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.5
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
@@ -20021,7 +20034,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.3.1:
+  dompurify@3.4.0:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -20897,7 +20910,9 @@ snapshots:
 
   fn.name@1.1.0: {}
 
-  follow-redirects@1.15.11(debug@4.4.3):
+  follow-redirects@1.15.11: {}
+
+  follow-redirects@1.16.0(debug@4.4.3):
     optionalDependencies:
       debug: 4.4.3
 
@@ -20992,7 +21007,7 @@ snapshots:
   fs-extra@11.3.4:
     dependencies:
       graceful-fs: 4.2.11
-      jsonfile: 6.2.0
+      jsonfile: 6.2.1
       universalify: 2.0.1
     optional: true
 
@@ -21606,7 +21621,7 @@ snapshots:
       '@types/debug': 4.1.13
       '@types/node': 18.19.130
       '@types/tough-cookie': 4.0.5
-      axios: 1.14.0(debug@4.4.3)
+      axios: 1.15.2(debug@4.4.3)
       camelcase: 6.3.0
       debug: 4.4.3
       dotenv: 16.6.1
@@ -21616,7 +21631,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.3
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.14.0(debug@4.4.3))
+      retry-axios: 2.6.0(axios@1.15.2(debug@4.4.3))
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -21969,6 +21984,13 @@ snapshots:
       universalify: 2.0.1
     optionalDependencies:
       graceful-fs: 4.2.11
+
+  jsonfile@6.2.1:
+    dependencies:
+      universalify: 2.0.1
+    optionalDependencies:
+      graceful-fs: 4.2.11
+    optional: true
 
   jsonpointer@5.0.1: {}
 
@@ -22691,7 +22713,7 @@ snapshots:
       d3-sankey: 0.12.3
       dagre-d3-es: 7.0.14
       dayjs: 1.11.19
-      dompurify: 3.3.1
+      dompurify: 3.4.0
       katex: 0.16.40
       khroma: 2.1.0
       lodash-es: 4.17.23
@@ -24838,9 +24860,9 @@ snapshots:
       onetime: 5.1.2
       signal-exit: 3.0.7
 
-  retry-axios@2.6.0(axios@1.14.0(debug@4.4.3)):
+  retry-axios@2.6.0(axios@1.15.2(debug@4.4.3)):
     dependencies:
-      axios: 1.14.0(debug@4.4.3)
+      axios: 1.15.2(debug@4.4.3)
 
   retry@0.12.0: {}
 
