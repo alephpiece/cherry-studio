@@ -116,7 +116,7 @@
     "sharp": "0.34.5",
     "tesseract.js": "6.0.1",
     "turndown": "7.2.0",
-    "ws": "^8.18.2",
+    "ws": "^8.21.0",
     "xxhash-wasm": "^1.1.0"
   },
   "devDependencies": {
