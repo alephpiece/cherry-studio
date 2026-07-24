@@ -6395,8 +6395,8 @@
       },
       "custom": {
         "css": {
-          "cherrycss": "从 cherrycss.com 获取",
           "label": "自定义 CSS",
+          "migration_notice": "此样式表由 v1 迁移而来，目前处于禁用状态。请先将其适配到 v2，然后删除第一行以启用。",
           "placeholder": "/* 这里写自定义 CSS */"
         }
       },
