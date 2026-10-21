@@ -492,7 +492,7 @@
     "use-sync-external-store": "^1.6.0",
     "uuid": "^13.0.0",
     "virtua": "^0.49.1",
-    "vite": "8.2.2",
+    "vite": "8.2.4",
     "vitest": "^5.0.1",
     "voyage-ai-provider": "^3.0.0",
     "webdav": "^5.9.0",
